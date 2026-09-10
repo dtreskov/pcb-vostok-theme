@@ -1,0 +1,147 @@
+.ucmm-wpbrigade-help-page .ucmm-settings-card-description a {
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.ucmm-wpbrigade-help-page .ucmm-settings-card-description a:hover,
+.ucmm-wpbrigade-help-page .ucmm-settings-card-description a:focus {
+	color: #135e96;
+	text-decoration: underline;
+}
+
+.ucmm-help-sysinfo {
+	margin-bottom: 8px;
+}
+
+.ucmm-help-sysinfo__box {
+	position: relative;
+}
+
+.ucmm-help-sysinfo-copy {
+	align-items: center;
+	background-color: rgba(255, 255, 255, 0.92);
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	color: #50575e;
+	cursor: pointer;
+	display: inline-flex;
+	font-family: Inter, sans-serif;
+	font-size: 12px;
+	font-weight: 500;
+	gap: 6px;
+	line-height: 1;
+	padding: 7px 10px;
+	position: absolute;
+	right: 12px;
+	top: 12px;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+	z-index: 1;
+}
+
+.ucmm-help-sysinfo-copy__tooltip {
+	background-color: #1e1e1e;
+	border-radius: 6px;
+	bottom: calc(100% + 8px);
+	color: #ffffff;
+	font-family: Inter, sans-serif;
+	font-size: 12px;
+	font-weight: 500;
+	left: 50%;
+	line-height: 1.2;
+	opacity: 0;
+	padding: 6px 10px;
+	pointer-events: none;
+	position: absolute;
+	transform: translateX(-50%);
+	visibility: hidden;
+	white-space: nowrap;
+	z-index: 2;
+}
+.ucmm-help-sysinfo-copy{
+	background: none;
+	border: none;
+	color: #50575e;
+	cursor: pointer;
+	display: inline-flex;
+	font-family: Inter, sans-serif;
+	font-size: 12px;
+	font-weight: 500;
+	gap: 6px;
+	line-height: 1;
+	padding: 7px 10px;
+	position: absolute;
+	right: 23px;
+	top: 8px;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+	z-index: 1;
+}
+
+.ucmm-help-sysinfo-copy__tooltip::after {
+	border-color: #1e1e1e transparent transparent transparent;
+	border-style: solid;
+	border-width: 5px 5px 0;
+	bottom: -5px;
+	content: '';
+	left: 50%;
+	position: absolute;
+	transform: translateX(-50%);
+}
+
+.ucmm-help-sysinfo-copy:hover .ucmm-help-sysinfo-copy__tooltip,
+.ucmm-help-sysinfo-copy:focus-visible .ucmm-help-sysinfo-copy__tooltip,
+.ucmm-help-sysinfo-copy.is-copied .ucmm-help-sysinfo-copy__tooltip {
+	opacity: 1;
+	visibility: visible;
+}
+
+.ucmm-help-sysinfo-copy:hover,
+.ucmm-help-sysinfo-copy:focus {
+	background-color: #ffffff8f;
+	border-color: #c3c4c78f;
+	color: #1e1e1e;
+}
+
+.ucmm-help-sysinfo-copy:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color);
+	outline-offset: 2px;
+}
+
+.ucmm-help-sysinfo-copy__icon {
+	display: inline-flex;
+	flex-shrink: 0;
+}
+
+.ucmm-help-sysinfo-copy.is-copied {
+	background-color: #edfaef;
+	border-color: #b8e6bf;
+	color: #007017;
+}
+
+.ucmm-help-sysinfo__textarea {
+	background-color: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	box-sizing: border-box;
+	color: #1e1e1e;
+	display: block;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 12px;
+	line-height: 1.5;
+	max-width: 100%;
+	padding: 48px 16px 16px;
+	resize: vertical;
+	width: 100%;
+}
+
+.ucmm-log-file-sniper {
+	display: none;
+	padding: 5px;
+}
+
+.ucmm-log-file-text {
+	display: none;
+}
+
+.under-construction_page_ucmm-help #ucmm_wpbrigade_setting .ucmm-settings-card {
+	padding: 40px;
+}

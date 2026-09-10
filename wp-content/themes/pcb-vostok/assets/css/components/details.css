@@ -1,0 +1,174 @@
+/* =================================
+   Details button
+   ================================= */
+
+
+/* =================================
+   Details button
+   ================================= */
+
+.details-button > summary {
+    list-style: none;
+
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    min-height: 48px;
+    box-sizing: border-box;
+
+    padding: 0 20px;
+
+    cursor: pointer;
+
+    border-radius: var(--radius-pill);
+
+    background-color: var(--color-copper);
+    color: var(--color-white);
+
+    font-weight: 600;
+
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.details-button > summary::-webkit-details-marker {
+    display: none;
+}
+
+.details-button > summary::after {
+    content: "";
+
+    width: 8px;
+    height: 8px;
+
+    margin-left: 4px;
+
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+
+    transform: rotate(-45deg);
+
+    transition:
+        transform var(--transition-fast);
+}
+
+.details-button[open] > summary::after {
+    transform: rotate(45deg);
+}
+
+.details-button > summary:hover {
+    background-color: var(--color-copper-dark);
+}
+
+
+/* =================================
+   Details content
+   ================================= */
+
+.details-button > .details-content {
+    padding-left: var(--space-lg);
+
+    border-left: 3px solid transparent;
+}
+
+.details-button > .details-content.animate {
+    border-left-color: var(--color-copper);
+}
+
+.details-button > .details-content > *:first-child {
+    margin-top: var(--space-lg);
+}
+
+
+/* =================================
+   Cards grid
+   ================================= */
+
+.details-cards-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap:
+        var(--space-lg);
+
+    align-items: stretch;
+}
+
+/* =================================
+   Details cards
+   ================================= */
+
+.details-card {
+    margin: 0;
+    height: 100%;
+    box-sizing: border-box;
+
+    background-color:
+        var(--color-card-background);
+
+    border:
+        1px solid var(--color-card-border);
+
+    border-radius:
+        var(--radius-card);
+
+    padding:
+        var(--space-lg);
+
+    box-shadow:
+        0 1px 2px var(--color-card-box-shadow);
+
+    transition:
+        transform var(--transition-normal),
+        box-shadow var(--transition-normal);
+}
+
+.details-card:hover {
+    transform:
+        translateY(-3px);
+
+    box-shadow:
+        0 8px 20px var(--color-card-box-shadow);
+}
+
+
+/* Mobile */
+
+@media (max-width: 767px) {
+
+    .details-cards-grid {
+        grid-template-columns: 1fr;
+
+        gap: 6px;
+    }
+}
+
+
+/* =================================
+   Cards animation
+   ================================= */
+
+.details-content .details-cards-grid .details-card {
+    opacity: 0;
+
+    transform:
+        translateY(40px);
+
+    transition:
+        opacity 0.35s ease,
+        transform 0.35s ease;
+
+    transition-delay:
+        var(--card-delay, 0.5s);
+}
+
+.details-content.animate .details-cards-grid .details-card {
+    opacity: 1;
+
+    transform:
+        translateY(0);
+}

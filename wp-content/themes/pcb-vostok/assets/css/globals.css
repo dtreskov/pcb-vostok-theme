@@ -1,0 +1,212 @@
+/* =================================
+   Global variables
+   ================================= */
+
+:root {
+
+    /* =================================
+       Colors
+       ================================= */
+
+    /* Base */
+    --color-white: #FFFFFF;
+    --color-black: #16211C;
+
+    --color-primary: #14543E;
+    --color-primary-dark: #0B2C22;
+    --color-primary-light: #E4EFE9;
+
+    --color-page-background: #FAFBFA;
+    --color-separator: #E2E8E4;
+    --color-grey: #5C6B64;
+    --color-section-alt: #F1F4F2;
+
+    /* Accent */
+    --color-copper: #C0703A;
+    --color-copper-dark: #A85C28;
+    --color-copper-light: #F7EDE4;
+
+    --color-gold: #D8B45A;
+    --color-gold-light: #FBF3DF;
+
+
+    /* Text Base */
+    --color-text-white: var(--color-white);
+    --color-text-black: var(--color-black);
+    --color-text-primary: var(--color-primary);
+    --color-text-primary-dark: var(--color-primary-dark);
+    --color-text-grey: var(--color-grey);
+
+    /* Text Accent */
+    --color-text-copper: var(--color-copper);
+    --color-text-copper-dark: var(--color-copper-dark);
+    --color-text-gold: var(--color-gold);
+
+    /* Header */
+    --color-head-background: var(--color-page-background);
+    --color-head-border: var(--color-separator);
+
+
+    /* Footer */
+    --color-footer-background: var(--color-primary-dark);
+    --color-footer-text: var(--color-white);
+    --color-footer-border: var(--color-gold);
+
+
+
+
+    /* Main */
+    --color-main-background: var(--color-white);
+    --color-main-border: var(--color-separator);
+
+
+
+
+
+    /* Cards */
+    --color-card-background: var(--color-section-alt);
+    --color-card-border: var(--color-separator);
+    --color-card-box-shadow: rgba(32, 36, 34, 0.08);
+
+
+    /* FAQ */
+    --color-faq-background: var(--color-white);
+    --color-faq-border: var(--color-separator);
+    --color-faq-box-shadow: rgba(32, 36, 34, 0.08);
+
+
+    /* =================================
+       Layout
+       ================================= */
+
+    --content-width: 90vw;
+    --content-max-width: 1290px;
+
+    /*
+     * Фактическая ширина обычного контента.
+     * Используется там, где необходимо учитывать
+     * одновременно 90vw и максимальную ширину.
+     */
+    --content-size: min(
+        var(--content-width),
+        var(--content-max-width)
+    );
+
+
+    --content-spacing: 1.5em;
+    --content-vertical-spacing: 60px;
+
+    --section-spacing: clamp(24px, 2vw, 40px);
+
+    --wide-offset: 130px;
+    --list-indent: 2.5em;
+
+
+    /* =================================
+       Typography
+       ================================= */
+
+    --font-family:
+        "Inter",
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    --font-size: 16px;
+    --font-weight: 400;
+    --line-height: 1.6;
+
+
+    /* =================================
+       Borders
+       ================================= */
+
+    --width-border-header: 2px;
+    --width-border-footer: 2px;
+    --width-border-full-wrapper: 2px;
+    --width-border-main: 2px;
+
+    --radius-card: 8px;
+    --radius-faq: 8px;
+    --radius-button: 4px;
+    --radius-page-wrapper: 8px;
+    --radius-pill: 999px;
+
+
+    /* =================================
+       Spacing
+       ================================= */
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-xxl: 48px;
+
+
+    /* =================================
+       Transitions
+       ================================= */
+
+    --transition-fast: 0.32s ease;
+    --transition-normal: 0.4s ease;
+
+
+    /* =================================
+       Components
+       ================================= */
+
+    --carousel-button-size: 40px;
+    --carousel-button-gap: 16px;
+
+
+    /* =================================
+       Anchor
+       ================================= */
+
+    --anchor-offset: 60px;
+
+
+    /* =================================
+       Gradients
+       ================================= */
+
+    --gradient-page-horizontal:
+        linear-gradient(
+            to right,
+            var(--color-primary) 0,
+            var(--color-primary-dark)
+                calc(50% - var(--content-size) / 2),
+            var(--color-primary)
+                calc(50% + var(--content-size) / 2),
+            var(--color-primary) 100%
+        );
+}
+
+/* Adding fonts test lovable branch*/
+
+body {
+    margin: 0;
+
+    background:
+        var(--color-page-background);
+
+    color:
+        var(--color-text-black);
+
+    font-family:
+        var(--font-family);
+
+    font-size:
+        var(--font-size);
+
+    font-weight:
+        var(--font-weight);
+
+    line-height:
+        var(--line-height);
+}

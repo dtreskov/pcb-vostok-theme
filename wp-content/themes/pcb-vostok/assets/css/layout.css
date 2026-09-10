@@ -1,0 +1,110 @@
+/* =================================
+   Section head
+   ================================= */
+
+.section-head {
+    max-width: var(--section-head-max-width);
+    margin-bottom: var(--section-head-spacing);
+}
+
+/* =================================
+   Section content
+   ================================= */
+
+.section-content {
+    width: 100%;
+}
+
+/* =================================
+   Section variants
+   ================================= */
+
+.section--alt {
+    background-color:
+        var(--color-section-alt);
+}
+
+/* =================================
+   Section
+   ================================= */
+
+.section {
+    position: relative;
+
+    padding-block:
+        var(--section-spacing);
+}
+
+/* =================================
+   Section variants
+   ================================= */
+
+.section--alt {
+    position: relative;
+}
+
+.section--alt::before {
+    content: "";
+
+    position: absolute;
+    z-index: -1;
+
+    top: 0;
+    bottom: 0;
+
+    left: 50%;
+    width: 100vw;
+
+    transform: translateX(-50%);
+
+    background-color:
+        var(--color-section-alt);
+}
+
+.section--dark {
+    position: relative;
+    color:
+        var(--color-text-white);
+}
+
+.section--dark::before {
+    content: "";
+
+    position: absolute;
+    z-index: -1;
+
+    top: 0;
+    bottom: 0;
+
+    left: 50%;
+    width: 100vw;
+
+    transform: translateX(-50%);
+
+    background:
+        var(--color-primary-dark);
+
+    border-top:
+        var(--width-border-main)
+        solid
+        var(--color-copper);
+
+    border-bottom:
+        var(--width-border-main)
+        solid
+        var(--color-copper);
+}
+
+.section--dark .section-title,
+.section--dark .section-lead {
+    color: var(--color-text-white);
+}
+
+/* Hide header contacts on narrow screens */
+
+@media (max-width: 1200px) {
+
+    .header-contacts {
+        display: none;
+    }
+}

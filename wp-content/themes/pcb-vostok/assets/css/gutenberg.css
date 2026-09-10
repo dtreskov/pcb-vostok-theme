@@ -1,0 +1,34 @@
+/* =================================
+   Gutenberg
+   ================================= */
+
+
+/* =================================
+   Image alignment
+   ================================= */
+
+.main-attributes-item figure.wp-block-image {
+    margin: 0;
+
+    flex: 0 0 auto;
+}
+
+
+/* =================================
+   Details cards
+   Editor visibility
+   ================================= */
+
+.editor-styles-wrapper .details-card {
+    display: grid;
+    visibility: visible;
+}
+
+.editor-styles-wrapper .details-cards-grid .details-card {
+    display: block;
+
+    visibility: visible;
+    opacity: 1;
+
+    transform: none;
+}

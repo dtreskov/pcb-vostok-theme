@@ -1,0 +1,131 @@
+.wp-site-blocks > header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.site-header {
+    background: var(--color-primary-dark);
+    border-bottom: 2px solid var(--color-copper);
+}
+
+.site-header__inner {
+    width: var(--content-size);
+    max-width: 100%;
+    min-height: 54px;
+    margin-inline: auto;
+    padding-inline: var(--content-spacing);
+    box-sizing: border-box;
+    gap: var(--space-lg);
+}
+
+.site-header .wp-block-site-logo {
+    flex: 0 0 auto;
+}
+
+
+.site-header .wp-block-site-logo img {
+    width: auto;
+}
+
+.site-header__inner > .wp-block-image {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.site-header__inner > .wp-block-image img {
+    display: block;
+    width: 350px;
+    height: auto;
+}
+
+
+.site-header .wp-block-navigation {
+    margin-left: auto;
+}
+
+.site-header .wp-block-navigation .wp-block-navigation-item__content {
+    color: var(--color-white);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.site-header .wp-block-navigation .wp-block-navigation-item__content:hover {
+    color: var(--color-gold);
+}
+
+.site-header .wp-block-navigation-item {
+    width: 110px;
+    text-align: center;
+}
+
+.site-header .wp-block-navigation-item__content {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+}
+
+
+.site-header .wp-block-navigation-item__content:hover {
+    color: var(--color-gold);
+}
+
+.site-header .wp-block-navigation-item:nth-child(5) .wp-block-navigation-item__content,
+.site-header .wp-block-navigation-item:nth-child(6) .wp-block-navigation-item__content {
+    color: var(--color-copper);
+}
+
+.site-header .wp-block-navigation-item:nth-child(5) .wp-block-navigation-item__content:hover,
+.site-header .wp-block-navigation-item:nth-child(6) .wp-block-navigation-item__content:hover {
+    color: var(--color-gold);
+}
+
+.site-header .wp-block-navigation__container {
+    gap: 0px;
+}
+
+.site-header__contacts {
+    flex: 0 0 auto;
+    gap: 4px;
+}
+
+.site-header__contacts a {
+    color: var(--color-white);
+    text-decoration: none;
+}
+
+.site-header__phone {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.site-header__email {
+    margin: 0;
+    font-size: 13px;
+}
+
+.site-header__email a {
+    color: var(--color-primary-light);
+}
+
+.site-header__phone,
+.site-header__email {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.site-header__icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    color: var(--color-copper);
+}
+
+.wp-site-blocks > main {
+    padding: 0 !important;
+    margin: 0 !important;
+}

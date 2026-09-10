@@ -1,0 +1,20 @@
+{
+    "$schema": "https://schemas.wp.org/wp/6.8/theme.json",
+    "version": 3,
+
+    "settings": {
+        "appearanceTools": true,
+
+        "layout": {
+            "contentSize": "1290px",
+            "wideSize": "90vw"
+        }
+    },
+
+    "styles": {
+        "layout": {
+            "contentSize": "1290px",
+            "wideSize": "90vw"
+        }
+    }
+}

@@ -1,0 +1,48 @@
+/* =================================
+   Details animation
+   Frontend only
+   ================================= */
+
+
+/* =================================
+   Closed state
+   ================================= */
+
+.details-content {
+    display: grid;
+
+    grid-template-rows: 0fr;
+
+    opacity: 0;
+
+    transform:
+        translateY(-8px);
+
+    transition:
+        grid-template-rows var(--transition-normal),
+        opacity var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+
+/* =================================
+   Content clipping
+   ================================= */
+
+.details-content > * {
+    overflow: hidden;
+}
+
+
+/* =================================
+   Open state
+   ================================= */
+
+.details-content.animate {
+    grid-template-rows: 1fr;
+
+    opacity: 1;
+
+    transform:
+        translateY(0);
+}

@@ -1,0 +1,358 @@
+/* =================================
+   Carousel
+   ================================= */
+
+
+/* =================================
+   Card
+   ================================= */
+
+.carousel-card {
+    display: grid;
+
+    grid-template-columns:
+        minmax(220px, 0.8fr)
+        minmax(0, 1.2fr);
+
+    column-gap: 24px;
+
+    background-color:
+        var(--color-section-alt);
+
+    border-top:
+        1px solid
+        var(--color-card-border);
+
+    border-bottom:
+        1px solid
+        var(--color-card-border);
+
+    box-sizing: border-box;
+}
+
+
+/* =================================
+   Card image
+   ================================= */
+
+.carousel-card > figure {
+    margin: 0;
+    min-width: 0;
+}
+
+.carousel-card > figure img {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    margin: 0;
+}
+
+
+/* =================================
+   Card body
+   ================================= */
+
+.carousel-card-body {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+    min-height: 0;
+}
+
+.carousel-card-body h3 {
+    margin: 0 0 8px;
+
+    color: var(--color-text-black);
+
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.carousel-card-body p {
+    margin: 0;
+
+    color: var(--color-text-grey);
+
+    font-size: 14.5px;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+
+/* =================================
+   Card link
+   ================================= */
+
+.carousel-card-body .arrowlink {
+    display: inline-flex;
+    align-items: center;
+
+    width: fit-content;
+
+    margin-top: 16px;
+
+    color: var(--color-text-copper);
+
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.carousel-card-body .arrowlink svg {
+    display: block;
+
+    width: 18px;
+    height: 18px;
+
+    margin-left: 6px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    transition:
+        transform var(--transition-fast);
+}
+
+.carousel-card-body .arrowlink:hover svg {
+    transform: translateX(4px);
+}
+
+
+/* =================================
+   Carousel
+   ================================= */
+
+.carousel {
+    position: relative;
+}
+
+
+/* =================================
+   Carousel content
+   ================================= */
+
+.carousel .carousel-content {
+    position: relative;
+
+    width: 100vw;
+    max-width: none;
+    min-width: 0;
+
+    left: 50%;
+    transform: translateX(-50%);
+
+    box-sizing: border-box;
+}
+
+
+/* =================================
+   Slider
+   ================================= */
+
+.carousel-slider {
+    display: flex;
+    flex-wrap: nowrap;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    overflow-x: auto;
+
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: none;
+
+    cursor: grab;
+    user-select: none;
+    touch-action: pan-y;
+}
+
+.carousel-slider::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* =================================
+   Slides
+   ================================= */
+
+.carousel-slider > * {
+    flex: 0 0 100%;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+}
+
+
+/* =================================
+   Carousel card slide
+   ================================= */
+
+
+.carousel-slider > .carousel-card {
+    flex: 0 0 100%;
+
+    width: 100%;
+    max-width: 100%;
+
+    padding-inline:
+        calc((100vw - var(--content-size)) / 2);
+
+    box-sizing: border-box;
+}
+
+/* =================================
+   Drag state
+   ================================= */
+
+.carousel-slider.is-dragging {
+    cursor: grabbing;
+
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+}
+
+
+/* =================================
+   Prevent dragging and selection
+   ================================= */
+
+.carousel-slider img {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+.carousel-slider a,
+.carousel-slider button {
+    user-select: none;
+}
+
+
+/* =================================
+   Navigation
+   ================================= */
+
+.carousel-prev,
+.carousel-next {
+    position: absolute;
+
+    top: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 64px;
+
+    padding: 0;
+    margin: 0;
+
+    background: transparent;
+
+    border: none;
+    box-shadow: none;
+
+    color: var(--color-copper);
+
+    cursor: pointer;
+
+    transform: translateY(-50%);
+
+    z-index: 2;
+}
+
+.carousel-prev svg,
+.carousel-next svg {
+    display: block;
+
+    width: 32px;
+    height: 64px;
+
+    stroke: currentColor;
+}
+
+.carousel-prev {
+    left: -32px;
+}
+
+.carousel-next {
+    right: -32px;
+}
+
+/* =================================
+   Pagination
+   ================================= */
+
+ /* =================================
+    Pagination
+    ================================= */
+
+.carousel-pagination {
+    display: flex;
+    justify-content: center;
+
+    gap: var(--space-md);
+
+    margin-top: var(--space-lg);
+}
+
+.carousel-dot {
+    width: 12px;
+    height: 12px;
+
+    padding: 0;
+
+    background: transparent;
+
+    border: 2px solid var(--color-grey);
+    border-radius: 50%;
+
+    box-sizing: border-box;
+
+    cursor: pointer;
+
+    transition:
+        border-color var(--transition-fast);
+}
+
+.carousel-dot.is-active {
+    background: transparent;
+
+    border-color: var(--color-copper);
+}
+
+
+/* =================================
+   Responsive
+   ================================= */
+
+@media (max-width: 767px) {
+
+    .carousel-card {
+        grid-template-columns: 1fr;
+
+        row-gap: 20px;
+    }
+}

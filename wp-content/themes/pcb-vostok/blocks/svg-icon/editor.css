@@ -1,0 +1,65 @@
+.svg-icon-block {
+    position: relative;
+}
+
+.svg-icon-picker-button {
+    width: 56px;
+    height: 56px;
+    padding: 4px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.svg-icon-picker-button img {
+    width: 48px;
+    height: 48px;
+}
+
+.svg-icon-picker {
+    width: 320px;
+    padding: 12px;
+}
+
+.svg-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.svg-icon-option {
+    min-width: 0;
+    padding: 8px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.svg-icon-option img {
+    width: 32px;
+    height: 32px;
+}
+
+.svg-icon-option span {
+    max-width: 100%;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 10px;
+}
+
+.svg-icon-option.is-selected {
+    outline: 2px solid currentColor;
+}
+
+.svg-icon-no-results {
+    padding: 16px;
+    text-align: center;
+}

@@ -1,0 +1,17 @@
+{
+    "apiVersion": 3,
+    "name": "custom/svg-icon",
+    "title": "SVG Icon",
+    "category": "design",
+    "icon": "format-image",
+    "description": "Custom SVG icon from the site icon library.",
+    "attributes": {
+        "name": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "editorScript": "custom-svg-icon-editor-script",
+    "editorStyle": "custom-svg-icon-editor-style",
+    "render": "file:./render.php"
+}

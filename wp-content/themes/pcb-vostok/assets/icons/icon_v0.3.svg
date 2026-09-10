@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2650 380">
+  <rect x="0" y="0" width="2650" height="380" rx="60" fill="#0B2C22"></rect>
+
+  <g transform="translate(0,40)">
+    <style>
+    text {
+        font-family: Inter, Arial, sans-serif;
+        font-weight: 800;
+        dominant-baseline: middle;
+    }
+
+    .pcb,
+    .vostok {
+        fill: #5BC58B;
+        stroke: #0B2C22;
+        stroke-width: 12;
+        paint-order: stroke;
+        font-size: 300px;
+        letter-spacing: -4px;
+    }
+
+    .trace {
+        fill: none;
+        stroke: #D8B45A;
+        stroke-opacity: 0.7;
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .chip {
+        fill: #34413B;
+        stroke: #0B2C22;
+        stroke-width: 8;
+    }
+
+    .pad {
+        fill: #D8B45A;
+    }
+
+    .pin {
+        fill: #D8B45A;
+        fill-opacity: 0.85;
+    }
+    </style>
+
+    <g transform="translate(820,0)">
+      <g>
+        <rect class="pin" x="-26" y="48" width="26" height="16"></rect>
+        <path class="trace" d="M-26 56 H-70 L-105 30 H-800"></path>
+        <circle class="pad" cx="-800" cy="30" r="7"></circle>
+
+        <rect class="pin" x="-26" y="108" width="26" height="16"></rect>
+        <path class="trace" d="M-26 116 H-70 L-105 96 H-800"></path>
+        <circle class="pad" cx="-800" cy="96" r="7"></circle>
+
+        <rect class="pin" x="-26" y="178" width="26" height="16"></rect>
+        <path class="trace" d="M-26 186 H-70 L-105 206 H-800"></path>
+        <circle class="pad" cx="-800" cy="206" r="7"></circle>
+
+        <rect class="pin" x="-26" y="238" width="26" height="16"></rect>
+        <path class="trace" d="M-26 246 H-70 L-105 272 H-800"></path>
+        <circle class="pad" cx="-800" cy="272" r="7"></circle>
+      </g>
+    </g>
+
+    <text class="pcb" x="40" y="180">PCB</text>
+
+    <g transform="translate(820,0)">
+      <rect class="chip" width="230" height="300" rx="36"></rect>
+      <circle cx="45" cy="45" r="12" fill="white"></circle>
+
+      <g>
+        <rect class="pin" x="230" y="48" width="26" height="16"></rect>
+        <path class="trace" d="M256 56 H300 L335 30 H1800"></path>
+        <circle class="pad" cx="1800" cy="30" r="7"></circle>
+
+        <rect class="pin" x="230" y="108" width="26" height="16"></rect>
+        <path class="trace" d="M256 116 H300 L335 96 H1800"></path>
+        <circle class="pad" cx="1800" cy="96" r="7"></circle>
+
+        <rect class="pin" x="230" y="178" width="26" height="16"></rect>
+        <path class="trace" d="M256 186 H300 L335 206 H1800"></path>
+        <circle class="pad" cx="1800" cy="206" r="7"></circle>
+
+        <rect class="pin" x="230" y="238" width="26" height="16"></rect>
+        <path class="trace" d="M256 246 H300 L335 272 H1800"></path>
+        <circle class="pad" cx="1800" cy="272" r="7"></circle>
+      </g>
+    </g>
+
+    <text class="vostok" x="1160" y="180">ВОСТОК</text>
+  </g>
+</svg>

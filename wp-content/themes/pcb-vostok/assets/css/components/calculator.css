@@ -1,0 +1,74 @@
+/* =================================
+   Calculator
+   ================================= */
+
+.calculator-body {
+    display: grid;
+    row-gap: var(--space-sm);
+}
+
+.calculator-body > h3 {
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.calculator-field {
+    display: grid;
+
+    grid-template-columns:
+        220px
+        minmax(0, 1fr);
+
+    align-items: center;
+
+    gap: var(--space-md);
+
+    margin: 0 !important;
+}
+
+/* Field label */
+
+.calculator-field label {
+    margin: 0;
+}
+
+
+/* Field controls */
+
+.calculator-select {
+    box-sizing: border-box;
+
+    width: 100%;
+    height: 28px;
+}
+
+.calculator-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 28px !important;
+}
+
+.calculator-dimensions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    min-width: 0;
+}
+
+.calculator-dimensions .calculator-input {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* =================================
+   Responsive
+   ================================= */
+
+@media (max-width: 767px) {
+
+    .calculator-field {
+        grid-template-columns: 1fr;
+
+        gap: 6px;
+    }
+}

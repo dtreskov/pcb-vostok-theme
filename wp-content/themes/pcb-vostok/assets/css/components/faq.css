@@ -1,0 +1,150 @@
+/* =================================
+   FAQ
+   ================================= */
+
+
+/* =================================
+   Grid
+   ================================= */
+
+.faq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-sm);
+    align-items: start;
+}
+
+.faq-grid details summary:hover {
+    color: var(--color-primary);
+}
+
+/* =================================
+   Responsive
+   ================================= */
+
+@media (max-width: 767px) {
+
+    .faq-grid {
+        grid-template-columns: 1fr;
+
+        gap: 6px;
+    }
+}
+
+
+/* =================================
+   FAQ summary
+   ================================= */
+
+.faq-grid details summary {
+    list-style: none;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    min-height: 3.2em;
+
+    cursor: pointer;
+
+    font-weight: 600;
+}
+
+
+/* Remove native marker */
+
+.faq-grid details summary::-webkit-details-marker {
+    display: none;
+}
+
+
+/* Question icon */
+
+.faq-grid details summary::before {
+    content: "?";
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 20px;
+    height: 20px;
+
+    flex-shrink: 0;
+
+    border:
+        2px solid
+        var(--color-primary-dark);
+
+    border-radius: 50%;
+
+    color: var(--color-primary-dark);
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+/* Expand arrow */
+
+.faq-grid details summary::after {
+    content: "";
+
+    width: 8px;
+    height: 8px;
+
+    margin-left: auto;
+
+    border-right: 2px solid var(--color-gold);
+    border-bottom: 2px solid var(--color-gold);
+
+    transform: rotate(-45deg);
+
+    transition: transform var(--transition-fast);
+}
+
+.faq-grid details[open] summary::after {
+    transform: rotate(45deg);
+}
+
+
+/* =================================
+   FAQ card
+   ================================= */
+.faq-item {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    background-color: var(--color-faq-background);
+
+    border:
+        1px solid
+        var(--color-faq-border);
+
+    border-radius: var(--radius-faq);
+
+    padding: var(--space-lg);
+
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+
+.faq-item:hover {
+    border-color: var(--color-faq-border-hover);
+
+    box-shadow:
+        0 4px 12px
+        rgba(0, 0, 0, 0.08);
+}
+
+.faq-grid details summary::before {
+    border-color: var(--color-copper);
+    color: var(--color-copper);
+}
+
+.faq-grid details summary::after {
+    border-color: var(--color-gold);
+}

@@ -1,0 +1,484 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Under Construction & Maintenance Mode\n"
+"POT-Creation-Date: 2023-04-03 14:57+0500\n"
+"PO-Revision-Date: 2023-04-03 14:55+0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"X-Generator: Poedit 3.2.2\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: under-construction-maintenance-mode.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.min.js\n"
+
+#: classes/customizer.php:71 classes/ucmm-wpbrigade-setup.php:36
+msgid "Under Construction"
+msgstr ""
+
+#: classes/customizer.php:72
+msgid "Customize Your WordPress Under Construction Page :)"
+msgstr ""
+
+#: classes/customizer.php:82
+msgid "Logo"
+msgstr ""
+
+#: classes/customizer.php:83
+msgid "Customize Your Logo"
+msgstr ""
+
+#: classes/customizer.php:98
+msgid "Logo Image:"
+msgstr ""
+
+#: classes/customizer.php:108
+msgid "Logo Width:"
+msgstr ""
+
+#: classes/customizer.php:109
+msgid "Logo Height:"
+msgstr ""
+
+#: classes/customizer.php:110
+msgid "Padding Bottom:"
+msgstr ""
+
+#: classes/customizer.php:111
+msgid "Logo URL:"
+msgstr ""
+
+#: classes/customizer.php:112
+msgid "Logo Hover Title:"
+msgstr ""
+
+#: classes/customizer.php:144
+msgid "Background"
+msgstr ""
+
+#: classes/customizer.php:159
+msgid "Background Image:"
+msgstr ""
+
+#: classes/customizer.php:177
+msgid "Background Image Size:"
+msgstr ""
+
+#: classes/customizer.php:201
+msgid "Background Repeat:"
+msgstr ""
+
+#: classes/customizer.php:226
+msgid "Background Position:"
+msgstr ""
+
+#: classes/customizer.php:246
+msgid "Text Section"
+msgstr ""
+
+#: classes/customizer.php:253 ucmm-customize.php:257
+msgid "UNDER CONSTRUCTION"
+msgstr ""
+
+#: classes/customizer.php:261
+msgid "Header Text"
+msgstr ""
+
+#: classes/customizer.php:278
+msgid "Header Text Color:"
+msgstr ""
+
+#: classes/customizer.php:284 ucmm-customize.php:266
+msgid "We are working hard to bring you new experience!"
+msgstr ""
+
+#: classes/customizer.php:298
+msgid "Subheading Text"
+msgstr ""
+
+#: classes/customizer.php:299
+msgid "A new experience. You can use HTML tags here."
+msgstr ""
+
+#: classes/customizer.php:315
+msgid "Subheading Text Color:"
+msgstr ""
+
+#: classes/customizer.php:327
+msgid "Show Some Love"
+msgstr ""
+
+#: classes/customizer.php:343
+msgid ""
+"Please help other learn about this free plugin by placing a small link in "
+"the footer. Thank you very much!"
+msgstr ""
+
+#: classes/customizer.php:359
+msgid "Facebook Link:"
+msgstr ""
+
+#: classes/customizer.php:360
+msgid "Twitter Link:"
+msgstr ""
+
+#: classes/customizer.php:361
+msgid "Linkedin Link:"
+msgstr ""
+
+#: classes/customizer.php:362
+msgid "Google Plus Link:"
+msgstr ""
+
+#: classes/customizer.php:363
+msgid "YouTube Link:"
+msgstr ""
+
+#: classes/customizer.php:364
+msgid "Instagram Link:"
+msgstr ""
+
+#: classes/customizer.php:365
+msgid "Pinterest Link:"
+msgstr ""
+
+#: classes/customizer.php:366
+msgid "Codepen Link:"
+msgstr ""
+
+#: classes/customizer.php:372
+msgid "Add Social Accounts"
+msgstr ""
+
+#: classes/customizer.php:395
+msgid "https://www."
+msgstr ""
+
+#: classes/customizer.php:407
+msgid "Custom CSS"
+msgstr ""
+
+#: classes/customizer.php:422
+msgid "Customize CSS"
+msgstr ""
+
+#: classes/customizer.php:426
+msgid "You can add your custom CSS here."
+msgstr ""
+
+#: classes/customizer.php:439
+msgid "SEO Title:"
+msgstr ""
+
+#: classes/customizer.php:440
+msgid "SEO Description:"
+msgstr ""
+
+#: classes/customizer.php:441
+msgid "SEO URL:"
+msgstr ""
+
+#: classes/customizer.php:442
+msgid "SEO Site Name:"
+msgstr ""
+
+#: classes/customizer.php:443
+msgid "SEO Author Name:"
+msgstr ""
+
+#: classes/customizer.php:444
+msgid "SEO Keywords:"
+msgstr ""
+
+#: classes/customizer.php:450
+msgid "SEO Configuration"
+msgstr ""
+
+#: classes/customizer.php:483 classes/customizer.php:498
+msgid "Google Analytics Tracking Code"
+msgstr ""
+
+#: classes/customizer.php:503
+msgid "Google Analytics Tracking Code here."
+msgstr ""
+
+#: classes/customizer.php:513
+#, php-format
+msgid ""
+"Please update your WordPress %1$s time Zone%2$s before making a maintenance "
+"schedule "
+msgstr ""
+
+#: classes/customizer.php:518
+msgid "UCMM Start and End schedule"
+msgstr ""
+
+#: classes/customizer.php:531
+msgid "Show Maintenance Schedule"
+msgstr ""
+
+#: classes/customizer.php:548
+msgid "Start Maintenance Mode From"
+msgstr ""
+
+#: classes/customizer.php:549 classes/customizer.php:565
+msgid "WordPress Time Zone : "
+msgstr ""
+
+#: classes/customizer.php:564
+msgid "End Maintenance Mode At"
+msgstr ""
+
+#: classes/customizer.php:580
+msgid "Color"
+msgstr ""
+
+#: classes/customizer.php:581
+msgid "\"Time Counter\" and \"Redirect Message\""
+msgstr ""
+
+#: classes/plugin-meta.php:44
+msgid "Vote!"
+msgstr ""
+
+#: classes/plugin-meta.php:47
+msgid "Rate"
+msgstr ""
+
+#: classes/plugin-meta.php:69
+#, php-format
+msgid "%1$s Settings %2$s | %3$s Customize %4$s"
+msgstr ""
+
+#: classes/plugin-meta.php:162
+msgid "Leave A Review?"
+msgstr ""
+
+#: classes/plugin-meta.php:163
+msgid ""
+"We hope you've enjoyed using Under Construction & Maintenance Mode! Would "
+"you consider leaving us a review on WordPress.org?"
+msgstr ""
+
+#: classes/plugin-meta.php:165
+msgid "Sure! I'd love to!"
+msgstr ""
+
+#: classes/plugin-meta.php:166
+msgid "I've already left a review"
+msgstr ""
+
+#: classes/plugin-meta.php:167
+msgid "Maybe Later"
+msgstr ""
+
+#: classes/plugin-meta.php:168
+msgid "Never show again"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:415
+msgid "Choose File"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:575
+msgid "Spread the Word"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:578
+msgid "Post to Twitter Now"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:578
+msgid "Share on Twitter"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:581
+#: classes/ucmm-wpbrigade-settings-api.php:599
+msgid "Share with your facebook friends about this awesome plugin."
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:581
+msgid "Share on Facebook"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:585
+msgid "Rate on WordPress.org"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:591
+msgid "Recommended Plugins"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:595
+msgid "Customize your login screen"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:604
+msgid "Social Sharing never been easy without social share Buttons."
+msgstr ""
+
+#: classes/ucmm-wpbrigade-settings-api.php:609
+msgid "Related Posts Thumbnails"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:38 classes/ucmm-wpbrigade-setup.php:49
+msgid "Settings"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:40
+msgid "Customizer"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:41
+msgid "Help"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:50
+#, php-format
+msgid ""
+"Under Construction page is customizable through %1$sWordPress Customizer%2$s."
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:79
+msgid "Check the field to activate the maintenance mode."
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:83
+#, php-format
+msgid ""
+"%3$s%3$s Note: Scheduling maintenance from customizer is the primary "
+"setting. This option will not work if you have enabled the scheduled "
+"maintenance mode. %3$s If you want to use the default maintenance (this "
+"option), please deactivate the maintenance schedule from %1$s customizer%2$s "
+"and set this option again."
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:94
+msgid "Activate:"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:100
+msgid "Disable Mode For:"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:101
+msgid "Choose the roles to disable under construction mode for "
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:191
+msgid "Under Construction: Settings"
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:224
+#, php-format
+msgid "Free support is available on the %1$s plugin support forums%2$s."
+msgstr ""
+
+#: classes/ucmm-wpbrigade-setup.php:230
+msgid "Download Log File"
+msgstr ""
+
+#: includes/deactivate_modal.php:88
+msgid "Quick feedback"
+msgstr ""
+
+#: includes/deactivate_modal.php:91
+msgid "If you have a moment, please let us know why you are deactivating:"
+msgstr ""
+
+#: includes/deactivate_modal.php:98
+msgid "I only needed the plugin for a short period"
+msgstr ""
+
+#: includes/deactivate_modal.php:107
+msgid "I found a better plugin"
+msgstr ""
+
+#: includes/deactivate_modal.php:110
+msgid "Kindly write down the plugin name."
+msgstr ""
+
+#: includes/deactivate_modal.php:117
+msgid "The plugin broke my site"
+msgstr ""
+
+#: includes/deactivate_modal.php:126
+msgid "The plugin suddenly stopped working"
+msgstr ""
+
+#: includes/deactivate_modal.php:135
+msgid "I no longer need the plugin"
+msgstr ""
+
+#: includes/deactivate_modal.php:144
+msgid "It's a temporary deactivation. I'm just debugging an issue."
+msgstr ""
+
+#: includes/deactivate_modal.php:153
+msgid "Other"
+msgstr ""
+
+#: includes/deactivate_modal.php:156
+msgid "Kindly tell us the reason so we can improve."
+msgstr ""
+
+#: includes/deactivate_modal.php:161
+msgid "Anonymous feedback"
+msgstr ""
+
+#: includes/deactivate_modal.php:166
+msgid "Cancel"
+msgstr ""
+
+#: ucmm-customize.php:323
+msgid "Powered by:"
+msgstr ""
+
+#: ucmm-customize.php:371
+msgid ""
+"Website is now LIVE! will be redirected to homepage shortly. If not, please "
+"refresh the page."
+msgstr ""
+
+#: ucmm-customize.php:373
+msgid ""
+"Maintenance schedule has been expired. Please update the time or turn if "
+"off. "
+msgstr ""
+
+#: under-construction-maintenance-mode.php:433
+msgid "Under Construction mode Enabled"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "Under Construction & Maintenance Mode"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid ""
+"https://wpbrigade.com/wordpress/plugins/under-construction-maintenance-mode/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"This plugin will Display an Under Construction, Maintenance Mode or Coming "
+"Soon landing Page that takes 5 seconds to setup, while you're doing "
+"maintenance work on your site."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "WPBrigade"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://www.WPBrigade.com/"
+msgstr ""

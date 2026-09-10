@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2650 380">
+  <rect x="0" y="0" width="2650" height="380" rx="60" fill="#0B2C22"></rect>
+
+  <g transform="translate(0,40)">
+    <style>
+
+    text {
+        font-family: Inter, Arial, sans-serif;
+        font-weight: 800;
+        dominant-baseline: middle;
+    }
+
+    .pcb {
+        fill: #70C99A;
+        stroke: #0B2C22;
+        stroke-width: 18;
+        paint-order: stroke;
+        font-size: 300px;
+        letter-spacing: -4px;
+    }
+
+    .vostok {
+        fill: #70C99A;
+        stroke: #0B2C22;
+        stroke-width: 18;
+        paint-order: stroke;
+        font-size: 300px;
+        letter-spacing: -4px;
+    }
+
+    .trace {
+        fill: none;
+        stroke: #D8B45A;
+        stroke-opacity: 0.7;
+        stroke-width: 20;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .chip {
+        fill: #34413B;
+        stroke: #0B2C22;
+        stroke-width: 8;
+    }
+
+    .pad {
+        fill: #D8B45A;
+    }
+
+    .pin {
+        fill: #D8B45A;
+        fill-opacity: 0.85;
+    }
+
+    </style>
+
+    <!-- Левые дорожки: под текстом PCB -->
+    <g transform="translate(820,0)">
+      <g>
+        <rect class="pin" x="-34" y="45" width="34" height="22"></rect>
+        <path class="trace" d="M-34 56 H-70 L-105 30 H-800"></path>
+        <rect class="pad" x="-814" y="18" width="28" height="24" rx="12"></rect>
+
+        <rect class="pin" x="-34" y="105" width="34" height="22"></rect>
+        <path class="trace" d="M-34 116 H-70 L-105 96 H-800"></path>
+        <rect class="pad" x="-814" y="84" width="28" height="24" rx="12"></rect>
+
+        <rect class="pin" x="-34" y="175" width="34" height="22"></rect>
+        <path class="trace" d="M-34 186 H-70 L-105 206 H-800"></path>
+        <rect class="pad" x="-814" y="194" width="28" height="24" rx="12"></rect>
+
+        <rect class="pin" x="-34" y="235" width="34" height="22"></rect>
+        <path class="trace" d="M-34 246 H-70 L-105 272 H-800"></path>
+        <rect class="pad" x="-814" y="260" width="28" height="24" rx="12"></rect>
+      </g>
+    </g>
+
+    <!-- PCB -->
+    <text class="pcb" x="40" y="180">
+        PCB
+    </text>
+
+    <g transform="translate(820,0)">
+
+      <!-- Центральная микросхема -->
+      <rect class="chip" width="230" height="300" rx="36"></rect>
+      <circle cx="45" cy="45" r="12" fill="white"></circle>
+
+      <!-- Правые дорожки -->
+      <g>
+        <rect class="pin" x="230" y="45" width="34" height="22"></rect>
+        <path class="trace" d="M264 56 H300 L335 30 H1800"></path>
+        <rect class="pad" x="1786" y="18" width="28" height="24" rx="12"></rect>
+
+        <rect class="pin" x="230" y="105" width="34" height="22"></rect>
+        <path class="trace" d="M264 116 H300 L335 96 H1800"></path>
+        <rect class="pad" x="1786" y="84" width="28" height="24" rx="12"></rect>
+
+        <rect class="pin" x="230" y="175" width="34" height="22"></rect>
+        <path class="trace" d="M264 186 H300 L335 206 H1800"></path>
+        <rect class="pad" x="1786" y="194" width="28" height="24" rx="12"></rect>
+
+        <rect class="pin" x="230" y="235" width="34" height="22"></rect>
+        <path class="trace" d="M264 246 H300 L335 272 H1800"></path>
+        <rect class="pad" x="1786" y="260" width="28" height="24" rx="12"></rect>
+      </g>
+    </g>
+
+    <!-- ВОСТОК -->
+    <text class="vostok" x="1160" y="180">
+        ВОСТОК
+    </text>
+
+  </g>
+</svg>

@@ -1,0 +1,428 @@
+0000.000 (0) Opened log file at time: Wed, 09 Sep 2026 11:14:33 +0000 on https://pcbvostok.tw1.ru
+0000.001 (0) UpdraftPlus WordPress backup plugin (https://updraftplus.com): 1.26.6 WP: 7.1 PHP: 8.2.32 (apache2handler, Linux vh470 6.8.0-136-generic #136~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul  3 16:29:11 UTC  x86_64) MySQL: 8.4.11-11 (max packet size=20971520) WPLANG: en_US Server: Apache/2.4.52 safe_mode: 0 max_execution_time: 900 memory_limit: 1024M (used: 30.9M | 32M) multisite: N openssl: OpenSSL 3.0.2 15 Mar 2022 mcrypt: Y LANG: en_US.UTF-8 WP Proxy: disabled ZipArchive::addFile: Y
+0000.009 (0) Free space on disk containing Updraft's temporary directory: 2888936.6 MB
+0000.035 (0) Tasks: Backup files: 1 (schedule: manual) Backup DB: 1 (schedule: manual)
+0000.043 (0) Requesting semaphore lock (fd) (apparently not via scheduler)
+0000.045 (0) Set semaphore last lock (fd) time to 2026-09-09 11:14:33
+0000.046 (0) Semaphore lock (fd) complete
+0000.055 (0) Backup run: resumption=0, nonce=6249258ddf6a, file_nonce=6249258ddf6a begun at=1788952473 (0s ago), job type=backup
+0000.067 (0) Scheduling a resumption (1) after 300 seconds (1788952773) in case this run gets aborted
+0000.091 (0) Checking if we have a zip executable available
+0000.092 (0) Testing: /usr/bin/zip
+0000.097 (0) Output: zip warning: binziptest/test.zip not found or empty
+0000.099 (0) Output: adding: binziptest/subdir1/	(in=0) (out=0) (stored 0%)
+0000.108 (0) Output: adding: binziptest/subdir1/subdir2/	(in=0) (out=0) (stored 0%)
+0000.113 (0) Output: adding: binziptest/subdir1/subdir2/test.html	(in=131) (out=107) (deflated 18%)
+0000.116 (0) Output: total bytes=131, compressed=107 -> 18% savings
+0000.376 (0) Output: adding: binziptest/subdir1/subdir2/test2.html	(in=138) (out=113) (deflated 18%)
+0000.377 (0) Output: total bytes=269, compressed=220 -> 18% savings
+0000.543 (0) Working binary zip found: /usr/bin/zip
+0000.564 (0) Zip engine: found/will use a binary zip: /usr/bin/zip
+0000.565 (0) Creation of backups of directories: beginning
+0000.580 (0) Beginning creation of dump of plugins (split every: 400 MB)
+0001.818 (0) Total entities for the zip file: 1402 directories, 6773 files (0 skipped as non-modified), 174.2 MB
+0001.845 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 100 files added (on-disk size: 0 KB)
+0001.871 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 200 files added (on-disk size: 0 KB)
+0001.888 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 300 files added (on-disk size: 0 KB)
+0001.922 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 400 files added (on-disk size: 0 KB)
+0001.947 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 500 files added (on-disk size: 0 KB)
+0001.972 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 600 files added (on-disk size: 0 KB)
+0001.988 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 700 files added (on-disk size: 0 KB)
+0002.027 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 800 files added (on-disk size: 0 KB)
+0002.033 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 900 files added (on-disk size: 0 KB)
+0002.073 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1000 files added (on-disk size: 0 KB)
+0002.080 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 1000 files added on this batch (10.2 MB, 6773 files batched, 1001 (1001) added so far); re-opening (prior size: 0 KB)
+0004.556 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: size is now: 3.30 MB
+0004.597 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1100 files added (on-disk size: 3394 KB)
+0004.603 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1200 files added (on-disk size: 3394 KB)
+0004.631 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1300 files added (on-disk size: 3394 KB)
+0004.656 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1400 files added (on-disk size: 3394 KB)
+0004.658 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 25 MB added on this batch (25 MB, 6773 files batched, 414 (1415) added so far); re-opening (prior size: 3394 KB)
+0008.513 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: size is now: 12.00 MB
+0008.523 (0) A useful amount of data was added after this amount of zip processing: 4 s (normalised: 4 s, rate: 6396.9 KB/s)
+0008.531 (0) Performance is good - will increase the amount of data we attempt to batch (time=4.0094718933105, normalised_time=4.0019697267033, max_time=8.5236840248108, data points known=1, old_max_bytes=26214400, new_max_bytes=39302246)
+0008.536 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1500 files added (on-disk size: 12268.3 KB)
+0008.539 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1600 files added (on-disk size: 12268.3 KB)
+0008.545 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1700 files added (on-disk size: 12268.3 KB)
+0008.549 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1800 files added (on-disk size: 12268.3 KB)
+0008.554 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 1900 files added (on-disk size: 12268.3 KB)
+0008.560 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2000 files added (on-disk size: 12268.3 KB)
+0008.564 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2100 files added (on-disk size: 12268.3 KB)
+0008.567 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2200 files added (on-disk size: 12268.3 KB)
+0008.570 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2300 files added (on-disk size: 12268.3 KB)
+0008.574 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2400 files added (on-disk size: 12268.3 KB)
+0008.575 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 1000 files added on this batch (13.7 MB, 6773 files batched, 1001 (2416) added so far); re-opening (prior size: 12268.3 KB)
+0012.165 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: size is now: 15.90 MB
+0012.198 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2500 files added (on-disk size: 16330.9 KB)
+0012.201 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2600 files added (on-disk size: 16330.9 KB)
+0012.205 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2700 files added (on-disk size: 16330.9 KB)
+0012.209 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2800 files added (on-disk size: 16330.9 KB)
+0012.212 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 2900 files added (on-disk size: 16330.9 KB)
+0012.216 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3000 files added (on-disk size: 16330.9 KB)
+0012.219 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3100 files added (on-disk size: 16330.9 KB)
+0012.222 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3200 files added (on-disk size: 16330.9 KB)
+0012.226 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3300 files added (on-disk size: 16330.9 KB)
+0012.229 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3400 files added (on-disk size: 16330.9 KB)
+0012.231 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 1000 files added on this batch (22.2 MB, 6773 files batched, 1001 (3417) added so far); re-opening (prior size: 16330.9 KB)
+0019.233 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: size is now: 22.60 MB
+0019.241 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3500 files added (on-disk size: 23183 KB)
+0019.252 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3600 files added (on-disk size: 23183 KB)
+0019.264 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3700 files added (on-disk size: 23183 KB)
+0019.277 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3800 files added (on-disk size: 23183 KB)
+0019.287 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 3900 files added (on-disk size: 23183 KB)
+0019.293 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4000 files added (on-disk size: 23183 KB)
+0019.299 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4100 files added (on-disk size: 23183 KB)
+0019.310 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4200 files added (on-disk size: 23183 KB)
+0019.321 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4300 files added (on-disk size: 23183 KB)
+0019.326 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4400 files added (on-disk size: 23183 KB)
+0019.328 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 1000 files added on this batch (7.4 MB, 6773 files batched, 1001 (4418) added so far); re-opening (prior size: 23183 KB)
+0022.642 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4500 files added (on-disk size: 26359.2 KB)
+0022.652 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4600 files added (on-disk size: 26359.2 KB)
+0022.660 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4700 files added (on-disk size: 26359.2 KB)
+0022.666 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4800 files added (on-disk size: 26359.2 KB)
+0022.674 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 4900 files added (on-disk size: 26359.2 KB)
+0022.677 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5000 files added (on-disk size: 26359.2 KB)
+0022.681 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5100 files added (on-disk size: 26359.2 KB)
+0022.684 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5200 files added (on-disk size: 26359.2 KB)
+0022.688 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5300 files added (on-disk size: 26359.2 KB)
+0022.693 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5400 files added (on-disk size: 26359.2 KB)
+0022.694 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 1000 files added on this batch (16 MB, 6773 files batched, 1001 (5419) added so far); re-opening (prior size: 26359.2 KB)
+0027.000 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: size is now: 32.30 MB
+0027.011 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5500 files added (on-disk size: 33096.5 KB)
+0027.014 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5600 files added (on-disk size: 33096.5 KB)
+0027.017 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5700 files added (on-disk size: 33096.5 KB)
+0027.020 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5800 files added (on-disk size: 33096.5 KB)
+0027.028 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 5900 files added (on-disk size: 33096.5 KB)
+0027.030 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 37.5 MB added on this batch (37.5 MB, 6773 files batched, 526 (5945) added so far); re-opening (prior size: 33096.5 KB)
+0032.150 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: size is now: 39.80 MB
+0032.155 (0) A useful amount of data was added after this amount of zip processing: 5.6 s (normalised: 5.6 s, rate: 6803.4 KB/s)
+0032.160 (0) Performance is good - will increase the amount of data we attempt to batch (time=5.641529083252, normalised_time=5.6414455429549, max_time=32.157326936722, data points known=1, old_max_bytes=39302246, new_max_bytes=134418226)
+0032.166 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6000 files added (on-disk size: 40779.9 KB)
+0032.172 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6100 files added (on-disk size: 40779.9 KB)
+0032.176 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6200 files added (on-disk size: 40779.9 KB)
+0032.182 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6300 files added (on-disk size: 40779.9 KB)
+0032.188 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6400 files added (on-disk size: 40779.9 KB)
+0032.194 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6500 files added (on-disk size: 40779.9 KB)
+0032.200 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6600 files added (on-disk size: 40779.9 KB)
+0032.206 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: 6700 files added (on-disk size: 40779.9 KB)
+0039.771 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.tmp: size is now: 48.60 MB
+0039.907 (0) Creating zip file manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.list-temp.tmp)
+0040.021 (0) Successfully created zip file manifest (size: 584951)
+0042.259 (0) Created plugins zip (0) - 49765.4 KB in 41.7 s (1194.4 KB/s) (sha1: 04db4d546ad4b749a4dc7ed9e68bb6415aadda20, sha256: 98ef1e63f3a527c32d3d04782259ce29655aa1e053efbc9b44751806d54c75bb)
+0042.314 (0) Cloud backup selection (1/1): dropbox with instance (1/1) (last)
+0042.321 (0) Beginning dispatch of backup to remote (dropbox) (instance identifier s-31b89b550f523c5e3061161d92d2271e)
+0042.323 (0) Dropbox: begin cloud upload (using API version 2 with OAuth v2 token)
+0042.384 (0) Dropbox: access gained; setting chunk size to: 1024 KB
+0042.913 (0) Dropbox: quota usage: used=165.6 MB, total=2048 MB, available=1882.4 MB
+0042.914 (0) Dropbox: Attempt to upload: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip to: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip
+0044.333 (0) Dropbox chunked upload: 2.1 % uploaded (pid_upload_session:ABILEkknTpdmo2s3i4yUieTQI9G05dkLSIEOCD_mc8iTgTEM0Q, 1048576, 6144 KB)
+0045.984 (0) Dropbox chunked upload: 14.4 % uploaded (pid_upload_session:ABILEkknTpdmo2s3i4yUieTQI9G05dkLSIEOCD_mc8iTgTEM0Q, 7340032, 10240 KB)
+0047.557 (0) Dropbox chunked upload: 35 % uploaded (pid_upload_session:ABILEkknTpdmo2s3i4yUieTQI9G05dkLSIEOCD_mc8iTgTEM0Q, 17825792, 10240 KB)
+0050.036 (0) Dropbox chunked upload: 55.6 % uploaded (pid_upload_session:ABILEkknTpdmo2s3i4yUieTQI9G05dkLSIEOCD_mc8iTgTEM0Q, 28311552, 10240 KB)
+0051.640 (0) Dropbox chunked upload: 76.1 % uploaded (pid_upload_session:ABILEkknTpdmo2s3i4yUieTQI9G05dkLSIEOCD_mc8iTgTEM0Q, 38797312, 10240 KB)
+0053.565 (0) Dropbox chunked upload: 96.7 % uploaded (pid_upload_session:ABILEkknTpdmo2s3i4yUieTQI9G05dkLSIEOCD_mc8iTgTEM0Q, 49283072, 10240 KB)
+0055.171 (0) Dropbox chunked upload: 100 % uploaded (pid_upload_session:ABILEkknTpdmo2s3i4yUieTQI9G05dkLSIEOCD_mc8iTgTEM0Q, 50959741, 10240 KB)
+0056.964 (0) Recording as successfully uploaded: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip
+0056.977 (0) Deleting local file: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip: OK
+0056.978 (0) Dropbox: File upload success (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip): 49765 KB in 14s (3538 KB/s)
+0056.992 (0) Beginning creation of dump of themes (split every: 400 MB)
+0057.431 (0) Total entities for the zip file: 302 directories, 2051 files (0 skipped as non-modified), 24.5 MB
+0057.435 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 100 files added (on-disk size: 0 KB)
+0057.438 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 200 files added (on-disk size: 0 KB)
+0057.442 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 300 files added (on-disk size: 0 KB)
+0057.446 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 400 files added (on-disk size: 0 KB)
+0057.449 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 500 files added (on-disk size: 0 KB)
+0057.453 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 600 files added (on-disk size: 0 KB)
+0057.457 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 700 files added (on-disk size: 0 KB)
+0057.460 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 800 files added (on-disk size: 0 KB)
+0057.464 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 900 files added (on-disk size: 0 KB)
+0057.481 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1000 files added (on-disk size: 0 KB)
+0057.489 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 1000 files added on this batch (8.2 MB, 2051 files batched, 1001 (1001) added so far); re-opening (prior size: 0 KB)
+0059.274 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: size is now: 3.20 MB
+0059.309 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1100 files added (on-disk size: 3322.2 KB)
+0059.312 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1200 files added (on-disk size: 3322.2 KB)
+0059.316 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1300 files added (on-disk size: 3322.2 KB)
+0059.320 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1400 files added (on-disk size: 3322.2 KB)
+0059.323 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1500 files added (on-disk size: 3322.2 KB)
+0059.327 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1600 files added (on-disk size: 3322.2 KB)
+0059.330 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1700 files added (on-disk size: 3322.2 KB)
+0059.334 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1800 files added (on-disk size: 3322.2 KB)
+0059.337 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 1900 files added (on-disk size: 3322.2 KB)
+0059.341 (0) Zip: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: 2000 files added (on-disk size: 3322.2 KB)
+0059.341 (0) Adding batch to zip file (UpdraftPlus_BinZip): over 1000 files added on this batch (16 MB, 2051 files batched, 1001 (2002) added so far); re-opening (prior size: 3322.2 KB)
+0062.763 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.tmp: size is now: 17.30 MB
+0063.419 (0) Creating zip file manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.list-temp.tmp)
+0063.485 (0) Successfully created zip file manifest (size: 152947)
+0064.012 (0) Created themes zip (0) - 17862.3 KB in 7 s (2547.5 KB/s) (sha1: a33bac6409d1965abbad32aed921be6aa3c10ceb, sha256: bb2dfeda2150d017b7289d1d2040dac2298bb83f6098a7a5620e99b27a7650b8)
+0064.033 (0) Cloud backup selection (1/1): dropbox with instance (1/1) (last)
+0064.037 (0) Beginning dispatch of backup to remote (dropbox) (instance identifier s-31b89b550f523c5e3061161d92d2271e)
+0064.043 (0) Dropbox: begin cloud upload (using API version 2 with OAuth v2 token)
+0064.047 (0) Dropbox: access gained; setting chunk size to: 10240 KB
+0064.745 (0) Dropbox: quota usage: used=214.2 MB, total=2048 MB, available=1833.8 MB
+0064.782 (0) Dropbox: Attempt to upload: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip to: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip
+0066.596 (0) Dropbox chunked upload: 57.3 % uploaded (pid_upload_session:ABILEluMWOZmePoGjzER70ETEHtap73n7oo0qFzsLAkrRaKXSA, 10485760, 10240 KB)
+0068.273 (0) Dropbox chunked upload: 100 % uploaded (pid_upload_session:ABILEluMWOZmePoGjzER70ETEHtap73n7oo0qFzsLAkrRaKXSA, 18290955, 10240 KB)
+0069.739 (0) Recording as successfully uploaded: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip
+0069.746 (0) Deleting local file: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip: OK
+0069.748 (0) Dropbox: File upload success (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip): 17862 KB in 4s (3596 KB/s)
+0069.762 (0) Exclusion option setting (uploads): backup*,*backups,backwpup*,wp-clone,snapshots,wp-staging
+0069.763 (0) Looking for candidates to backup in: /home/p/pcbvostok/test/public_html/wp-content/uploads
+0069.769 (0) finding files: wp-migrate-db: adding to list (1)
+0069.770 (0) finding files: elementor: adding to list (2)
+0069.771 (0) finding files: blocksy: adding to list (3)
+0069.772 (0) finding files: 2026: adding to list (4)
+0069.773 (0) Beginning creation of dump of uploads (split every: 400 MB)
+0069.780 (0) Total entities for the zip file: 11 directories, 36 files (0 skipped as non-modified), 33 MB
+0071.111 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip.tmp: size is now: 32.80 MB
+0071.195 (0) Creating zip file manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip.list-temp.tmp)
+0071.199 (0) Successfully created zip file manifest (size: 1676)
+0072.093 (0) Created uploads zip (0) - 33557.9 KB in 2.3 s (14491.3 KB/s) (sha1: 7e7316cd49096395f4312e55bc90b540058efb91, sha256: 812912e0ea207f73009da6b3c2eedb08c66eef91ded8e7affed5d7ec11c24e10)
+0072.101 (0) Cloud backup selection (1/1): dropbox with instance (1/1) (last)
+0072.105 (0) Beginning dispatch of backup to remote (dropbox) (instance identifier s-31b89b550f523c5e3061161d92d2271e)
+0072.106 (0) Dropbox: begin cloud upload (using API version 2 with OAuth v2 token)
+0072.110 (0) Dropbox: access gained; setting chunk size to: 10240 KB
+0072.682 (0) Dropbox: quota usage: used=231.6 MB, total=2048 MB, available=1816.4 MB
+0072.793 (0) Dropbox: Attempt to upload: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip to: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip
+0075.368 (0) Dropbox chunked upload: 30.5 % uploaded (pid_upload_session:ABILErR78hx49DZvz1pZhPajS0QAGB72v_onH_ZW667BXRxXfg, 10485760, 10240 KB)
+0077.167 (0) Dropbox chunked upload: 61 % uploaded (pid_upload_session:ABILErR78hx49DZvz1pZhPajS0QAGB72v_onH_ZW667BXRxXfg, 20971520, 10240 KB)
+0078.659 (0) Dropbox chunked upload: 91.5 % uploaded (pid_upload_session:ABILErR78hx49DZvz1pZhPajS0QAGB72v_onH_ZW667BXRxXfg, 31457280, 10240 KB)
+0080.285 (0) Dropbox chunked upload: 100 % uploaded (pid_upload_session:ABILErR78hx49DZvz1pZhPajS0QAGB72v_onH_ZW667BXRxXfg, 34363280, 10240 KB)
+0082.121 (0) Recording as successfully uploaded: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip
+0082.125 (0) Deleting local file: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip: OK
+0082.129 (0) Dropbox: File upload success (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip): 33557 KB in 9s (3594 KB/s)
+0082.163 (0) Beginning creation of dump of mu-plugins (split every: 400 MB)
+0082.205 (0) Total entities for the zip file: 1 directories, 1 files (0 skipped as non-modified), 0 MB
+0082.267 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip.tmp: size is now: 0.00 MB
+0082.279 (0) Creating zip file manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip.list-temp.tmp)
+0082.284 (0) Successfully created zip file manifest (size: 83)
+0082.357 (0) Created mu-plugins zip (0) - 0.9 KB in 0.2 s (5.8 KB/s) (sha1: 323c44ac261c76883964c012a2c7856f74805d3a, sha256: 56ff99fa6f40ee53ec8c6587383446080bf8ee53ef02a8889b7257a35e09c37e)
+0082.373 (0) Cloud backup selection (1/1): dropbox with instance (1/1) (last)
+0082.376 (0) Beginning dispatch of backup to remote (dropbox) (instance identifier s-31b89b550f523c5e3061161d92d2271e)
+0082.376 (0) Dropbox: begin cloud upload (using API version 2 with OAuth v2 token)
+0082.378 (0) Dropbox: access gained; setting chunk size to: 10240 KB
+0082.949 (0) Dropbox: quota usage: used=264.4 MB, total=2048 MB, available=1783.6 MB
+0082.950 (0) Dropbox: Attempt to upload: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip to: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip
+0083.862 (0) Dropbox chunked upload: 100 % uploaded (pid_upload_session:ABILEqAHMnR9oDb-uX3LCttJdS2vVoWYoZNFv4nVBRN8J9Vx6w, 961, 10240 KB)
+0085.582 (0) Recording as successfully uploaded: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip
+0085.587 (0) Deleting local file: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip: OK
+0085.600 (0) Dropbox: File upload success (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip): 0 KB in 2s (0 KB/s)
+0085.620 (0) Beginning backup of other directories found in the content directory (index: 0)
+0085.621 (0) Exclusion option setting (others): upgrade,cache,updraft,backup*,*backups,mysql.sql,debug.log
+0085.622 (0) Looking for candidates to backup in: /home/p/pcbvostok/test/public_html/wp-content
+0085.624 (0) finding files: mu-plugins: skipping: this is the mu-plugins directory
+0085.639 (0) finding files: uploads: skipping: this is the uploads directory
+0085.649 (0) finding files: updraft: skipping: this is the updraft directory
+0085.655 (0) finding files: plugins: skipping: this is the plugins directory
+0085.656 (0) finding files: upgrade-temp-backup: adding to list (1)
+0085.656 (0) finding files: upgrade: skipping: excluded by options
+0085.656 (0) finding files: themes: skipping: this is the themes directory
+0085.657 (0) finding files: index.php: adding to list (2)
+0085.663 (0) Total entities for the zip file: 1 directories, 1 files (0 skipped as non-modified), 0 MB
+0085.704 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip.tmp: size is now: 0.00 MB
+0085.708 (0) Creating zip file manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip.list-temp.tmp)
+0085.709 (0) Successfully created zip file manifest (size: 43)
+0085.719 (0) Created others zip (0) - 0.4 KB in 0.1 s (6 KB/s) (sha1: 3c694082ddaf2d7d5ce0cdf41361c61c2114deec, sha256: 40e4bb6059d48f19b2b6b1ce075c67dd2b85906b7bfd482d003286957304b553)
+0085.742 (0) Cloud backup selection (1/1): dropbox with instance (1/1) (last)
+0085.746 (0) Beginning dispatch of backup to remote (dropbox) (instance identifier s-31b89b550f523c5e3061161d92d2271e)
+0085.747 (0) Dropbox: begin cloud upload (using API version 2 with OAuth v2 token)
+0085.751 (0) Dropbox: access gained; setting chunk size to: 10240 KB
+0086.469 (0) Dropbox: quota usage: used=264.4 MB, total=2048 MB, available=1783.6 MB
+0086.473 (0) Dropbox: Attempt to upload: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip to: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip
+0087.462 (0) Dropbox chunked upload: 100 % uploaded (pid_upload_session:ABILErqZISj-LDBpecpM5cU9jcxGjBbfOJeBavneKnID6kXyOA, 364, 10240 KB)
+0088.935 (0) Recording as successfully uploaded: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip
+0088.939 (0) Deleting local file: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip: OK
+0088.943 (0) Dropbox: File upload success (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip): 0 KB in 2s (0 KB/s)
+0088.979 (0) Saving backup status to database (elements: 10)
+0088.990 (0) Beginning creation of database dump (WordPress DB)
+0088.992 (0) SQL compatibility mode is: NO_ENGINE_SUBSTITUTION
+0089.000 (0) Testing potential mysqldump binary: /usr/bin/mysqldump
+0089.094 (0) Output: /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n/*!40103 SET TIME_ZONE='+00:00' */;\n/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n/*!50717 SELECT COUNT(*) INTO @rocksdb_has_p_s_session_variables FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'performance_schema' AND TABL (truncated - 2576 bytes total)
+0089.096 (0) Working binary mysqldump found: /usr/bin/mysqldump
+0089.125 (0) Table wp_options: Total expected rows (via COUNT): 316
+0089.127 (0) Table is relatively small; fetch_rows will thus be: 500 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0089.334 (0) Table wp_options: Rows added in this batch (next record: 32136): 312 (uncompressed bytes in this segment=1984272) in 0.22 seconds
+0089.373 (0) Table wp_options: finishing file(s) (2, 325.2 KB)
+0089.393 (0) Table wp_users: Total expected rows (via COUNT): 2
+0089.399 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0089.417 (0) Table wp_users: Rows added in this batch (next record: 3): 2 (uncompressed bytes in this segment=1654) in 0.03 seconds
+0089.449 (0) Table wp_users: finishing file(s) (2, 0.8 KB)
+0089.489 (0) Table wp_usermeta: Total expected rows (via COUNT): 59
+0089.490 (0) Table is relatively small; fetch_rows will thus be: 100 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0089.496 (0) Table wp_usermeta: Rows added in this batch (next record: 76): 59 (uncompressed bytes in this segment=4450) in 0.02 seconds
+0089.556 (0) Table wp_usermeta: finishing file(s) (2, 2.2 KB)
+0089.597 (0) Table wp_actionscheduler_actions: Total expected rows (via COUNT): 33
+0089.605 (0) Table is relatively small; fetch_rows will thus be: 50 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0089.621 (0) Table wp_actionscheduler_actions: Rows added in this batch (next record: 78): 33 (uncompressed bytes in this segment=17955) in 0.04 seconds
+0089.630 (0) Table wp_actionscheduler_actions: finishing file(s) (2, 2 KB)
+0089.683 (0) Table wp_actionscheduler_claims: Total expected rows (via COUNT): 0
+0089.687 (0) Table wp_actionscheduler_claims: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=623) in 0.05 seconds
+0089.695 (0) Table wp_actionscheduler_claims: finishing file(s) (2, 0.4 KB)
+0089.770 (0) Table wp_actionscheduler_groups: Total expected rows (via COUNT): 2
+0089.771 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0089.785 (0) Table wp_actionscheduler_groups: Rows added in this batch (next record: 2): 2 (uncompressed bytes in this segment=710) in 0.03 seconds
+0089.793 (0) Table wp_actionscheduler_groups: finishing file(s) (2, 0.4 KB)
+0089.811 (0) Table wp_actionscheduler_logs: Total expected rows (via COUNT): 97
+0089.812 (0) Table is relatively small; fetch_rows will thus be: 100 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0089.825 (0) Table wp_actionscheduler_logs: Rows added in this batch (next record: 130): 97 (uncompressed bytes in this segment=9043) in 0.02 seconds
+0089.858 (0) Table wp_actionscheduler_logs: finishing file(s) (2, 1.4 KB)
+0089.887 (0) Table wp_commentmeta: Total expected rows (via COUNT): 0
+0089.892 (0) Table wp_commentmeta: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=694) in 0.02 seconds
+0089.903 (0) Table wp_commentmeta: finishing file(s) (2, 0.4 KB)
+0089.913 (0) Table wp_comments: Total expected rows (via COUNT): 0
+0089.943 (0) Table wp_comments: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=1702) in 0.03 seconds
+0089.978 (0) Table wp_comments: finishing file(s) (2, 0.5 KB)
+0090.135 (0) Table wp_links: Total expected rows (via COUNT): 0
+0090.179 (0) Table wp_links: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=1298) in 0.06 seconds
+0090.201 (0) Table wp_links: finishing file(s) (2, 0.5 KB)
+0090.263 (0) Table wp_postmeta: Total expected rows (approximate): 1647
+0090.288 (0) Table wp_postmeta: Rows added in this batch (next record: 1438): 462 (uncompressed bytes in this segment=77157) in 0.06 seconds
+0090.315 (0) Table wp_postmeta: finishing file(s) (2, 9.5 KB)
+0090.482 (0) Table wp_posts: Total expected rows (approximate): 2260
+0091.074 (0) Table wp_posts: Rows added in this batch (next record: 1033): 605 (uncompressed bytes in this segment=11667215) in 0.75 seconds
+0091.101 (0) Table wp_posts: finishing file(s) (2, 1093.3 KB)
+0091.200 (0) Table wp_term_relationships: Total expected rows (approximate): 12
+0091.209 (0) Table wp_term_relationships: Rows added in this batch (next record: 100000): 12 (uncompressed bytes in this segment=841) in 0.01 seconds
+0091.215 (0) Table wp_term_relationships: finishing file(s) (2, 0.4 KB)
+0091.243 (0) Table wp_term_taxonomy: Total expected rows (via COUNT): 8
+0091.250 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0091.262 (0) Table wp_term_taxonomy: Rows added in this batch (next record: 8): 8 (uncompressed bytes in this segment=1141) in 0.03 seconds
+0091.273 (0) Table wp_term_taxonomy: finishing file(s) (2, 0.5 KB)
+0091.313 (0) Table wp_termmeta: Total expected rows (via COUNT): 0
+0091.338 (0) Table wp_termmeta: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=650) in 0.05 seconds
+0091.381 (0) Table wp_termmeta: finishing file(s) (2, 0.4 KB)
+0091.397 (0) Table wp_terms: Total expected rows (via COUNT): 8
+0091.398 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0091.402 (0) Table wp_terms: Rows added in this batch (next record: 8): 8 (uncompressed bytes in this segment=1021) in 0.01 seconds
+0091.411 (0) Table wp_terms: finishing file(s) (2, 0.5 KB)
+0091.423 (0) Table wp_e_events: Total expected rows (via COUNT): 0
+0091.431 (0) Table wp_e_events: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=525) in 0.01 seconds
+0091.437 (0) Table wp_e_events: finishing file(s) (2, 0.3 KB)
+0091.532 (0) Table wp_ff_scheduled_actions: Total expected rows (via COUNT): 0
+0091.542 (0) Table wp_ff_scheduled_actions: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=1048) in 0.09 seconds
+0091.562 (0) Table wp_ff_scheduled_actions: finishing file(s) (2, 0.4 KB)
+0091.597 (0) Table wp_fluentform_entry_details: Total expected rows (via COUNT): 6
+0091.603 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0091.612 (0) Table wp_fluentform_entry_details: Rows added in this batch (next record: 6): 6 (uncompressed bytes in this segment=1100) in 0.04 seconds
+0091.636 (0) Table wp_fluentform_entry_details: finishing file(s) (2, 0.5 KB)
+0091.691 (0) Table wp_fluentform_form_analytics: Total expected rows (via COUNT): 0
+0091.705 (0) Table wp_fluentform_form_analytics: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=1110) in 0.03 seconds
+0091.714 (0) Table wp_fluentform_form_analytics: finishing file(s) (2, 0.4 KB)
+0091.731 (0) Table wp_fluentform_form_meta: Total expected rows (via COUNT): 15
+0091.734 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0091.770 (0) Table wp_fluentform_form_meta: Rows added in this batch (next record: 41): 15 (uncompressed bytes in this segment=446623) in 0.05 seconds
+0091.783 (0) Table wp_fluentform_form_meta: finishing file(s) (2, 29 KB)
+0091.832 (0) Table wp_fluentform_forms: Total expected rows (via COUNT): 1
+0091.832 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0091.836 (0) Table wp_fluentform_forms: Rows added in this batch (next record: 3): 1 (uncompressed bytes in this segment=13092) in 0.04 seconds
+0091.852 (0) Table wp_fluentform_forms: finishing file(s) (2, 2.9 KB)
+0091.910 (0) Table wp_fluentform_logs: Total expected rows (via COUNT): 0
+0091.913 (0) Table wp_fluentform_logs: Rows added in this batch (next record: -1): 0 (uncompressed bytes in this segment=902) in 0.04 seconds
+0091.922 (0) Table wp_fluentform_logs: finishing file(s) (2, 0.4 KB)
+0091.972 (0) Table wp_fluentform_submission_meta: Total expected rows (via COUNT): 4
+0091.973 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0091.976 (0) Table wp_fluentform_submission_meta: Rows added in this batch (next record: 4): 4 (uncompressed bytes in this segment=1574) in 0.02 seconds
+0091.983 (0) Table wp_fluentform_submission_meta: finishing file(s) (2, 0.6 KB)
+0091.999 (0) Table wp_fluentform_submissions: Total expected rows (via COUNT): 2
+0092.000 (0) Table is relatively small; fetch_rows will thus be: 20 (allow_further_reductions=1, is_first_fetch=1, known_bigger_than_table=1)
+0092.013 (0) Table wp_fluentform_submissions: Rows added in this batch (next record: 2): 2 (uncompressed bytes in this segment=7811) in 0.02 seconds
+0092.026 (0) Table wp_fluentform_submissions: finishing file(s) (2, 2.9 KB)
+0092.028 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_options.table.tmpr32137.gz (1/25/fopen): adding to final database dump
+0092.065 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_options.table.gz (2/25/fopen): adding to final database dump
+0092.066 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_users.table.tmpr4.gz (3/25/fopen): adding to final database dump
+0092.087 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_users.table.gz (4/25/fopen): adding to final database dump
+0092.089 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_usermeta.table.tmpr77.gz (5/25/fopen): adding to final database dump
+0092.091 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_usermeta.table.gz (6/25/fopen): adding to final database dump
+0092.092 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_actions.table.tmpr79.gz (7/25/fopen): adding to final database dump
+0092.097 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_actions.table.gz (8/25/fopen): adding to final database dump
+0092.100 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_claims.table.tmpr0.gz (9/25/fopen): adding to final database dump
+0092.104 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_claims.table.gz (10/25/fopen): adding to final database dump
+0092.107 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_groups.table.tmpr3.gz (11/25/fopen): adding to final database dump
+0092.108 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_groups.table.gz (12/25/fopen): adding to final database dump
+0092.109 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_logs.table.tmpr131.gz (13/25/fopen): adding to final database dump
+0092.109 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_actionscheduler_logs.table.gz (14/25/fopen): adding to final database dump
+0092.110 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_commentmeta.table.tmpr0.gz (15/25/fopen): adding to final database dump
+0092.114 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_commentmeta.table.gz (16/25/fopen): adding to final database dump
+0092.116 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_comments.table.tmpr0.gz (17/25/fopen): adding to final database dump
+0092.121 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_comments.table.gz (18/25/fopen): adding to final database dump
+0092.124 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_links.table.tmpr0.gz (19/25/fopen): adding to final database dump
+0092.127 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_links.table.gz (20/25/fopen): adding to final database dump
+0092.127 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_postmeta.table.tmpr1439.gz (21/25/fopen): adding to final database dump
+0092.130 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_postmeta.table.gz (22/25/fopen): adding to final database dump
+0092.132 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_posts.table.tmpr1034.gz (23/25/fopen): adding to final database dump
+0092.228 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_posts.table.gz (24/25/fopen): adding to final database dump
+0092.229 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_term_relationships.table.tmpr100001.gz (25/25/fopen): adding to final database dump
+0092.230 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_term_relationships.table.gz (26/25/fopen): adding to final database dump
+0092.231 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_term_taxonomy.table.tmpr9.gz (27/25/fopen): adding to final database dump
+0092.231 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_term_taxonomy.table.gz (28/25/fopen): adding to final database dump
+0092.232 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_termmeta.table.tmpr0.gz (29/25/fopen): adding to final database dump
+0092.234 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_termmeta.table.gz (30/25/fopen): adding to final database dump
+0092.234 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_terms.table.tmpr9.gz (31/25/fopen): adding to final database dump
+0092.235 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_terms.table.gz (32/25/fopen): adding to final database dump
+0092.236 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_e_events.table.tmpr0.gz (33/25/fopen): adding to final database dump
+0092.237 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_e_events.table.gz (34/25/fopen): adding to final database dump
+0092.237 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_ff_scheduled_actions.table.tmpr0.gz (35/25/fopen): adding to final database dump
+0092.238 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_ff_scheduled_actions.table.gz (36/25/fopen): adding to final database dump
+0092.239 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_entry_details.table.tmpr7.gz (37/25/fopen): adding to final database dump
+0092.239 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_entry_details.table.gz (38/25/fopen): adding to final database dump
+0092.240 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_form_analytics.table.tmpr0.gz (39/25/fopen): adding to final database dump
+0092.241 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_form_analytics.table.gz (40/25/fopen): adding to final database dump
+0092.241 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_form_meta.table.tmpr42.gz (41/25/fopen): adding to final database dump
+0092.246 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_form_meta.table.gz (42/25/fopen): adding to final database dump
+0092.248 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_forms.table.tmpr4.gz (43/25/fopen): adding to final database dump
+0092.249 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_forms.table.gz (44/25/fopen): adding to final database dump
+0092.251 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_logs.table.tmpr0.gz (45/25/fopen): adding to final database dump
+0092.253 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_logs.table.gz (46/25/fopen): adding to final database dump
+0092.254 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_submission_meta.table.tmpr5.gz (47/25/fopen): adding to final database dump
+0092.256 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_submission_meta.table.gz (48/25/fopen): adding to final database dump
+0092.257 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_submissions.table.tmpr3.gz (49/25/fopen): adding to final database dump
+0092.258 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db-table-wp_fluentform_submissions.table.gz (50/25/fopen): adding to final database dump
+0092.272 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz: finished writing out complete database file (1475.8 KB)
+0092.323 (0) Total database tables backed up: 25 (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz, size: 1511346, sha1: 42d368ea26fa2c895c961db15f87688254ecc8b1, sha256: 52c1da5d90aa32535174b19b237a7e3bc6127216a944863e867b6cb3dea93628)
+0092.334 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip: plugins: This file has already been successfully uploaded
+0092.335 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip: themes: This file has already been successfully uploaded
+0092.337 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip: uploads: This file has already been successfully uploaded
+0092.337 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip: mu-plugins: This file has already been successfully uploaded
+0092.338 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip: others: This file has already been successfully uploaded
+0092.338 (0) backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz: db: This file has not yet been successfully uploaded: will queue
+0092.339 (0) Saving backup history. Total backup size: 100.3 MB
+0092.342 (0) Requesting upload of the files that have not yet been successfully uploaded (1)
+0092.361 (0) Cloud backup selection (1/1): dropbox with instance (1/1) (last)
+0092.372 (0) Beginning dispatch of backup to remote (dropbox) (instance identifier s-31b89b550f523c5e3061161d92d2271e)
+0092.374 (0) Dropbox: begin cloud upload (using API version 2 with OAuth v2 token)
+0092.377 (0) Dropbox: access gained; setting chunk size to: 10240 KB
+0092.852 (0) Dropbox: quota usage: used=264.4 MB, total=2048 MB, available=1783.6 MB
+0092.858 (0) Dropbox: Attempt to upload: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz to: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz
+0094.150 (0) Dropbox chunked upload: 100 % uploaded (pid_upload_session:ABILErzNfta8cwfptwfz00VaA05Y1eGWgFnwKaHpxBFcvpUkkg, 1511346, 10240 KB)
+0095.725 (0) Recording as successfully uploaded: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz
+0095.738 (0) Deleting local file: backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz: OK
+0095.741 (0) Dropbox: File upload success (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-db.gz): 1475 KB in 2s (511 KB/s)
+0095.765 (0) Retain: beginning examination of existing backup sets; user setting: retain_files=2, retain_db=2
+0095.772 (0) Number of backup sets in history: 2; groups (db): 1
+0095.775 (0) Examining (for databases) backup set with group_id=0, nonce=6249258ddf6a, datestamp=1788952473 (Sep 09 2026 11:14:33)
+0095.776 (0) This backup set is the backup set just made, so will not be deleted.
+0095.776 (0) Examining (for databases) backup set with group_id=0, nonce=eac16038a0a2, datestamp=1785767441 (Aug 03 2026 14:30:41)
+0095.776 (0) This backup set remains non-empty (f=1/d=1); will retain in history
+0095.777 (0) Number of backup sets in history: 2; groups (files): 1
+0095.779 (0) Examining (for files) backup set with nonce=6249258ddf6a, datestamp=1788952473 (Sep 09 2026 11:14:33)
+0095.779 (0) This backup set is the backup set just made, so will not be deleted.
+0095.780 (0) This backup set is the backup set just made, so will not be deleted.
+0095.780 (0) This backup set is the backup set just made, so will not be deleted.
+0095.780 (0) This backup set is the backup set just made, so will not be deleted.
+0095.780 (0) This backup set is the backup set just made, so will not be deleted.
+0095.780 (0) This backup set remains non-empty (f=1/d=1); will retain in history
+0095.783 (0) Examining (for files) backup set with nonce=eac16038a0a2, datestamp=1785767441 (Aug 03 2026 14:30:41)
+0095.783 (0) This backup set remains non-empty (f=1/d=1); will retain in history
+0095.783 (0) Retain: saving new backup history (sets now: 2) and finishing retain operation
+0095.795 (0) Resume backup (6249258ddf6a, 0): finish run
+0095.800 (0) Decremented the semaphore (fd) by 1
+0095.804 (0) Semaphore (fd) unlocked
+0095.804 (0) There were no errors in the uploads, so the 'resume' event (1) is being unscheduled
+0095.808 (0) Deleting zip manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-plugins.zip.list.tmp)
+0095.809 (0) Deleting zip manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-themes.zip.list.tmp)
+0095.810 (0) Deleting zip manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-uploads.zip.list.tmp)
+0095.810 (0) Deleting zip manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-mu-plugins.zip.list.tmp)
+0095.811 (0) Deleting zip manifest (backup_2026-09-09-1114_pcbvostoktest_6249258ddf6a-others.zip.list.tmp)
+0095.812 (0) Fetching RSS news feed
+0096.584 (0) Fetched RSS news feed; result is a: SimplePie\SimplePie
+0096.602 (0) Sending email ('Files and database (Full backup)') report (attachments: 0, size: 0 KB) to: dtres...
+0101.952 (0) The backup succeeded and is now complete
