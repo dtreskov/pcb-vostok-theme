@@ -106,6 +106,12 @@ function theme_enqueue_frontend_assets(): void
     );
 
     theme_enqueue_css(
+        'capability-cards',
+        'assets/css/components/capability-cards.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
         'frontend',
         'assets/css/frontend.css',
         array(
@@ -116,7 +122,8 @@ function theme_enqueue_frontend_assets(): void
             'faq',
             'details',
             'carousel',
-            'calculator'
+            'calculator',
+            'capability-cards'
         )
     );
 }
@@ -196,6 +203,12 @@ function theme_enqueue_editor_assets(): void
     );
 
     theme_enqueue_css(
+        'capability-cards',
+        'assets/css/components/capability-cards.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
         'gutenberg',
         'assets/css/gutenberg.css',
         array(
@@ -205,7 +218,8 @@ function theme_enqueue_editor_assets(): void
             'faq',
             'details',
             'carousel',
-            'calculator'
+            'calculator',
+            'capability-cards'
         )
     );
 }

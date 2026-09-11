@@ -72,6 +72,7 @@
     /* FAQ */
     --color-faq-background: var(--color-white);
     --color-faq-border: var(--color-separator);
+    --color-faq-border-hover: var(--color-copper);
     --color-faq-box-shadow: rgba(32, 36, 34, 0.08);
 
 
@@ -98,6 +99,12 @@
 
     --section-spacing: clamp(24px, 2vw, 40px);
 
+    /* Шапка секции: заголовок + лид */
+    --section-head-max-width: 720px;
+    --section-head-spacing: var(--space-lg);
+
+
+
     --wide-offset: 130px;
     --list-indent: 2.5em;
 
@@ -118,6 +125,9 @@
     --font-size: 16px;
     --font-weight: 400;
     --line-height: 1.6;
+
+    /* Лид-абзац под заголовком секции */
+    --font-size-lead: 18px;
 
 
     /* =================================
