@@ -129,31 +129,3 @@
     padding: 0 !important;
     margin: 0 !important;
 }
-
-
-/* =================================
-   Responsive
-   ================================= */
-
-/* Узкие экраны: контакты в шапке скрываем */
-
-@media (max-width: 1200px) {
-
-    .site-header__contacts {
-        display: none !important;
-    }
-}
-
-
-/* Совсем узкие: логотип не сжимаем */
-
-@media (max-width: 900px) {
-
-    .site-header__inner {
-        gap: var(--space-md);
-    }
-
-    .site-header__inner > .wp-block-image img {
-        width: 220px;
-    }
-}

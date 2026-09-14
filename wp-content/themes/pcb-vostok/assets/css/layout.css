@@ -100,4 +100,11 @@
     color: var(--color-text-white);
 }
 
+/* Hide header contacts on narrow screens */
 
+@media (max-width: 1200px) {
+
+    .header-contacts {
+        display: none;
+    }
+}
