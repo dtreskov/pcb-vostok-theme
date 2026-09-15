@@ -1,0 +1,10 @@
+{
+    "id": 20,
+    "title": "Homepage",
+    "slug": "homepage",
+    "status": "publish",
+    "parent": 0,
+    "menu_order": 0,
+    "modified": "2026-09-15 12:41:44",
+    "file": "20-homepage.html"
+}

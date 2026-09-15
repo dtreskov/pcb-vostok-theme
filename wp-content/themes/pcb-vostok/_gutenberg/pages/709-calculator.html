@@ -1,0 +1,227 @@
+<!-- wp:group {"className":"block-wrapper","layout":{"type":"constrained"}} -->
+<div class="wp-block-group block-wrapper"><!-- wp:group {"className":"calculator-header","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-header"><!-- wp:heading -->
+<h2 class="wp-block-heading">Онлайн калькулятор</h2>
+<!-- /wp:heading --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-body","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-body"><!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Производство печатных плат</h3>
+<!-- /wp:heading -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Количество плат, шт 
+</label>
+
+<input
+    type="number"
+    class="calculator-input"
+    data-parameter="quantity"
+    min="1"
+    step="1"
+    value="10">
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Количество слоёв, шт: 
+</label>
+
+<select
+    class="calculator-select"
+    data-parameter="layers">
+
+    <option value="2">2 слоя</option>
+    <option value="4">4 слоя</option>
+    <option value="6">6 слоёв</option>
+    <option value="8">8 слоёв</option>
+    <option value="10">10 слоёв</option>
+    <option value="12">12 слоёв</option>
+    <option value="16">16 слоёв</option>
+    <option value="20">20 слоёв</option>
+    <option value="24">24 слоя</option>
+
+</select>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Размер платы, мм:
+</label>
+
+<div class="calculator-dimensions">
+    <input
+        type="number"
+        class="calculator-input"
+        data-parameter="length"
+        min="10"
+        step="0.1"
+        max="2000"
+        value="100"
+    >
+
+    <span>×</span>
+
+    <input
+        type="number"
+        class="calculator-input"
+        data-parameter="width"
+        min="10"
+        step="0.1"
+        max="2000"
+        value="100"
+    >
+</div>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Толщина платы: 
+</label>
+
+<select
+    class="calculator-select"
+    data-parameter="board_thickness">
+
+    <option value="0.2">0.2 мм</option>
+    <option value="0.4">0.4 мм</option>
+    <option value="0.6">0.6 мм</option>
+    <option value="0.8">0.8 мм</option>
+    <option value="1">1.0 мм</option>
+    <option value="1.2">1.2 мм</option>
+    <option value="1.6">1.6 мм</option>
+    <option value="2.0">2.0 мм</option>
+    <option value="2.4">2.4 мм</option>
+    <option value="2.6">2.6 мм</option>
+    <option value="2.8">2.8 мм</option>
+    <option value="3.0">3.0 мм</option>
+    <option value="3.2">3.2 мм</option>
+
+</select>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Толщина фольги:
+</label>
+
+<select
+    class="calculator-select"
+    data-parameter="trace_thickness">
+
+    <option value="18">18 мкм</option>
+    <option value="35">35 мкм</option>
+    <option value="50">50 мкм</option>
+    <option value="70">70 мкм</option>
+    <option value="105">105 мкм</option>
+
+</select>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Финишное покрытие: 
+</label>
+
+<select
+    class="calculator-select"
+    data-parameter="finish_material">
+
+    <option value="first">first (default)</option>
+    <option value="second">second</option>
+    <option value="third">third</option>
+
+</select>
+<!-- /wp:html --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-body","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-body"><!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Монтаж печатных плат (предлагаю переделать под 2 варианта)</h3>
+<!-- /wp:heading -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Простые smd, шт 
+</label>
+
+<input type="number" 
+    class="calculator-input" 
+    data-parameter="quantity_smd" 
+    min="1" 
+    step="1" 
+    value="10">
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Простые DIP, шт 
+</label>
+
+<input type="number" class="calculator-input"
+ data-parameter=""
+ min="1"
+ step="1"
+ value="10">
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-field","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-field"><!-- wp:html -->
+<label>
+    Многовыводные элементы(микросхемы), шт 
+</label>
+
+<input type="number" class="calculator-input"
+ data-parameter=""
+ min="1"
+ step="1"
+ value="10"
+>
+<!-- /wp:html --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"calculator-result","layout":{"type":"constrained"}} -->
+<div class="wp-block-group calculator-result"><!-- wp:html -->
+<p class="calculator-result-label">
+        Ориентировочная стоимость:
+    </p>
+
+    <p class="calculator-result-value">
+        —
+    </p>
+
+    <p class="calculator-result-note">
+Дисклеймер: теги: данные для оценки/ не является офертой, уточняйте: присылайте проект для расчёта/ Для расчёта нестандартных: запрашивайте расчёт.
+    </p>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:html -->
+<button
+    type="button"
+    class="wp-element-button calculator-submit">
+    Перенести в форму для запроса
+</button>
+<!-- /wp:html --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->

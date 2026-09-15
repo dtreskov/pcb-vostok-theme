@@ -28,12 +28,14 @@ const GGE_PAGES_DIR  = '_gutenberg/pages';
  */
 
 add_action('admin_menu', function () {
-    add_management_page(
+    add_menu_page(
         'Gutenberg Git Export',
         'Gutenberg Git Export',
         'manage_options',
         'gutenberg-git-export',
-        'gge_render_admin_page'
+        'gge_render_admin_page',
+        'dashicons-editor-code',
+        82
     );
 });
 
