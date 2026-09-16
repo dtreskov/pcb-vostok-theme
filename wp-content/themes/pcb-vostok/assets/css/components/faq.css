@@ -84,11 +84,11 @@
 
     border:
         2px solid
-        var(--color-primary-dark);
+        var(--color-copper);
 
     border-radius: 50%;
 
-    color: var(--color-primary-dark);
+    color: var(--color-copper);
 
     font-size: 14px;
     font-weight: 700;
@@ -147,13 +147,4 @@
     box-shadow:
         0 4px 12px
         rgba(0, 0, 0, 0.08);
-}
-
-.faq-grid details summary::before {
-    border-color: var(--color-copper);
-    color: var(--color-copper);
-}
-
-.faq-grid details summary::after {
-    border-color: var(--color-gold);
 }
