@@ -9,7 +9,15 @@
     border-bottom: 2px solid var(--color-copper);
 }
 
+/* display/justify-content/align-items добавлены 2026-09-18 —
+   раньше это давал WP layout support (flex/nowrap/space-between/center),
+   отключённый в functions.php (wp_render_layout_support_flag) */
 .site-header__inner {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+
     width: var(--content-size);
     max-width: 100%;
     min-height: 54px;
@@ -86,7 +94,14 @@
     gap: 0px;
 }
 
+/* display/flex-direction/justify-content добавлены 2026-09-18 —
+   раньше это давал WP layout support (flex/vertical/justify:right),
+   отключённый в functions.php (wp_render_layout_support_flag) */
 .site-header__contacts {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
     flex: 0 0 auto;
     gap: 4px;
 }
