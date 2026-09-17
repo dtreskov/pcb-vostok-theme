@@ -1,4 +1,32 @@
 /* =================================
+   Site main
+   Добавлено 2026-09-18: max-width/центрирование содержимого
+   <main> раньше давал WP constrained-layout support, отключённый
+   в functions.php (wp_render_layout_support_flag). Значения взяты
+   из theme.json: settings.layout.contentSize/wideSize.
+   ================================= */
+
+.site-main {
+    display: flow-root;
+}
+
+.site-main > :where(:not(.alignwide):not(.alignfull)) {
+    max-width: 1290px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.site-main > .alignwide {
+    max-width: 90vw;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.site-main > .alignfull {
+    max-width: none;
+}
+
+/* =================================
    Section head
    ================================= */
 
