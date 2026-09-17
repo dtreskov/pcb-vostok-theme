@@ -13,6 +13,22 @@ require_once get_theme_file_path(
 );
 
 /**
+ * Отключаем автогенерируемые WordPress классы и inline-CSS
+ * для layout-атрибутов блоков (is-layout-*, wp-container-core-*,
+ * плюс инлайновый <style> с расчётом gap/flex-wrap/justify-content).
+ *
+ * Раскладка становится предсказуемой: то, что лежит в сыром экспорте
+ * post_content (_gutenberg/pages/) плюс CSS темы — это ровно то,
+ * что рендерится на фронтенде, без рантайм-довески от ядра.
+ *
+ * Внесено: 2026-09-18.
+ * Компенсирующий CSS: .site-header__inner, .site-header__contacts
+ * (header.css) и .site-main (globals.css/layout.css) — раскладка
+ * этих блоков раньше держалась именно на layout support.
+ */
+remove_filter( 'render_block', 'wp_render_layout_support_flag', 10 );
+
+/**
  * Подключение CSS-файла темы.
  *
  * Версия файла определяется по времени его изменения,
