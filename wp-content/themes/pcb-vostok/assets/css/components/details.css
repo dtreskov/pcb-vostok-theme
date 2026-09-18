@@ -135,6 +135,37 @@
         0 8px 20px var(--color-card-box-shadow);
 }
 
+/* =================================
+   Details card — внутренний ряд (иконка + текст)
+   Добавлено 2026-09-18: раскладка держалась на WP layout support
+   ("layout":{"type":"flex","flexWrap":"nowrap"}), отключённом
+   в functions.php — без этого правила картинка растягивалась
+   на всю карточку, а текст наезжал поверх неё.
+   ================================= */
+
+.details-card > .wp-block-group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: var(--space-md);
+}
+
+.details-card > .wp-block-group > .wp-block-image {
+    flex: 0 0 56px;
+    width: 56px;
+    margin: 0;
+}
+
+.details-card > .wp-block-group > .wp-block-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.details-card > .wp-block-group > .wp-block-group {
+    min-width: 0;
+}
+
 
 /* =================================
    Tablet
