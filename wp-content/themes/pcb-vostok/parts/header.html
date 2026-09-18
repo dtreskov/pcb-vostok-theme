@@ -10,7 +10,24 @@
             </figure>
         <!-- /wp:image -->
 
-        <!-- wp:navigation {"overlayMenu":"mobile","icon":"menu","layout":{"type":"flex","justifyContent":"center"}} /-->
+        <!-- wp:html -->
+        <nav class="site-nav" aria-label="Основная навигация">
+            <ul class="site-nav__list">
+                <li class="site-nav__item"><a class="site-nav__link" href="#manufacturing">Печатные платы</a></li>
+                <li class="site-nav__item"><a class="site-nav__link" href="#components">Электронные компоненты</a></li>
+                <li class="site-nav__item"><a class="site-nav__link" href="#about">О компании</a></li>
+                <li class="site-nav__item"><a class="site-nav__link" href="/contacts">Контакты</a></li>
+                <li class="site-nav__item site-nav__item--accent"><a class="site-nav__link" href="#request">Рассчитать стоимость</a></li>
+                <li class="site-nav__item site-nav__item--accent"><a class="site-nav__link" href="/calculator">Онлайн калькулятор</a></li>
+            </ul>
+        </nav>
+        <!-- /wp:html -->
+        <!--
+            Пункты меню перенесены из WP Navigation (БД) в статическую разметку.
+            Редактируются прямо здесь, без обращения к админке.
+            Мобильный бургер-тоггл (раньше давал overlayMenu блока wp:navigation)
+            пока не реализован — на узких экранах пункты просто переносятся строкой.
+        -->
 
         <!-- wp:group {"className":"site-header__contacts","layout":{"type":"flex","orientation":"vertical","justifyContent":"right"}} -->
         <div class="wp-block-group site-header__contacts">
