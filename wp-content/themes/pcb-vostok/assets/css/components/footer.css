@@ -1,0 +1,135 @@
+/* =================================
+   Footer
+   По мотивам .ftr/.ftr__in/.ftr__bot из Kimi reference.html.
+   Наполнение — временное, доработаем отдельно.
+   ================================= */
+
+.site-footer {
+    background-color: var(--color-footer-background);
+    border-top: 2px solid var(--color-footer-border);
+
+    color: var(--color-primary-light);
+    font-size: 14px;
+}
+
+.site-footer__inner {
+    display: grid;
+
+    grid-template-columns: 1.4fr 1fr 1.2fr;
+
+    gap: clamp(26px, 4vw, 56px);
+
+    width: var(--content-size);
+    max-width: 100%;
+    margin-inline: auto;
+
+    padding-block: clamp(44px, 6vw, 72px) 40px;
+    padding-inline: var(--content-spacing);
+
+    box-sizing: border-box;
+}
+
+.site-footer h4 {
+    color: var(--color-white);
+
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+
+    margin: 0 0 16px;
+}
+
+.site-footer ul {
+    list-style: none;
+
+    display: grid;
+    gap: 9px;
+
+    margin: 0;
+    padding: 0;
+}
+
+.site-footer a {
+    color: var(--color-primary-light);
+    text-decoration: none;
+}
+
+.site-footer a:hover {
+    color: var(--color-gold);
+}
+
+.site-footer__tel {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-white);
+}
+
+.site-footer__tel:hover {
+    color: var(--color-gold);
+}
+
+.site-footer__logo {
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.site-footer__logo img,
+.site-footer__logo svg {
+    display: block;
+    width: 200px;
+    height: auto;
+}
+
+.site-footer__about {
+    font-size: 13.5px;
+    line-height: 1.6;
+    max-width: 40ch;
+
+    margin: 0;
+}
+
+.site-footer__requisites {
+    margin: 18px 0 0;
+
+    font-size: 12px;
+    line-height: 1.7;
+    color: #8FA9A0;
+}
+
+.site-footer__bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+    width: var(--content-size);
+    max-width: 100%;
+    margin-inline: auto;
+
+    padding: 18px var(--content-spacing) 22px;
+
+    box-sizing: border-box;
+
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+
+    font-size: 12.5px;
+    color: #8FA9A0;
+}
+
+/* =================================
+   Responsive
+   ================================= */
+
+@media (max-width: 900px) {
+
+    .site-footer__inner {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+
+    .site-footer__inner {
+        grid-template-columns: 1fr;
+    }
+}
