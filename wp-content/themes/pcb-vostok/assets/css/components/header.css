@@ -48,50 +48,63 @@
 }
 
 
-.site-header .wp-block-navigation {
+/* =================================
+   Site nav
+   Добавлено 2026-09-18: заменяет .wp-block-navigation* —
+   пункты меню теперь статическая разметка (parts/header.html),
+   а не блок wp:navigation, рендерившийся через wp-block-library
+   с непредсказуемым шрифтом/выравниванием.
+   ================================= */
+
+.site-nav {
     margin-left: auto;
 }
 
-.site-header .wp-block-navigation .wp-block-navigation-item__content {
-    color: var(--color-white);
-    font-size: 15px;
-    font-weight: 500;
+.site-nav__list {
+    display: flex;
+    align-items: center;
+    gap: 0;
+
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
-.site-header .wp-block-navigation .wp-block-navigation-item__content:hover {
-    color: var(--color-gold);
-}
-
-.site-header .wp-block-navigation-item {
+.site-nav__item {
     width: 110px;
     text-align: center;
 }
 
-.site-header .wp-block-navigation-item__content {
+.site-nav__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     width: 100%;
+    min-height: 54px;
     box-sizing: border-box;
-    text-align: center;
-    white-space: normal;
+
+    color: var(--color-white);
+    font-size: 15px;
+    font-weight: 500;
     line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    white-space: normal;
+
+    transition: color var(--transition-fast);
 }
 
-
-.site-header .wp-block-navigation-item__content:hover {
+.site-nav__link:hover {
     color: var(--color-gold);
 }
 
-.site-header .wp-block-navigation-item:nth-child(5) .wp-block-navigation-item__content,
-.site-header .wp-block-navigation-item:nth-child(6) .wp-block-navigation-item__content {
+.site-nav__item--accent .site-nav__link {
     color: var(--color-copper);
 }
 
-.site-header .wp-block-navigation-item:nth-child(5) .wp-block-navigation-item__content:hover,
-.site-header .wp-block-navigation-item:nth-child(6) .wp-block-navigation-item__content:hover {
+.site-nav__item--accent .site-nav__link:hover {
     color: var(--color-gold);
-}
-
-.site-header .wp-block-navigation__container {
-    gap: 0px;
 }
 
 /* display/flex-direction/justify-content добавлены 2026-09-18 —
@@ -147,7 +160,9 @@
 
 /* =================================
    Tablet
-   Заготовка — заполнить при необходимости
+   Заготовка — заполнить при необходимости.
+   Мобильный бургер-тоггл для .site-nav ещё не реализован —
+   на узких экранах пункты меню просто перенесутся строкой.
    ================================= */
 
 @media (max-width: 1199px) {
