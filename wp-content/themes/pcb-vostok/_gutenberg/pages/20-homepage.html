@@ -230,9 +230,50 @@
 <!-- /wp:group -->
 
 <!-- wp:group {"className":"section-content","layout":{"type":"constrained"}} -->
-<div class="wp-block-group section-content"><!-- wp:image {"id":259,"width":"1168px","height":"auto","aspectRatio":"1.7777777777777777","sizeSlug":"full","linkDestination":"none"} -->
-<figure class="wp-block-image size-full is-resized"><img src="/wp-content/themes/pcb-vostok/assets/icons/placeholder.svg" alt="" class="wp-image-259" style="aspect-ratio:1.7777777777777777;width:1168px;height:auto"/></figure>
-<!-- /wp:image --></div>
+<div class="wp-block-group section-content"><!-- wp:html -->
+<div class="cycle-grid">
+    <div class="cycle-step">
+        <div class="cycle-step__num">01</div>
+        <h3>Заявка и файлы</h3>
+        <p>Присылаете производственные файлы и параметры заказа — дальше всё делаем мы.</p>
+    </div>
+    <div class="cycle-step">
+        <div class="cycle-step__num">02</div>
+        <h3>Аудит и DFM-проверка</h3>
+        <p>Верификация и аудит производственных файлов, проверка технологичности (DFM). Вопросы согласуем до запуска.</p>
+    </div>
+    <div class="cycle-step">
+        <div class="cycle-step__num">03</div>
+        <h3>Производство плат</h3>
+        <p>Изготовление плат на фабрике в КНР с контролем на каждом технологическом этапе.</p>
+    </div>
+    <div class="cycle-step">
+        <div class="cycle-step__num">04</div>
+        <h3>Закупка компонентов</h3>
+        <p>Закупка ЭКБ у фабрик и дилеров, входной контроль: маркировка, целостность, признаки подделок.</p>
+    </div>
+    <div class="cycle-step">
+        <div class="cycle-step__num">05</div>
+        <h3>Монтаж</h3>
+        <p>SMD- и THT-монтаж, оптический контроль AOI после оплавления, рентген (AXI) для BGA и QFN.</p>
+    </div>
+    <div class="cycle-step">
+        <div class="cycle-step__num">06</div>
+        <h3>Проверка по ПМИ</h3>
+        <p>Функциональная проверка готовых изделий согласно вашей программе и методике испытаний.</p>
+    </div>
+    <div class="cycle-step">
+        <div class="cycle-step__num">07</div>
+        <h3>Приёмка ОТК</h3>
+        <p>Российский отдел технического контроля принимает партию на фабрике: осмотр, микрошлифы, фотоотчёт.</p>
+    </div>
+    <div class="cycle-step">
+        <div class="cycle-step__num">08</div>
+        <h3>Доставка до двери</h3>
+        <p>Растаможка, декларации, ГТД и доставка до вашей двери — полностью наша зона ответственности.</p>
+    </div>
+</div>
+<!-- /wp:html --></div>
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 
@@ -676,8 +717,75 @@
 <!-- /wp:group -->
 
 <!-- wp:group {"className":"section-content","layout":{"type":"constrained"}} -->
-<div class="wp-block-group section-content"><!-- wp:paragraph -->
-<p>[ форма заявки — временно убрана вместе с плагином Fluent Forms, будет собрана вручную ]</p>
-<!-- /wp:paragraph --></div>
+<div class="wp-block-group section-content"><!-- wp:html -->
+<div class="request-layout">
+
+    <form class="request-form" id="request-form">
+
+        <div class="request-field">
+            <label for="rf-email">Электронная почта <i>*</i></label>
+            <input type="email" id="rf-email" name="email" placeholder="имя.компания@домен.ru" required>
+        </div>
+
+        <div class="request-field">
+            <label for="rf-phone">Телефон</label>
+            <input type="tel" id="rf-phone" name="phone" placeholder="+7 (123) 456-78-99">
+        </div>
+
+        <div class="request-field">
+            <label for="rf-name">Имя</label>
+            <input type="text" id="rf-name" name="name" placeholder="Как к вам обращаться">
+        </div>
+
+        <div class="request-field">
+            <label for="rf-company">Компания</label>
+            <input type="text" id="rf-company" name="company" placeholder="Название организации">
+        </div>
+
+        <div class="request-field request-field--full">
+            <label for="rf-message">Текст сообщения</label>
+            <textarea id="rf-message" name="message" placeholder="Опишите задачу: тираж, количество слоёв, материал, нужен ли монтаж и функциональная проверка"></textarea>
+        </div>
+
+        <div class="request-field request-field--full">
+            <label>Производственные файлы</label>
+            <div class="request-drop" id="request-dropzone">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M12 11v6" /><path d="M9.5 13.5l2.5 -2.5l2.5 2.5" /></svg>
+                Перетащите файлы сюда или
+                <label for="rf-files">выберите на компьютере</label>
+                <input type="file" id="rf-files" name="files" multiple hidden>
+                <small>Лучше архивом ZIP/RAR. Можно прислать проект целиком из САПР.</small>
+            </div>
+        </div>
+
+        <div class="request-field request-field--full">
+            <div class="request-captcha">Антиробот-проверка (hCaptcha) — виджет подключим при доработке логики формы.</div>
+        </div>
+
+        <div class="request-agree">
+            <input type="checkbox" id="rf-agree" required>
+            <label for="rf-agree">Соглашаюсь с <a href="#">политикой обработки персональных данных</a> и даю согласие на обработку моих персональных данных.</label>
+        </div>
+
+        <button class="wp-element-button request-submit" type="submit">Отправить</button>
+
+    </form>
+
+    <aside class="request-sidebar" aria-label="Что приложить к заявке">
+        <h3>Что приложить (ZIP/RAR)</h3>
+        <p>Либо пришлите проект целиком из САПР.</p>
+        <ol class="request-checklist">
+            <li>BOM</li>
+            <li>Pick and place</li>
+            <li>Gerber со сверловкой</li>
+            <li>Чертёж</li>
+            <li>Параметры печатной платы: тираж, слои, материал, финишное покрытие, толщина меди, цвет маски, шелкография</li>
+            <li>Stackup — для плат от 6 слоёв и при контролируемом импедансе</li>
+        </ol>
+        <p class="request-dim">Нет части файлов? Пришлите, что есть — разберёмся и подскажем, чего не хватает.</p>
+    </aside>
+
+</div>
+<!-- /wp:html --></div>
 <!-- /wp:group --></div>
 <!-- /wp:group -->
