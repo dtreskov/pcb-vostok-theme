@@ -84,7 +84,13 @@ function theme_enqueue_frontend_assets(): void
         'assets/css/components/header.css',
         array('layout')
     );
-    
+
+    theme_enqueue_css(
+        'footer',
+        'assets/css/components/footer.css',
+        array('layout')
+    );
+
     theme_enqueue_css(
         'utils',
         'assets/css/utils.css',
@@ -122,17 +128,32 @@ function theme_enqueue_frontend_assets(): void
     );
 
     theme_enqueue_css(
+        'cycle',
+        'assets/css/components/cycle.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
+        'request-form',
+        'assets/css/components/request-form.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
         'frontend',
         'assets/css/frontend.css',
         array(
             'layout',
             'header',
+            'footer',
             'utils',
             'hero',
             'faq',
             'details',
             'carousel',
-            'calculator'
+            'calculator',
+            'cycle',
+            'request-form'
         )
     );
 }
@@ -212,6 +233,18 @@ function theme_enqueue_editor_assets(): void
     );
 
     theme_enqueue_css(
+        'cycle',
+        'assets/css/components/cycle.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
+        'request-form',
+        'assets/css/components/request-form.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
         'gutenberg',
         'assets/css/gutenberg.css',
         array(
@@ -221,7 +254,9 @@ function theme_enqueue_editor_assets(): void
             'faq',
             'details',
             'carousel',
-            'calculator'
+            'calculator',
+            'cycle',
+            'request-form'
         )
     );
 }
