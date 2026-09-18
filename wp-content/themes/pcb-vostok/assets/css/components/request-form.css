@@ -1,0 +1,299 @@
+/* =================================
+   Request form
+   Форма заявки по мотивам .formgrid/.frm/.drop/.glass
+   из Kimi reference.html, адаптирована под переменные темы.
+   Поле "Предпочтительный способ связи" не переносим.
+   Логика отправки — отдельная задача, здесь только разметка/стили.
+   ================================= */
+
+.request-layout {
+    display: grid;
+
+    grid-template-columns: 1.35fr 1fr;
+
+    gap: clamp(26px, 4vw, 44px);
+
+    align-items: start;
+}
+
+/* =================================
+   Form
+   ================================= */
+
+.request-form {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 16px;
+}
+
+.request-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.request-field--full {
+    grid-column: 1 / -1;
+}
+
+.request-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-primary-light);
+}
+
+.request-field label i {
+    color: var(--color-gold);
+    font-style: normal;
+}
+
+.request-field input,
+.request-field select,
+.request-field textarea {
+    width: 100%;
+    height: 48px;
+
+    padding: 0 16px;
+
+    box-sizing: border-box;
+
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-button);
+
+    background-color: var(--color-white);
+    color: var(--color-text-black);
+
+    font-family: var(--font-family);
+    font-size: 15px;
+    line-height: 1.4;
+
+    transition:
+        box-shadow var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.request-field textarea {
+    height: auto;
+    min-height: 120px;
+
+    padding: 13px 16px;
+
+    resize: vertical;
+}
+
+.request-field input:focus,
+.request-field select:focus,
+.request-field textarea:focus {
+    outline: none;
+
+    border-color: var(--color-copper);
+    box-shadow: 0 0 0 3px rgba(192, 112, 58, 0.4);
+}
+
+.request-field input::placeholder,
+.request-field textarea::placeholder {
+    color: #9AA8A1;
+}
+
+/* =================================
+   File dropzone
+   ================================= */
+
+.request-drop {
+    border: 2px dashed rgba(192, 112, 58, 0.65);
+    border-radius: var(--radius-card);
+
+    background-color: rgba(255, 255, 255, 0.04);
+
+    padding: 26px 20px;
+
+    text-align: center;
+
+    color: #B7CCC2;
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.request-drop:hover {
+    background-color: rgba(192, 112, 58, 0.14);
+    border-color: var(--color-copper);
+}
+
+.request-drop svg {
+    display: block;
+    margin: 0 auto 10px;
+
+    width: 30px;
+    height: 30px;
+
+    stroke: var(--color-gold);
+}
+
+.request-drop label {
+    color: var(--color-gold);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.request-drop small {
+    display: block;
+    margin-top: 8px;
+
+    font-size: 12px;
+    color: #8FA9A0;
+}
+
+/* =================================
+   Captcha placeholder
+   ================================= */
+
+.request-captcha {
+    border: 1.5px dashed rgba(216, 180, 90, 0.5);
+    border-radius: var(--radius-button);
+
+    background-color: rgba(216, 180, 90, 0.06);
+
+    padding: 14px 18px;
+
+    font-size: 13px;
+    color: #8FA9A0;
+}
+
+/* =================================
+   Agreement + submit
+   ================================= */
+
+.request-agree {
+    grid-column: 1 / -1;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-primary-light);
+}
+
+.request-agree input {
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+
+    flex: 0 0 auto;
+
+    accent-color: var(--color-copper);
+}
+
+.request-agree a {
+    color: #C4D6CD;
+}
+
+.request-submit {
+    grid-column: 1 / -1;
+
+    width: 100%;
+    height: 54px;
+
+    font-size: 16px;
+}
+
+/* =================================
+   Sidebar ("что приложить")
+   ================================= */
+
+.request-sidebar {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-card);
+
+    padding: 28px 26px;
+
+    position: sticky;
+    top: 100px;
+}
+
+.request-sidebar h3 {
+    color: var(--color-white);
+    font-size: 18px;
+    margin-bottom: 6px;
+}
+
+.request-sidebar > p {
+    font-size: 13.5px;
+    color: var(--color-primary-light);
+}
+
+.request-checklist {
+    list-style: none;
+    counter-reset: request-item;
+
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+.request-checklist li {
+    counter-increment: request-item;
+    position: relative;
+
+    padding: 9px 0 9px 40px;
+
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--color-primary-light);
+
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.request-checklist li::before {
+    content: counter(request-item, decimal-leading-zero);
+
+    position: absolute;
+    left: 0;
+    top: 10px;
+
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-gold);
+}
+
+.request-sidebar .request-dim {
+    margin-top: 16px;
+
+    font-size: 12.5px;
+    color: #8FA9A0;
+}
+
+/* =================================
+   Responsive
+   ================================= */
+
+@media (max-width: 900px) {
+
+    .request-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .request-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 640px) {
+
+    .request-form {
+        grid-template-columns: 1fr;
+    }
+
+    .request-field--full {
+        grid-column: auto;
+    }
+}
