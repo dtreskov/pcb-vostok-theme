@@ -14,13 +14,17 @@
 
 /* =================================
    Grid
+   Изменено 2026-09-19: align-items был "start" — из-за этого
+   карточки в одном ряду не выравнивались по высоте (каждая
+   под свой контент). Теперь "stretch" (по умолчанию для grid) —
+   все карточки в ряду тянутся под самую высокую.
    ================================= */
 
 .faq-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-sm);
-    align-items: start;
+    align-items: stretch;
 }
 
 .faq-grid details summary:hover {
@@ -115,6 +119,15 @@
 
 .faq-grid details[open] summary::after {
     transform: rotate(45deg);
+}
+
+/* Зазор между заголовком (summary) и раскрывающимся текстом.
+   Добавлено 2026-09-19: FAQ использует голый .wp-block-details
+   (не .details-button), для которого такого отступа не было
+   вообще — текст стартовал вплотную к summary. ~1 строка. */
+
+.faq-grid details .details-content > *:first-child {
+    margin-top: var(--space-lg);
 }
 
 
