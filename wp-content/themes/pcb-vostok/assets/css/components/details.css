@@ -141,6 +141,11 @@
    ("layout":{"type":"flex","flexWrap":"nowrap"}), отключённом
    в functions.php — без этого правила картинка растягивалась
    на всю карточку, а текст наезжал поверх неё.
+
+   Изменено 2026-09-19: картинка расширена с фикс. 56px до 30%
+   ширины карточки; заголовок/текст переоформлены под стиль
+   .carousel-card-body (services) — были слишком крупный заголовок
+   с большими отступами и тёмный (чёрный) текст параграфа.
    ================================= */
 
 .details-card > .wp-block-group {
@@ -151,8 +156,8 @@
 }
 
 .details-card > .wp-block-group > .wp-block-image {
-    flex: 0 0 56px;
-    width: 56px;
+    flex: 0 0 30%;
+    width: 30%;
     margin: 0;
 }
 
@@ -164,6 +169,28 @@
 
 .details-card > .wp-block-group > .wp-block-group {
     min-width: 0;
+}
+
+.details-card .heading3-item-card {
+    margin: 0 0 8px;
+
+    color: var(--color-text-black);
+
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    text-transform: none;
+}
+
+.details-card > .wp-block-group > .wp-block-group p {
+    margin: 0;
+
+    color: var(--color-text-grey);
+
+    font-size: 14.5px;
+    font-weight: 400;
+    line-height: 1.6;
 }
 
 
