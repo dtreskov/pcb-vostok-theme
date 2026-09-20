@@ -11,8 +11,8 @@
     display: grid;
 
     grid-template-columns:
-        minmax(220px, 0.8fr)
-        minmax(0, 1.2fr);
+        25%
+        1fr;
 
     column-gap: 24px;
 
@@ -33,18 +33,28 @@
 
 /* =================================
    Card image
+   Добавлено 2026-09-19: картинка теперь во всю высоту карточки
+   (с небольшими отступами сверху/снизу) и кадрируется, а не тянется.
+   Ширина колонки — 25% карточки (см. .carousel-card выше).
    ================================= */
 
 .carousel-card > figure {
     margin: 0;
     min-width: 0;
+
+    height: 100%;
+    box-sizing: border-box;
+
+    padding-block: var(--space-md);
 }
 
 .carousel-card > figure img {
     display: block;
 
     width: 100%;
-    height: auto;
+    height: 100%;
+
+    object-fit: cover;
 
     margin: 0;
 }
@@ -52,6 +62,9 @@
 
 /* =================================
    Card body
+   Добавлено 2026-09-19: заголовок/текст прижаты к верху,
+   "подробнее" — к низу (см. .arrowlink ниже), высота колонки
+   равна высоте картинки за счёт grid stretch по умолчанию.
    ================================= */
 
 .carousel-card-body {
@@ -60,6 +73,11 @@
 
     min-width: 0;
     min-height: 0;
+
+    height: 100%;
+    box-sizing: border-box;
+
+    padding-block: var(--space-md);
 }
 
 .carousel-card-body h3 {
@@ -94,7 +112,8 @@
 
     width: fit-content;
 
-    margin-top: 16px;
+    /* было: margin-top: 16px — теперь прижимаем к низу колонки */
+    margin-top: auto;
 
     color: var(--color-text-copper);
 
@@ -373,5 +392,9 @@
         grid-template-columns: 1fr;
 
         row-gap: 20px;
+    }
+
+    .carousel-card > figure {
+        height: 220px;
     }
 }
