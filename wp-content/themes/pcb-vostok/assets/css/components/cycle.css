@@ -40,20 +40,23 @@
     box-shadow: 0 8px 20px var(--color-card-box-shadow);
 }
 
+/* Изменено 2026-09-19: кружок -> пилюля (--radius-pill).
+   Бейдж теперь тянется по ширине под текст номера,
+   а не фиксированный квадрат. */
 .cycle-step__num {
-    width: 44px;
-    height: 44px;
-
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    border-radius: 50%;
+    height: 32px;
+    padding: 0 16px;
+
+    border-radius: var(--radius-pill);
 
     background-color: var(--color-primary);
     color: var(--color-white);
 
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.04em;
 }
@@ -73,7 +76,9 @@
 }
 
 /* Пунктирные коннекторы между карточками на десктопе —
-   визуально связывают шаги в единую цепочку */
+   визуально связывают шаги в единую цепочку.
+   top пересчитан под новую высоту пилюли (32px вместо 44px):
+   22px padding карточки + половина высоты пилюли (16px) = 38px. */
 
 @media (min-width: 901px) {
 
@@ -81,7 +86,7 @@
         content: "";
 
         position: absolute;
-        top: 44px;
+        top: 38px;
         right: -25px;
 
         width: 25px;
