@@ -32,3 +32,19 @@
 
     transform: none;
 }
+
+
+/* =================================
+   Cycle + request form
+   Editor spacing
+   Добавлено 2026-09-21: в редакторе группы с раскладкой "default"
+   получают вертикальный отступ между соседними блоками (blockGap).
+   Внутри grid-контейнеров он сдвигал бы карточки/поля — обнуляем.
+   На фронтенде этих отступов нет (layout support отключён).
+   ================================= */
+
+.editor-styles-wrapper .cycle-grid > *,
+.editor-styles-wrapper .request-layout > *,
+.editor-styles-wrapper .request-form > * {
+    margin-block: 0;
+}
