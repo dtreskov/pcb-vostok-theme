@@ -134,6 +134,18 @@ function theme_enqueue_frontend_assets(): void
     );
 
     theme_enqueue_css(
+        'section-stage',
+        'assets/css/components/section-stage.css',
+        array('layout', 'typography')
+    );
+
+    theme_enqueue_css(
+        'pcb-tabs',
+        'assets/css/components/pcb-tabs.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
         'request-form',
         'assets/css/components/request-form.css',
         array('layout')
@@ -153,6 +165,8 @@ function theme_enqueue_frontend_assets(): void
             'carousel',
             'calculator',
             'cycle',
+            'section-stage',
+            'pcb-tabs',
             'request-form'
         )
     );
@@ -239,6 +253,18 @@ function theme_enqueue_editor_assets(): void
     );
 
     theme_enqueue_css(
+        'section-stage',
+        'assets/css/components/section-stage.css',
+        array('layout', 'typography')
+    );
+
+    theme_enqueue_css(
+        'pcb-tabs',
+        'assets/css/components/pcb-tabs.css',
+        array('layout')
+    );
+
+    theme_enqueue_css(
         'request-form',
         'assets/css/components/request-form.css',
         array('layout')
@@ -256,6 +282,8 @@ function theme_enqueue_editor_assets(): void
             'carousel',
             'calculator',
             'cycle',
+            'section-stage',
+            'pcb-tabs',
             'request-form'
         )
     );

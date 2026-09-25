@@ -1,0 +1,336 @@
+/* =================================
+   Section stage
+   Шапка секций-этапов производственного цикла
+   (#order, #audit, #manufacturing, #components, #installation,
+   #inspection, #qc, #logistics): крупный номер этапа, шкала
+   из 8 делений и тихий переключатель спойлера.
+
+   Добавлено 2026-09-25 (чат «Единое оформление секций»,
+   вариант шапки 4.1, шкала S1).
+
+   Разметка:
+   .section.section--stage
+     .stage-head
+       .stage-marker
+         p.stage-num            — номер этапа, «02»
+         .stage-scale[data-stage="2"] > i×8
+       .section-head            — надзаголовок, H2, лид
+     .section-content
+       details.details-link > summary + .details-content
+
+   Этап 01 вместо спойлера: .stage-cta (кнопка) + p.stage-cta__note.
+
+   Номер этапа задаётся дважды: текстом в .stage-num
+   и атрибутом data-stage у шкалы. Раскраску делений
+   делает CSS ниже — вручную деления не красим.
+   ================================= */
+
+.section--stage {
+    --stage-col: 170px;
+    --stage-gap: var(--space-xl);
+
+    --stage-done: var(--color-primary);
+    --stage-now: var(--color-gold);
+    --stage-todo: #D5DDD8;
+
+    --stage-lead-color: #2E3B35;
+
+    /* цвет заливки контурной цифры = фон секции */
+    --stage-num-fill: var(--color-page-background);
+}
+
+.section--stage.section--alt {
+    --stage-num-fill: var(--color-section-alt);
+}
+
+
+/* =================================
+   Head: номер этапа + текст
+   ================================= */
+
+.stage-head {
+    display: grid;
+    grid-template-columns:
+        var(--stage-col) minmax(0, 1fr);
+    gap: var(--stage-gap);
+    align-items: start;
+}
+
+.stage-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Контурная цифра.
+   У Inter часть цифр (например, «4») собрана из наложенных
+   контуров, а соседние цифры из-за трекинга заходят друг
+   на друга. Обычная обводка рисует все эти пересечения.
+   Поэтому цифра заливается цветом фона секции, а обводка
+   двойной толщины рисуется ПОД заливкой (paint-order):
+   заливка прячет внутренние линии и внутреннюю половину
+   обводки, снаружи остаётся чистый контур 1.5px. */
+.stage-num {
+    margin: 0;
+
+    color: var(--stage-num-fill);
+    -webkit-text-stroke: 3px var(--color-copper);
+    paint-order: stroke fill;
+
+    font-size: 112px;
+    font-weight: 800;
+    line-height: 0.82;
+    letter-spacing: -0.05em;
+}
+
+.section--stage .section-head {
+    max-width: 680px;
+}
+
+.section--stage .section-lead {
+    max-width: none;
+
+    color: var(--stage-lead-color);
+
+    font-size: 20px;
+    line-height: 1.55;
+}
+
+
+/* =================================
+   Stage scale — 8 делений
+   ================================= */
+
+.stage-scale {
+    display: flex;
+    gap: 4px;
+
+    margin-top: 14px;
+}
+
+.stage-scale i {
+    width: 14px;
+    height: 4px;
+
+    border-radius: 2px;
+
+    background: var(--stage-todo);
+}
+
+.stage-scale[data-stage="1"] i:nth-child(1) { width: 28px; background: var(--stage-now); }
+.stage-scale[data-stage="2"] i:nth-child(-n+1) { background: var(--stage-done); }
+.stage-scale[data-stage="2"] i:nth-child(2) { width: 28px; background: var(--stage-now); }
+.stage-scale[data-stage="3"] i:nth-child(-n+2) { background: var(--stage-done); }
+.stage-scale[data-stage="3"] i:nth-child(3) { width: 28px; background: var(--stage-now); }
+.stage-scale[data-stage="4"] i:nth-child(-n+3) { background: var(--stage-done); }
+.stage-scale[data-stage="4"] i:nth-child(4) { width: 28px; background: var(--stage-now); }
+.stage-scale[data-stage="5"] i:nth-child(-n+4) { background: var(--stage-done); }
+.stage-scale[data-stage="5"] i:nth-child(5) { width: 28px; background: var(--stage-now); }
+.stage-scale[data-stage="6"] i:nth-child(-n+5) { background: var(--stage-done); }
+.stage-scale[data-stage="6"] i:nth-child(6) { width: 28px; background: var(--stage-now); }
+.stage-scale[data-stage="7"] i:nth-child(-n+6) { background: var(--stage-done); }
+.stage-scale[data-stage="7"] i:nth-child(7) { width: 28px; background: var(--stage-now); }
+.stage-scale[data-stage="8"] i:nth-child(-n+7) { background: var(--stage-done); }
+.stage-scale[data-stage="8"] i:nth-child(8) { width: 28px; background: var(--stage-now); }
+
+
+/* =================================
+   Stage CTA — кнопка этапа 01 «Ваш шаг»
+   Единственная заливная кнопка среди секций-этапов:
+   выделяет шаг, который делает сам клиент.
+   ================================= */
+
+.stage-cta {
+    margin-top: var(--space-lg);
+    margin-left: calc(var(--stage-col) + var(--stage-gap));
+}
+
+.stage-cta .wp-block-button__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    height: 48px;
+    padding: 0 26px;
+
+    border-radius: var(--radius-pill);
+
+    background: var(--color-copper-dark);
+    color: var(--color-white);
+
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+
+    box-shadow: 0 6px 18px rgba(168, 92, 40, 0.28);
+
+    transition:
+        background-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.stage-cta .wp-block-button__link:hover {
+    background: #975224;
+    color: var(--color-white);
+
+    box-shadow: 0 10px 24px rgba(151, 82, 36, 0.34);
+}
+
+.stage-cta__note {
+    margin-top: var(--space-md);
+    margin-left: calc(var(--stage-col) + var(--stage-gap));
+
+    color: var(--color-text-grey);
+
+    font-size: 14px;
+}
+
+
+/* =================================
+   Details link — тихий переключатель
+   ================================= */
+
+.details-link {
+    margin-top: var(--space-lg);
+}
+
+.details-link > summary {
+    list-style: none;
+
+    display: inline-flex;
+    align-items: center;
+
+    padding-bottom: 3px;
+
+    cursor: pointer;
+
+    border-bottom:
+        1.5px solid rgba(192, 112, 58, 0.35);
+
+    color: var(--color-copper-dark);
+
+    font-size: 16px;
+    font-weight: 600;
+
+    transition:
+        color var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.details-link > summary::-webkit-details-marker {
+    display: none;
+}
+
+.details-link > summary::after {
+    content: "";
+
+    width: 6px;
+    height: 6px;
+
+    margin: -3px 0 0 10px;
+
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+
+    transform: rotate(45deg);
+
+    transition:
+        transform var(--transition-fast);
+}
+
+.details-link[open] > summary::after {
+    transform: translateY(3px) rotate(-135deg);
+}
+
+.details-link > summary:hover {
+    color: var(--color-primary);
+    border-bottom-color: currentColor;
+}
+
+/* Переключатель стоит под колонкой текста,
+   содержимое спойлера — на всю ширину */
+.section--stage .details-link > summary {
+    margin-left:
+        calc(var(--stage-col) + var(--stage-gap));
+}
+
+.details-link > .details-content > *:first-child {
+    margin-top: var(--space-xl);
+}
+
+.details-link > .details-content > * + * {
+    margin-top: var(--space-lg);
+}
+
+
+/* =================================
+   Tablet
+   ================================= */
+
+@media (max-width: 1199px) {
+
+    .section--stage {
+        --stage-col: 140px;
+        --stage-gap: var(--space-lg);
+    }
+
+    .stage-num {
+        font-size: 92px;
+    }
+
+    .stage-scale i {
+        width: 11px;
+    }
+}
+
+
+/* =================================
+   Mobile: номер и шкала — строкой над текстом
+   ================================= */
+
+@media (max-width: 767px) {
+
+    .stage-head {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .stage-marker {
+        flex-direction: row;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .stage-num {
+        font-size: 48px;
+        -webkit-text-stroke-width: 2.5px;
+    }
+
+    .stage-scale {
+        margin-top: 0;
+    }
+
+    .stage-scale i {
+        width: 6px;
+    }
+
+    .stage-scale[data-stage="1"] i:nth-child(1) { width: 12px; }
+    .stage-scale[data-stage="2"] i:nth-child(2) { width: 12px; }
+    .stage-scale[data-stage="3"] i:nth-child(3) { width: 12px; }
+    .stage-scale[data-stage="4"] i:nth-child(4) { width: 12px; }
+    .stage-scale[data-stage="5"] i:nth-child(5) { width: 12px; }
+    .stage-scale[data-stage="6"] i:nth-child(6) { width: 12px; }
+    .stage-scale[data-stage="7"] i:nth-child(7) { width: 12px; }
+    .stage-scale[data-stage="8"] i:nth-child(8) { width: 12px; }
+
+    .section--stage .section-lead {
+        font-size: 18px;
+    }
+
+    .section--stage .details-link > summary,
+    .stage-cta,
+    .stage-cta__note {
+        margin-left: 0;
+    }
+}

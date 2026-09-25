@@ -1,0 +1,205 @@
+/* =================================
+   PCB tabs
+   Вкладки типов печатных плат в спойлере #manufacturing:
+   слева список, справа панель выбранного типа.
+
+   Добавлено 2026-09-25 (чат «Единое оформление секций»,
+   формат C4). Работает без JS: радиокнопки + :has().
+   С клавиатуры — Tab до списка, стрелки переключают тип.
+
+   Разметка (один блок «HTML» в Gutenberg):
+   .pcb-tabs
+     input[type=radio][name=pcb-type]#pcb-type-N ×7
+     .pcb-tabs__list > label[for=pcb-type-N] ×7
+     .pcb-tabs__panels
+       .pcb-tabs__panel.pcb-tabs__panel--N ×7
+         .pcb-tabs__media > img
+         .pcb-tabs__body > h3 + p
+   ================================= */
+
+.pcb-tabs {
+    display: grid;
+    grid-template-columns:
+        280px minmax(0, 1fr);
+
+    overflow: hidden;
+
+    border: 1px solid var(--color-separator);
+    border-radius: 12px;
+
+    background: var(--color-white);
+}
+
+.pcb-tabs > input {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pcb-tabs__list {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+
+    padding: 10px;
+
+    border-right: 1px solid var(--color-separator);
+
+    background: var(--color-section-alt);
+}
+
+.pcb-tabs__list label {
+    display: block;
+
+    padding: 12px 14px;
+
+    cursor: pointer;
+
+    border-radius: var(--radius-card);
+
+    color: var(--color-text-grey);
+
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.35;
+
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.pcb-tabs__list label:hover {
+    color: var(--color-primary);
+}
+
+.pcb-tabs__panel {
+    display: none;
+
+    grid-template-columns:
+        200px minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: start;
+
+    padding: var(--space-xl);
+}
+
+.pcb-tabs__media {
+    /* Иконки pcb-type-*.svg уже нарисованы на белой карточке
+       с рамкой — дополнительная подложка не нужна */
+    width: 100%;
+}
+
+.pcb-tabs__media img {
+    display: block;
+
+    width: 100%;
+    height: auto;
+}
+
+.pcb-tabs__body h3 {
+    margin: 0 0 10px;
+
+    font-size: 22px;
+}
+
+.pcb-tabs__body p {
+    margin: 0;
+
+    color: var(--color-text-grey);
+
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* --- состояние выбранной вкладки --- */
+
+.pcb-tabs:has(#pcb-type-1:checked) .pcb-tabs__panel--1 { display: grid; }
+.pcb-tabs:has(#pcb-type-2:checked) .pcb-tabs__panel--2 { display: grid; }
+.pcb-tabs:has(#pcb-type-3:checked) .pcb-tabs__panel--3 { display: grid; }
+.pcb-tabs:has(#pcb-type-4:checked) .pcb-tabs__panel--4 { display: grid; }
+.pcb-tabs:has(#pcb-type-5:checked) .pcb-tabs__panel--5 { display: grid; }
+.pcb-tabs:has(#pcb-type-6:checked) .pcb-tabs__panel--6 { display: grid; }
+.pcb-tabs:has(#pcb-type-7:checked) .pcb-tabs__panel--7 { display: grid; }
+
+.pcb-tabs:has(#pcb-type-1:checked) label[for="pcb-type-1"],
+.pcb-tabs:has(#pcb-type-2:checked) label[for="pcb-type-2"],
+.pcb-tabs:has(#pcb-type-3:checked) label[for="pcb-type-3"],
+.pcb-tabs:has(#pcb-type-4:checked) label[for="pcb-type-4"],
+.pcb-tabs:has(#pcb-type-5:checked) label[for="pcb-type-5"],
+.pcb-tabs:has(#pcb-type-6:checked) label[for="pcb-type-6"],
+.pcb-tabs:has(#pcb-type-7:checked) label[for="pcb-type-7"] {
+    background: var(--color-white);
+    color: var(--color-text-black);
+    box-shadow:
+        inset 3px 0 0 var(--color-copper),
+        0 1px 2px var(--color-card-box-shadow);
+}
+
+.pcb-tabs:has(#pcb-type-1:focus-visible) label[for="pcb-type-1"],
+.pcb-tabs:has(#pcb-type-2:focus-visible) label[for="pcb-type-2"],
+.pcb-tabs:has(#pcb-type-3:focus-visible) label[for="pcb-type-3"],
+.pcb-tabs:has(#pcb-type-4:focus-visible) label[for="pcb-type-4"],
+.pcb-tabs:has(#pcb-type-5:focus-visible) label[for="pcb-type-5"],
+.pcb-tabs:has(#pcb-type-6:focus-visible) label[for="pcb-type-6"],
+.pcb-tabs:has(#pcb-type-7:focus-visible) label[for="pcb-type-7"] {
+    outline: 2px solid var(--color-copper);
+    outline-offset: -2px;
+}
+
+
+/* =================================
+   Tablet
+   ================================= */
+
+@media (max-width: 1199px) {
+
+    .pcb-tabs {
+        grid-template-columns:
+            220px minmax(0, 1fr);
+    }
+
+    .pcb-tabs__panel {
+        grid-template-columns: 1fr;
+    }
+
+    .pcb-tabs__media {
+        max-width: 160px;
+    }
+}
+
+
+/* =================================
+   Mobile: список — горизонтальной лентой сверху
+   ================================= */
+
+@media (max-width: 767px) {
+
+    .pcb-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .pcb-tabs__list {
+        display: flex;
+
+        overflow-x: auto;
+
+        border-right: 0;
+        border-bottom: 1px solid var(--color-separator);
+    }
+
+    .pcb-tabs__list label {
+        white-space: nowrap;
+    }
+
+    .pcb-tabs__panel {
+        padding: var(--space-lg);
+    }
+
+    .pcb-tabs__media {
+        max-width: 120px;
+    }
+}
