@@ -146,6 +146,12 @@ function theme_enqueue_frontend_assets(): void
     );
 
     theme_enqueue_css(
+        'stage-content',
+        'assets/css/components/stage-content.css',
+        array('section-stage')
+    );
+
+    theme_enqueue_css(
         'request-form',
         'assets/css/components/request-form.css',
         array('layout')
@@ -167,6 +173,7 @@ function theme_enqueue_frontend_assets(): void
             'cycle',
             'section-stage',
             'pcb-tabs',
+            'stage-content',
             'request-form'
         )
     );
@@ -265,6 +272,12 @@ function theme_enqueue_editor_assets(): void
     );
 
     theme_enqueue_css(
+        'stage-content',
+        'assets/css/components/stage-content.css',
+        array('section-stage')
+    );
+
+    theme_enqueue_css(
         'request-form',
         'assets/css/components/request-form.css',
         array('layout')
@@ -284,6 +297,7 @@ function theme_enqueue_editor_assets(): void
             'cycle',
             'section-stage',
             'pcb-tabs',
+            'stage-content',
             'request-form'
         )
     );
@@ -326,6 +340,46 @@ function theme_enqueue_scripts(): void
         array(),
         filemtime(
             get_theme_file_path('assets/js/file-uploader.js')
+        ),
+        true
+    );
+
+    wp_enqueue_script(
+        'theme-header',
+        get_theme_file_uri('assets/js/header.js'),
+        array(),
+        filemtime(
+            get_theme_file_path('assets/js/header.js')
+        ),
+        true
+    );
+
+    wp_enqueue_script(
+        'theme-logo',
+        get_theme_file_uri('assets/js/logo.js'),
+        array(),
+        filemtime(
+            get_theme_file_path('assets/js/logo.js')
+        ),
+        true
+    );
+
+    wp_enqueue_script(
+        'theme-cycle',
+        get_theme_file_uri('assets/js/cycle.js'),
+        array(),
+        filemtime(
+            get_theme_file_path('assets/js/cycle.js')
+        ),
+        true
+    );
+
+    wp_enqueue_script(
+        'theme-audit-board',
+        get_theme_file_uri('assets/js/audit-board.js'),
+        array(),
+        filemtime(
+            get_theme_file_path('assets/js/audit-board.js')
         ),
         true
     );

@@ -9,21 +9,26 @@
    одного wp:html. Описание получило класс .cycle-step__text
    (раньше — селектор .cycle-step p): иначе правило перекрашивало
    бы и номер, который теперь тоже <p>.
-   ================================= */
 
-.cycle-grid {
-    display: grid;
+   Изменено 2026-09-25: сквозная «трасса» через все этапы.
+   SVG-дорожку рисует assets/js/cycle.js поверх сетки и
+   перестраивает при любом изменении ширины (ResizeObserver),
+   поэтому переход 04 → 05 (и любые переносы рядов на планшете)
+   не рвётся. Скрипт добавляет сетке класс .cycle-grid--traced —
+   старые пунктирные коннекторы ниже остаются как fallback
+   без JS (селекторы с :not(.cycle-grid--traced)).
+   ================================= */
+.cycle-grid{display: grid;
 
     grid-template-columns:
         repeat(4, minmax(0, 1fr));
 
-    gap: 26px 24px;
+    
+    gap: 40px 28px;
 
-    position: relative;
-}
-
-.cycle-step {
-    position: relative;
+    position: relative;}
+.cycle-step{position: relative;
+    z-index: 1; 
 
     background-color: var(--color-card-background);
 
@@ -37,21 +42,11 @@
     transition:
         transform var(--transition-normal),
         box-shadow var(--transition-normal),
-        border-color var(--transition-normal);
-}
+        border-color var(--transition-normal);}
+.cycle-step:hover{transform: translateY(-4px);
 
-.cycle-step:hover {
-    transform: translateY(-4px);
-
-    box-shadow: 0 8px 20px var(--color-card-box-shadow);
-}
-
-/* Изменено 2026-09-19: кружок -> пилюля (--radius-pill).
-   Бейдж теперь тянется по ширине под текст номера,
-   а не фиксированный квадрат.
-   Изменено 2026-09-21: добавлен margin: 0 — номер теперь <p>. */
-.cycle-step__num {
-    display: inline-flex;
+    box-shadow: 0 8px 20px var(--color-card-box-shadow);}
+.cycle-step__num{display: inline-flex;
     align-items: center;
     justify-content: center;
 
@@ -66,107 +61,173 @@
 
     font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.04em;
-}
-
-.cycle-step h3 {
-    margin: 14px 0 7px;
-    font-size: 16px;
-}
-
-.cycle-step__text {
-    margin: 0;
+    letter-spacing: 0.04em;}
+.cycle-step h3{margin: 14px 0 7px;
+    font-size: 16px;}
+.cycle-step__text{margin: 0;
 
     color: var(--color-text-grey);
 
     font-size: 13.5px;
-    line-height: 1.55;
-}
-
-/* Добавлено 2026-09-24: маленькая пиктограмма этапа, правый
-   верхний угол карточки. Абсолютное позиционирование — не влияет
-   на поток, поэтому текст ниже не сдвигается независимо от того,
-   насколько иконка длинная/короткая. Размер ~28px подобран под
-   высоту пилюли с номером (32px), чтобы визуально уравновесить
-   правый и левый верхние углы карточки. Цвет — медь, основной
-   акцентный цвет сайта. */
-.cycle-step__icon {
-    position: absolute;
+    line-height: 1.55;}
+.cycle-step__icon{position: absolute;
     top: 22px;
     right: 20px;
 
     width: 28px;
     height: 28px;
 
-    color: var(--color-copper);
-}
-
-.cycle-step__icon svg {
-    display: block;
+    color: var(--color-copper);}
+.cycle-step__icon svg{display: block;
 
     width: 100%;
     height: 100%;
 
-    stroke: currentColor;
+    stroke: currentColor;}
+.cycle-trace{position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+
+    overflow: visible;
+    pointer-events: none;}
+.cycle-trace__line{fill: none;
+    stroke: var(--color-copper);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.75;}
+.cycle-trace__pulse{fill: none;
+    stroke: var(--color-gold);
+    stroke-width: 3.5;
+    stroke-linecap: round;
+
+    filter: drop-shadow(0 0 4px rgba(216, 180, 90, 0.95));}
+.cycle-trace__pin{fill: var(--color-copper-light);
+    stroke: var(--color-copper);
+    stroke-width: 1.5;}
+.cycle-trace__tick{fill: none;
+    stroke: var(--color-copper);
+    stroke-width: 2;
+    stroke-linecap: round;}
+.cycle-trace__arrow{fill: none;
+    stroke: var(--color-copper);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;}
+@media (prefers-reduced-motion: reduce){
+.cycle-trace__pulse{display: none;}
 }
+.cycle-grid--fill .cycle-step::after{content: "";
 
-/* Пунктирные коннекторы между карточками на десктопе —
-   визуально связывают шаги в единую цепочку.
-   top пересчитан под новую высоту пилюли (32px вместо 44px):
-   22px padding карточки + половина высоты пилюли (16px) = 38px. */
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
 
-@media (min-width: 901px) {
+    height: 3px;
 
-    .cycle-step:not(:nth-child(4n))::after {
-        content: "";
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+
+    background: linear-gradient(90deg, var(--color-copper), var(--color-gold));
+
+    transform: scaleX(var(--p, 0));
+    transform-origin: left;}
+.cycle-grid--fill .cycle-step.is-done .cycle-step__icon{color: var(--color-primary);
+    transition: color 0.35s ease;}
+.cycle-grid--noicon .cycle-step__icon{display: none;}
+.cycle-grid--dashed .cycle-trace__line{stroke-dasharray: 6 6;
+    opacity: 0.85;}
+.cycle-grid--check .cycle-step__num{position: relative;}
+.cycle-grid--check .cycle-step__num::after{content: "";
+
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    z-index: -1;
+
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+
+    border: 2px solid var(--color-copper-dark);
+    border-radius: var(--radius-pill);
+
+    opacity: 0;
+
+    transition:
+        opacity 0.25s ease,
+        width 0.45s cubic-bezier(0.22, 0.9, 0.3, 1);}
+.cycle-grid--check .cycle-step__num::before{content: "";
+
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 8px);
+
+    width: 14px;
+    height: 14px;
+
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M3.2 8.4l3 3L12.8 4.8" fill="none" stroke="%23A85C28" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') center / 14px no-repeat;
+
+    opacity: 0;
+    transform: translateY(-50%) scale(0.5);
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;}
+.cycle-grid--check .cycle-step.is-active .cycle-step__num::after,.cycle-grid--check .cycle-step.is-done .cycle-step__num::after{opacity: 1;}
+.cycle-grid--check .cycle-step.is-done .cycle-step__num::after{width: calc(100% + 8px + 26px);}
+.cycle-grid--check .cycle-step.is-done .cycle-step__num::before{opacity: 1;
+    transform: translateY(-50%) scale(1);
+    transition-delay: 0.3s;}
+.cycle-trace__glow{fill: none;
+    stroke: var(--color-gold);
+    stroke-width: 3;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px rgba(216, 180, 90, 0.95));}
+.cycle-trace__lit{opacity: 0;
+    transition: opacity 0.3s ease;}
+.cycle-trace__lit.is-lit{opacity: 1;}
+.cycle-trace__label rect{fill: var(--color-page-background);
+    stroke: var(--color-copper);
+    stroke-width: 1.5;}
+.cycle-trace__label text{fill: var(--color-copper-dark);
+    font-family: var(--font-family);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;}
+.cycle-trace .cycle-trace__line--solid{stroke-dasharray: none !important;
+    stroke-width: 3;
+    opacity: 0.9;}
+.cycle-trace .cycle-trace__line--link{stroke-dasharray: none !important;
+    opacity: 0.85;}
+@media (min-width: 641px){
+.cycle-grid[data-parallel="group"]{row-gap: 56px;}
+}
+@media (min-width: 901px){
+.cycle-grid:not(.cycle-grid--traced) .cycle-step:not(:nth-child(4n))::after{content: "";
 
         position: absolute;
         top: 38px;
-        right: -25px;
+        right: -29px;
 
-        width: 25px;
+        width: 29px;
 
         border-top: 2px dashed var(--color-copper);
-        opacity: 0.55;
-    }
+        opacity: 0.55;}
 }
-
-/* =================================
-   Tablet
-   ================================= */
-
-@media (max-width: 1199px) {
-
+@media (max-width: 900px){
+.cycle-grid{grid-template-columns: repeat(2, minmax(0, 1fr));}
+.cycle-grid:not(.cycle-grid--traced) .cycle-step:not(:nth-child(4n))::after{display: none;}
 }
-
-/* =================================
-   Responsive
-   ================================= */
-
-@media (max-width: 900px) {
-
-    .cycle-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .cycle-step:not(:nth-child(4n))::after {
-        display: none;
-    }
-}
-
-@media (max-width: 640px) {
-
-    .cycle-grid {
-        grid-template-columns: 1fr;
+@media (max-width: 640px){
+.cycle-grid{grid-template-columns: 1fr;
 
         padding-left: 30px;
         gap: 16px;
 
-        position: relative;
-    }
-
-    .cycle-grid::before {
-        content: "";
+        position: relative;}
+.cycle-grid:not(.cycle-grid--traced)::before{content: "";
 
         position: absolute;
         left: 9px;
@@ -178,11 +239,8 @@
         background: linear-gradient(
             var(--color-copper),
             rgba(192, 112, 58, 0.15)
-        );
-    }
-
-    .cycle-step::before {
-        content: "";
+        );}
+.cycle-grid:not(.cycle-grid--traced) .cycle-step::before{content: "";
 
         position: absolute;
         left: -27px;
@@ -195,6 +253,8 @@
 
         background: var(--color-copper);
         border: 2px solid var(--color-page-background);
-        box-shadow: 0 0 0 2px rgba(192, 112, 58, 0.5);
-    }
+        box-shadow: 0 0 0 2px rgba(192, 112, 58, 0.5);}
 }
+.cycle-grid *,.cycle-grid *::before,.cycle-grid *::after{box-sizing:border-box}
+.cycle-grid.cycle-grid--fill .cycle-step{clip-path:inset(0 round var(--radius-card))}
+.cycle-grid.cycle-grid--fill .cycle-step::after{border-radius:0}
