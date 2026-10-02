@@ -1,229 +1,137 @@
-/* =================================
-   Section stage
-   Шапка секций-этапов производственного цикла
-   (#order, #audit, #manufacturing, #components, #installation,
-   #inspection, #qc, #logistics): крупный номер этапа, шкала
-   из 8 делений и тихий переключатель спойлера.
-
-   Добавлено 2026-09-25 (чат «Единое оформление секций»,
-   вариант шапки 4.1, шкала S1).
-
-   Разметка:
-   .section.section--stage
-     .stage-head
-       .stage-marker
-         p.stage-num            — номер этапа, «02»
-         .stage-scale[data-stage="2"] > i×8
-       .section-head            — надзаголовок, H2, лид
-     .section-content
-       details.details-link > summary + .details-content
-
-   Этап 01 вместо спойлера: .stage-cta (кнопка) + p.stage-cta__note.
-
-   Номер этапа задаётся дважды: текстом в .stage-num
-   и атрибутом data-stage у шкалы. Раскраску делений
-   делает CSS ниже — вручную деления не красим.
-   ================================= */
-
-.section--stage {
-    --stage-col: 170px;
+/* =====================================================
+   Секции-этапы 01–08: общий стиль («Этапы цикла: итерации», итерация 8)
+   ===================================================== */
+.section--stage{--stage-col: 120px;
     --stage-gap: var(--space-xl);
+    --stage-pad: clamp(36px, 4vw, 56px);
 
-    --stage-done: var(--color-primary);
-    --stage-now: var(--color-gold);
-    --stage-todo: #D5DDD8;
+    --stage-num-size: 112px;
+    --stage-num-h: calc(var(--stage-num-size) * 0.82);
+
+    --stage-axis-gap: 18px;
+    --stage-axis-x: calc(var(--content-spacing) + var(--stage-col) / 2 - 1px);
+    --stage-axis-color: rgba(192, 112, 58, 0.5);
+    --stage-axis-dash: repeating-linear-gradient(
+        to bottom,
+        var(--stage-axis-color) 0 6px,
+        transparent 6px 12px
+    );
+    --stage-axis-lit: linear-gradient(var(--color-copper), var(--color-copper));
 
     --stage-lead-color: #2E3B35;
 
-    /* цвет заливки контурной цифры = фон секции */
+    
     --stage-num-fill: var(--color-page-background);
-}
 
-.section--stage.section--alt {
-    --stage-num-fill: var(--color-section-alt);
-}
+    
+    box-sizing: border-box;
+    width: var(--content-size);
+    max-width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--content-spacing);
+    padding-block: var(--stage-pad);
 
+    
+    background-image: var(--stage-axis-dash), var(--stage-axis-dash);
+    background-repeat: no-repeat;
+    background-size:
+        2px calc(var(--stage-pad) - var(--stage-axis-gap)),
+        2px 100%;
+    background-position:
+        var(--stage-axis-x) 0,
+        var(--stage-axis-x)
+            calc(var(--stage-pad) + var(--stage-num-h) + var(--stage-axis-gap));}
+.section--stage.section--alt{--stage-num-fill: var(--color-section-alt);}
+.section--stage-first{background-size: 0 0, 2px 100%;}
+.section--stage-last{background-size: 2px calc(var(--stage-pad) - var(--stage-axis-gap)), 0 0;}
+.section--stage:has(details[open]){--stage-lit-h: calc(
+        100% - var(--stage-pad) - var(--stage-num-h) - var(--stage-axis-gap) - 24px
+    );
 
-/* =================================
-   Head: номер этапа + текст
-   ================================= */
+    background-image: var(--stage-axis-dash), var(--stage-axis-lit);
+    background-size:
+        2px calc(var(--stage-pad) - var(--stage-axis-gap)),
+        2px var(--stage-lit-h);}
+.section--stage-first:has(details[open]){background-size: 0 0, 2px var(--stage-lit-h);}
+.section--stage:has(details[open])::after{content: "";
 
-.stage-head {
-    display: grid;
+    position: absolute;
+    left: calc(var(--stage-axis-x) - 4px);
+    bottom: 12px;
+
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    background: var(--color-copper);}
+.stage-head{display: grid;
     grid-template-columns:
         var(--stage-col) minmax(0, 1fr);
     gap: var(--stage-gap);
-    align-items: start;
-}
-
-.stage-marker {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-/* Контурная цифра.
-   У Inter часть цифр (например, «4») собрана из наложенных
-   контуров, а соседние цифры из-за трекинга заходят друг
-   на друга. Обычная обводка рисует все эти пересечения.
-   Поэтому цифра заливается цветом фона секции, а обводка
-   двойной толщины рисуется ПОД заливкой (paint-order):
-   заливка прячет внутренние линии и внутреннюю половину
-   обводки, снаружи остаётся чистый контур 1.5px. */
-.stage-num {
-    margin: 0;
+    align-items: start;}
+.stage-marker{display: flex;
+    justify-content: center;}
+.stage-num{margin: 0;
 
     color: var(--stage-num-fill);
     -webkit-text-stroke: 3px var(--color-copper);
     paint-order: stroke fill;
 
-    font-size: 112px;
+    font-size: var(--stage-num-size);
     font-weight: 800;
     line-height: 0.82;
-    letter-spacing: -0.05em;
-}
+    letter-spacing: 0;
+    text-align: center;
 
-.section--stage .section-head {
-    max-width: 680px;
-}
+    transform: translateX(var(--stage-num-nudge, 0));
 
-.section--stage .section-lead {
-    max-width: none;
+    cursor: pointer;
+    user-select: none;
+
+    transition: color var(--transition-normal);}
+.stage-num:hover{color: var(--color-copper-light);}
+.section--stage:has(details[open]) .stage-num{color: var(--color-copper);}
+.section--stage .section-head{max-width: 680px;}
+.section--stage .section-lead{max-width: none;
 
     color: var(--stage-lead-color);
 
     font-size: 20px;
-    line-height: 1.55;
-}
+    line-height: 1.55;}
+.stage-tab{position: absolute;
+    z-index: 3;
+    left: calc(
+        var(--content-spacing) + var(--stage-col) + var(--stage-gap)
+    );
 
-
-/* =================================
-   Stage scale — 8 делений
-   ================================= */
-
-.stage-scale {
-    display: flex;
-    gap: 4px;
-
-    margin-top: 14px;
-}
-
-.stage-scale i {
-    width: 14px;
-    height: 4px;
-
-    border-radius: 2px;
-
-    background: var(--stage-todo);
-}
-
-.stage-scale[data-stage="1"] i:nth-child(1) { width: 28px; background: var(--stage-now); }
-.stage-scale[data-stage="2"] i:nth-child(-n+1) { background: var(--stage-done); }
-.stage-scale[data-stage="2"] i:nth-child(2) { width: 28px; background: var(--stage-now); }
-.stage-scale[data-stage="3"] i:nth-child(-n+2) { background: var(--stage-done); }
-.stage-scale[data-stage="3"] i:nth-child(3) { width: 28px; background: var(--stage-now); }
-.stage-scale[data-stage="4"] i:nth-child(-n+3) { background: var(--stage-done); }
-.stage-scale[data-stage="4"] i:nth-child(4) { width: 28px; background: var(--stage-now); }
-.stage-scale[data-stage="5"] i:nth-child(-n+4) { background: var(--stage-done); }
-.stage-scale[data-stage="5"] i:nth-child(5) { width: 28px; background: var(--stage-now); }
-.stage-scale[data-stage="6"] i:nth-child(-n+5) { background: var(--stage-done); }
-.stage-scale[data-stage="6"] i:nth-child(6) { width: 28px; background: var(--stage-now); }
-.stage-scale[data-stage="7"] i:nth-child(-n+6) { background: var(--stage-done); }
-.stage-scale[data-stage="7"] i:nth-child(7) { width: 28px; background: var(--stage-now); }
-.stage-scale[data-stage="8"] i:nth-child(-n+7) { background: var(--stage-done); }
-.stage-scale[data-stage="8"] i:nth-child(8) { width: 28px; background: var(--stage-now); }
-
-
-/* =================================
-   Stage CTA — кнопка этапа 01 «Ваш шаг»
-   Единственная заливная кнопка среди секций-этапов:
-   выделяет шаг, который делает сам клиент.
-   ================================= */
-
-.stage-cta {
-    margin-top: var(--space-lg);
-    margin-left: calc(var(--stage-col) + var(--stage-gap));
-}
-
-.stage-cta .wp-block-button__link {
-    display: inline-flex;
+    margin: 0;}
+.stage-tab--skip{top: -19px;}
+.stage-tab .wp-block-button__link{display: inline-flex;
     align-items: center;
-    gap: var(--space-sm);
 
-    height: 48px;
-    padding: 0 26px;
+    height: 38px;
+    padding: 0 16px;
 
+    border: 1px solid var(--color-separator);
     border-radius: var(--radius-pill);
 
-    background: var(--color-copper-dark);
-    color: var(--color-white);
+    background: var(--color-white);
+    color: var(--color-copper-dark);
 
-    font-size: 15px;
+    box-shadow: 0 6px 14px rgba(11, 44, 34, 0.08);
+
+    font-size: 14px;
     font-weight: 600;
     line-height: 1;
     text-decoration: none;
 
-    box-shadow: 0 6px 18px rgba(168, 92, 40, 0.28);
-
     transition:
+        border-color var(--transition-fast),
         background-color var(--transition-fast),
-        box-shadow var(--transition-fast);
-}
-
-.stage-cta .wp-block-button__link:hover {
-    background: #975224;
-    color: var(--color-white);
-
-    box-shadow: 0 10px 24px rgba(151, 82, 36, 0.34);
-}
-
-.stage-cta__note {
-    margin-top: var(--space-md);
-    margin-left: calc(var(--stage-col) + var(--stage-gap));
-
-    color: var(--color-text-grey);
-
-    font-size: 14px;
-}
-
-
-/* =================================
-   Details link — тихий переключатель
-   ================================= */
-
-.details-link {
-    margin-top: var(--space-lg);
-}
-
-.details-link > summary {
-    list-style: none;
-
-    display: inline-flex;
-    align-items: center;
-
-    padding-bottom: 3px;
-
-    cursor: pointer;
-
-    border-bottom:
-        1.5px solid rgba(192, 112, 58, 0.35);
-
-    color: var(--color-copper-dark);
-
-    font-size: 16px;
-    font-weight: 600;
-
-    transition:
         color var(--transition-fast),
-        border-color var(--transition-fast);
-}
-
-.details-link > summary::-webkit-details-marker {
-    display: none;
-}
-
-.details-link > summary::after {
-    content: "";
+        box-shadow var(--transition-fast);}
+.stage-tab .wp-block-button__link::after{content: "";
 
     width: 6px;
     height: 6px;
@@ -233,104 +141,134 @@
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
 
-    transform: rotate(45deg);
+    transform: rotate(45deg);}
+.stage-tab .wp-block-button__link:hover{border-color: var(--color-copper);
+    color: var(--color-primary);}
+.stage-tab--skip .wp-block-button__link{color: var(--color-text-grey);}
+.stage-actions{display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0;
+
+    margin-top: var(--space-lg);
+    margin-left: calc(var(--stage-col) + var(--stage-gap));
+
+    overflow: hidden;
+
+    border: 1px solid var(--color-copper-dark);
+    border-radius: var(--radius-pill);
+
+    box-shadow: 0 6px 18px rgba(168, 92, 40, 0.22);}
+.stage-actions .wp-block-button{margin: 0;}
+.stage-actions .wp-block-button__link{display: inline-flex;
+    align-items: center;
+
+    box-sizing: border-box;
+    height: 36px;
+    padding: 0 18px;
+
+    border: 0;
+    border-radius: 0;
+
+    background: var(--color-copper-dark);
+    color: var(--color-white);
+
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
 
     transition:
-        transform var(--transition-fast);
-}
+        background-color var(--transition-fast),
+        color var(--transition-fast);}
+.stage-actions .wp-block-button__link:hover{background: #975224;
+    color: var(--color-white);}
+.stage-actions .stage-actions__secondary .wp-block-button__link{border-left: 1px solid rgba(168, 92, 40, 0.45);
 
-.details-link[open] > summary::after {
-    transform: translateY(3px) rotate(-135deg);
-}
+    background: transparent;
+    color: var(--color-copper-dark);}
+.stage-actions .stage-actions__secondary .wp-block-button__link:hover{background: var(--color-copper-light);
+    color: var(--color-copper-dark);}
+.details-link{margin-top: 0;}
+.details-link > summary{list-style: none;
+    cursor: pointer;}
+.details-link > summary::-webkit-details-marker{display: none;}
+:where(body:not(.editor-styles-wrapper)) .section--stage .details-link > summary{position: absolute;
+    z-index: 1;
+    inset: 0;
 
-.details-link > summary:hover {
-    color: var(--color-primary);
-    border-bottom-color: currentColor;
-}
+    overflow: hidden;
 
-/* Переключатель стоит под колонкой текста,
-   содержимое спойлера — на всю ширину */
-.section--stage .details-link > summary {
+    border-radius: 0;
+
+    
+    color: transparent;
+    white-space: nowrap;
+    text-indent: 200%;}
+.section--stage .details-link > summary:focus-visible{outline: 2px solid var(--color-copper);
+    outline-offset: -2px;}
+:where(body:not(.editor-styles-wrapper)) .section--stage .details-link > summary::after{content: "";
+
+    position: absolute;
+    
+    top: calc(var(--stage-pad) + (var(--stage-num-size) * 0.82 - 44px) / 2);
+    right: var(--content-spacing);
+
+    width: 44px;
+    height: 44px;
+
+    box-sizing: border-box;
+
+    border: 1.5px solid var(--color-separator);
+    border-radius: 50%;
+
+    background:
+        var(--color-white)
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="%23A85C28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+        center / 18px no-repeat;
+
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast),
+        background-color var(--transition-fast);}
+.section--stage .details-link[open] > summary::after{transform: rotate(180deg);
+    border-color: var(--color-copper);}
+.stage-head{border-radius: 12px;
+
+    transition: background-color var(--transition-fast);}
+.section--stage:has(.details-link > summary:hover) .stage-head{background-color: rgba(192, 112, 58, 0.06);
+    box-shadow: 0 0 0 var(--space-md) rgba(192, 112, 58, 0.06);}
+.section--stage:has(.details-link > summary:hover) .details-link > summary::after{border-color: var(--color-copper);
+    background-color: var(--color-copper-light);}
+.section--stage:has(.details-link > summary:hover) .stage-num{color: var(--color-copper-light);}
+.section--stage:has(details[open]):has(.details-link > summary:hover) .stage-num{color: var(--color-copper-dark);}
+.section--stage:has(.details-link) .section-head{padding-right: 64px;}
+.section--stage .details-link > .details-content,.stage-actions{position: relative;
+    z-index: 2;}
+.section--stage .details-link > .details-content{margin-top: var(--space-lg);
     margin-left:
-        calc(var(--stage-col) + var(--stage-gap));
-}
-
-.details-link > .details-content > *:first-child {
-    margin-top: var(--space-xl);
-}
-
-.details-link > .details-content > * + * {
-    margin-top: var(--space-lg);
-}
-
-
-/* =================================
-   Tablet
-   ================================= */
-
-@media (max-width: 1199px) {
-
-    .section--stage {
-        --stage-col: 140px;
+        calc(var(--stage-col) + var(--stage-gap));}
+.details-inner > * + *{margin-top: var(--space-lg);}
+@media (max-width: 1199px){
+.section--stage{--stage-col: 96px;
         --stage-gap: var(--space-lg);
-    }
-
-    .stage-num {
-        font-size: 92px;
-    }
-
-    .stage-scale i {
-        width: 11px;
-    }
+        --stage-num-size: 92px;}
 }
+@media (max-width: 767px){
+.section--stage,.section--stage:has(details[open]){--stage-pad: 32px;
+        --stage-num-size: 52px;
 
-
-/* =================================
-   Mobile: номер и шкала — строкой над текстом
-   ================================= */
-
-@media (max-width: 767px) {
-
-    .stage-head {
-        grid-template-columns: 1fr;
-        gap: 14px;
-    }
-
-    .stage-marker {
-        flex-direction: row;
-        align-items: center;
-        gap: 14px;
-    }
-
-    .stage-num {
-        font-size: 48px;
-        -webkit-text-stroke-width: 2.5px;
-    }
-
-    .stage-scale {
-        margin-top: 0;
-    }
-
-    .stage-scale i {
-        width: 6px;
-    }
-
-    .stage-scale[data-stage="1"] i:nth-child(1) { width: 12px; }
-    .stage-scale[data-stage="2"] i:nth-child(2) { width: 12px; }
-    .stage-scale[data-stage="3"] i:nth-child(3) { width: 12px; }
-    .stage-scale[data-stage="4"] i:nth-child(4) { width: 12px; }
-    .stage-scale[data-stage="5"] i:nth-child(5) { width: 12px; }
-    .stage-scale[data-stage="6"] i:nth-child(6) { width: 12px; }
-    .stage-scale[data-stage="7"] i:nth-child(7) { width: 12px; }
-    .stage-scale[data-stage="8"] i:nth-child(8) { width: 12px; }
-
-    .section--stage .section-lead {
-        font-size: 18px;
-    }
-
-    .section--stage .details-link > summary,
-    .stage-cta,
-    .stage-cta__note {
-        margin-left: 0;
-    }
+        background-image: none;}
+.section--stage:has(details[open])::after{display: none;}
+.stage-head{grid-template-columns: 1fr;
+        gap: 12px;}
+.stage-marker{justify-content: flex-start;}
+.stage-num{-webkit-text-stroke-width: 2.5px;}
+.section--stage .section-lead{font-size: 18px;}
+.section--stage .details-link > .details-content{margin-left: 0;}
+.stage-tab{left: var(--content-spacing);}
+.stage-actions{margin-left: 0;}
+.section--stage:has(.details-link) .section-head{padding-right: 0;}
+.section--stage:has(.details-link) .stage-marker{padding-right: 56px;}
 }
