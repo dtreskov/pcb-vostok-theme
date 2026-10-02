@@ -1,170 +1,167 @@
-.wp-site-blocks > header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
+/* =====================================================
+   Шапка сайта — «Шапка: выбранный вариант»
+   (сжатие при скролле, логотип-концепция 25, дорожка при наведении)
+   ===================================================== */
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 68px)}
+.hdr-sentinel{position:absolute;top:0;left:0;width:1px;height:48px;pointer-events:none}
+
+@property --p{ syntax:'<number>'; inherits:true; initial-value:0; }
+
+.wp-site-blocks > header{
+  --logo-h-start:50px;
+  --hdr-pad:12px;                                   /* отступ сверху и снизу */
+  --k:1.6881;                                       /* уточняется скриптом логотипа */
+  --logo-h:calc(var(--logo-h-start) / (1 + var(--p) * (var(--k) - 1)));
+  --hdr-h:calc(var(--logo-h) + 2 * var(--hdr-pad));
+  --tight:calc(var(--p) * 14);                      /* слова подъезжают к чипу, ед. логотипа */
+  --sc:calc(1 + var(--p) * (var(--k) - 1));         /* рост слов до высоты корпуса */
+  --logo-r:calc(var(--r-full,5.94) + var(--p) * ((var(--k) - 1) * (var(--wa,90) + var(--ww,177)) - 28) / var(--vb-h,63.5));
+
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:100;
+  margin-bottom:calc(var(--logo-h-start) - var(--logo-h));   /* контент под шапкой не прыгает */
+  transition:--p .32s ease;
+}
+.wp-site-blocks > header.is-compact{ --p:1; }
+
+.site-header{background:var(--color-primary-dark);border-bottom:2px solid var(--color-copper);transition:box-shadow .32s ease}
+.is-compact .site-header{box-shadow:0 6px 18px rgba(11,44,34,.18)}
+.site-header__inner{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  width:var(--content-size);max-width:100%;min-height:var(--hdr-h);
+  margin-inline:auto;padding-inline:var(--content-spacing);
 }
 
-.site-header {
-    background: var(--color-primary-dark);
-    border-bottom: 2px solid var(--color-copper);
+/* ---------- Логотип ---------- */
+.site-header__logo{flex:0 0 auto;margin:0}
+.site-header__logo a{display:block;line-height:0;border-radius:4px}
+.site-header__logo a:focus-visible{outline:2px solid var(--color-copper);outline-offset:4px}
+.logo-crop{display:block;overflow:hidden;height:var(--logo-h);width:calc(var(--logo-h) * var(--logo-r))}
+.logo-crop svg{display:block;overflow:visible;max-width:none;
+  height:var(--logo-h);width:calc(var(--logo-h) * var(--r-full,5.94));
+  margin-left:calc(var(--logo-h) * var(--p) * ((var(--k) - 1) * var(--wa,90) - 14) / var(--vb-h,63.5))}
+.lg{--cu:#D2854F;--au:#D8B45A;--au2:#A8893F;--body:#06140F;--hi:#D8B45A;--bg:#0B2C22;--spark:#F6D78C}
+.lg text{font-family:Inter,Arial,sans-serif}
+.lg .i8{font-weight:800;letter-spacing:-.025em}
+.lg .f-ink,.lg .f-wt{fill:#fff} .lg .f-au{fill:var(--au)} .lg .f-au2{fill:var(--au2)}
+.lg .f-body{fill:var(--body)} .lg .f-hi{fill:var(--hi)}
+.lg .s-hi{stroke:var(--hi);fill:none} .lg .s-cu{stroke:var(--cu);fill:none} .lg .s-au{stroke:var(--au);fill:none}
+/* слова: сдвиг к чипу + рост от края, обращённого к чипу; чип и дорожки неподвижны */
+.lg .wtxt{transform-box:fill-box;scale:var(--sc)}
+.lg .wtxt--a{translate:calc(var(--tight) * 1px) 0;transform-origin:right center}
+.lg .wtxt--w{translate:calc(var(--tight) * -1px) 0;transform-origin:left center}
+/* дорожки и центральные выводы втягиваются в чип */
+.lg .tr,.lg .stub{stroke-dasharray:1 1.1;stroke-dashoffset:0;transition:stroke-dashoffset .35s cubic-bezier(.5,0,.3,1)}
+.lg .cap,.lg .via{transform-box:fill-box;transform-origin:center;transition:opacity .2s ease,transform .2s ease}
+.is-compact .lg .tr,.is-compact .lg .stub{stroke-dashoffset:1.05}
+.is-compact .lg .cap,.is-compact .lg .via{opacity:0;transform:scale(0)}
+header:not(.is-compact) .lg .cap,header:not(.is-compact) .lg .via{transition-delay:.25s}
+/* импульс по дорожкам при загрузке и возврате наверх */
+.lg .pulse{stroke:var(--spark);stroke-width:2.8;stroke-linecap:round;fill:none;stroke-dasharray:.2 2;stroke-dashoffset:.2;opacity:0}
+.lg.is-pulsing .pulse{animation:lgPulse .85s cubic-bezier(.4,0,.2,1) forwards}
+.lg.is-pulsing .f-hi{animation:lgLed .85s ease}
+@keyframes lgPulse{0%{stroke-dashoffset:.2;opacity:1}90%{opacity:1}100%{stroke-dashoffset:-1;opacity:0}}
+@keyframes lgLed{0%,100%{fill:var(--hi)}35%{fill:var(--spark)}}
+
+/* ---------- Меню ---------- */
+.site-nav{margin-left:auto}
+.site-nav__list{display:flex;align-items:center;list-style:none;margin:0;padding:0}
+.site-nav__item{position:relative}
+.site-nav__item + .site-nav__item::before{content:'';position:absolute;left:0;top:32%;bottom:32%;width:1px;background:rgba(255,255,255,.14)}
+.site-nav__link{
+  display:flex;align-items:center;justify-content:center;min-height:var(--hdr-h);padding-inline:11px;
+  color:var(--color-white);font-size:15px;font-weight:500;line-height:1.2;text-align:center;text-decoration:none;
+}
+.site-nav__t{position:relative;display:block;white-space:nowrap}
+.site-nav__t--2l{line-height:1.45}
+/* наведение и текущий раздел: медная дорожка с золотым отверстием —
+   под однострочной подписью, между строк у двухстрочной */
+.site-nav__t::after{content:'';position:absolute;left:0;right:6px;bottom:-6px;height:2px;
+  background:var(--color-copper);transform:scaleX(0);transform-origin:left;transition:transform .25s ease}
+.site-nav__t::before{content:'';position:absolute;right:-2px;bottom:-9px;width:8px;height:8px;border-radius:50%;
+  border:2px solid var(--color-gold);background:var(--color-primary-dark);opacity:0;transform:scale(.3);transition:opacity .15s ease,transform .15s ease}
+.site-nav__t--2l::after{bottom:auto;top:calc(50% - 1px)}
+.site-nav__t--2l::before{bottom:auto;top:calc(50% - 4px)}
+.site-nav__link:is(:hover,.is-active) .site-nav__t::after{transform:scaleX(1)}
+.site-nav__link:is(:hover,.is-active) .site-nav__t::before{opacity:1;transform:none;transition-delay:.2s}
+.site-nav__short{display:none}
+
+/* компакт: «Рассчитать стоимость» + «Калькулятор» — сдвоенная пилюля (как .seg в hero) */
+.is-compact .site-nav__item--accent{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);padding-block:4px;animation:navIn .25s ease}
+.is-compact .site-nav__item--req{margin-left:10px;padding-left:4px;border-right:0;border-radius:var(--radius-pill) 0 0 var(--radius-pill)}
+.is-compact .site-nav__item--calc{padding-right:4px;border-left:0;border-radius:0 var(--radius-pill) var(--radius-pill) 0}
+.is-compact .site-nav__item--accent::before{display:none}
+.is-compact .site-nav__item--accent .site-nav__link{min-height:32px;padding:0 16px;border-radius:var(--radius-pill);
+  font-size:13.5px;font-weight:600;line-height:1;transition:background .25s ease,color .25s ease}
+.is-compact .site-nav__item--accent br{display:none}
+.is-compact .site-nav__item--accent .site-nav__t::before,
+.is-compact .site-nav__item--accent .site-nav__t::after{display:none}
+.is-compact .site-nav__item--calc .site-nav__full{display:none}
+.is-compact .site-nav__item--calc .site-nav__short{display:block}
+.is-compact .site-nav__item--req .site-nav__link{background:var(--color-copper-dark);color:#fff}
+.is-compact .site-nav__item--req .site-nav__link:hover{background:var(--color-copper)}
+.is-compact .site-nav__item--calc .site-nav__link{color:#fff}
+.is-compact .site-nav__item--calc .site-nav__link:hover{background:rgba(255,255,255,.1);color:#fff}
+@keyframes navIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* ---------- Контакты ---------- */
+.site-header__contacts{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto;animation:ctIn .3s ease}
+.site-header__phone,.site-header__email{margin:0;line-height:1.25}
+.site-header__contacts a{display:flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}
+.site-header__phone a{color:var(--color-white);font-size:15px;font-weight:600;letter-spacing:-.01em}
+.site-header__email a{color:var(--color-primary-light);font-size:13px}
+.site-header__icon{width:20px;height:20px;flex:0 0 auto;color:var(--color-copper);transition:background .25s ease,color .25s ease}
+.site-header__label{position:relative;display:inline-block}
+.site-header__label::after{content:'';position:absolute;left:0;right:6px;bottom:-4px;height:2px;
+  background:var(--color-copper);transform:scaleX(0);transform-origin:left;transition:transform .25s ease}
+.site-header__label::before{content:'';position:absolute;right:-2px;bottom:-7px;width:8px;height:8px;border-radius:50%;
+  border:2px solid var(--color-gold);background:var(--color-primary-dark);opacity:0;transform:scale(.3);transition:opacity .15s ease,transform .15s ease}
+.site-header__contacts a:hover .site-header__label::after{transform:scaleX(1)}
+.site-header__contacts a:hover .site-header__label::before{opacity:1;transform:none;transition-delay:.2s}
+/* компакт: только иконки в капсуле — зеркально пилюле меню (почта медная, телефон — медная иконка) */
+.is-compact .site-header__contacts{flex-direction:row;align-items:center;gap:2px;padding:4px;border-radius:var(--radius-pill);
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);animation-name:ctIn2}
+.is-compact .site-header__label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.is-compact .site-header__contacts a{border-radius:50%}
+.is-compact .site-header__icon{box-sizing:content-box;width:16px;height:16px;padding:8px;border-radius:50%}
+.is-compact .site-header__email .site-header__icon{background:var(--color-copper-dark);color:#fff}
+.is-compact .site-header__email a:hover .site-header__icon{background:var(--color-copper)}
+.is-compact .site-header__phone a:hover .site-header__icon{background:rgba(255,255,255,.1);color:#fff}
+/* подсказка «Скопировано» */
+.copy-tip{position:fixed;z-index:120;padding:6px 12px;border-radius:var(--radius-pill);pointer-events:none;
+  background:var(--color-primary-dark);border:1px solid var(--color-copper);color:var(--color-copper);
+  font:600 12px/1 var(--font-family);white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.25);
+  opacity:0;transform:translate(-50%,-4px);transition:opacity .2s ease,transform .2s ease}
+.copy-tip.is-on{opacity:1;transform:translate(-50%,0)}
+@keyframes ctIn {from{opacity:.15;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@keyframes ctIn2{from{opacity:.15;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion:reduce){
+  .wp-site-blocks > header{transition:none}
+  .lg .tr,.lg .stub,.lg .cap,.lg .via{transition:none}
+  .lg.is-pulsing .pulse,.lg.is-pulsing .f-hi,.site-header__contacts,.is-compact .site-nav__item--accent{animation:none}
 }
 
-/* display/justify-content/align-items добавлены 2026-09-18 —
-   раньше это давал WP layout support (flex/nowrap/space-between/center),
-   отключённый в functions.php (wp_render_layout_support_flag) */
-.site-header__inner {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    align-items: center;
 
-    width: var(--content-size);
-    max-width: 100%;
-    min-height: 54px;
-    margin-inline: auto;
-    padding-inline: var(--content-spacing);
-    box-sizing: border-box;
-    gap: var(--space-lg);
-}
+/* дорожка при наведении: цвет текста не меняется (иначе a:hover из typography.css красит его в цвет фона шапки);
+   кольцо отверстия 8 px вместе с рамкой — центр на оси дорожки */
+.site-nav__link:hover{color:var(--color-white)}
+.site-header__phone a:hover{color:var(--color-white)}
+.site-header__email a:hover{color:var(--color-primary-light)}
+.site-nav__t::before,.site-header__label::before{box-sizing:border-box}
 
-.site-header .wp-block-site-logo {
-    flex: 0 0 auto;
-}
+/* 2) логотип шапки: viewBox расширен скриптом на --vb-pad с каждой стороны, чтобы слова в компактной
+      шапке не выходили за пределы SVG (Firefox обрезает такое при перерисовке); сдвиг компенсирован */
+.logo-crop svg{
+  width:calc(var(--logo-h) * (var(--r-full,5.94) + 2 * var(--vb-pad,0) / var(--vb-h,63.5)));
+  margin-left:calc(var(--logo-h) * (var(--p) * ((var(--k) - 1) * var(--wa,90) - 14) - var(--vb-pad,0)) / var(--vb-h,63.5))}
 
-
-.site-header .wp-block-site-logo img {
-    width: auto;
-}
-
-.site-header__inner > .wp-block-image {
-    flex: 0 0 auto;
-    margin: 0;
-}
-
-.site-header__inner > .wp-block-image img {
-    display: block;
-    width: 350px;
-    height: auto;
-}
-
-
-/* =================================
-   Site nav
-   Добавлено 2026-09-18: заменяет .wp-block-navigation* —
-   пункты меню теперь статическая разметка (parts/header.html),
-   а не блок wp:navigation, рендерившийся через wp-block-library
-   с непредсказуемым шрифтом/выравниванием.
-   ================================= */
-
-.site-nav {
-    margin-left: auto;
-}
-
-.site-nav__list {
-    display: flex;
-    align-items: center;
-    gap: 0;
-
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.site-nav__item {
-    width: 110px;
-    text-align: center;
-}
-
-.site-nav__link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 100%;
-    min-height: 54px;
-    box-sizing: border-box;
-
-    color: var(--color-white);
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.2;
-    text-align: center;
-    text-decoration: none;
-    white-space: normal;
-
-    transition: color var(--transition-fast);
-}
-
-.site-nav__link:hover {
-    color: var(--color-gold);
-}
-
-.site-nav__item--accent .site-nav__link {
-    color: var(--color-copper);
-}
-
-.site-nav__item--accent .site-nav__link:hover {
-    color: var(--color-gold);
-}
-
-/* display/flex-direction/justify-content добавлены 2026-09-18 —
-   раньше это давал WP layout support (flex/vertical/justify:right),
-   отключённый в functions.php (wp_render_layout_support_flag) */
-.site-header__contacts {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-
-    flex: 0 0 auto;
-    gap: 4px;
-}
-
-.site-header__contacts a {
-    color: var(--color-white);
-    text-decoration: none;
-}
-
-.site-header__phone {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-.site-header__email {
-    margin: 0;
-    font-size: 13px;
-}
-
-.site-header__email a {
-    color: var(--color-primary-light);
-}
-
-.site-header__phone,
-.site-header__email {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.site-header__icon {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 auto;
-    color: var(--color-copper);
-}
-
-.wp-site-blocks > main {
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-/* =================================
-   Tablet
-   Заготовка — заполнить при необходимости.
-   Мобильный бургер-тоггл для .site-nav ещё не реализован —
-   на узких экранах пункты меню просто перенесутся строкой.
-   ================================= */
-
-@media (max-width: 1199px) {
-
-}
+/* Логотип в подвале — концепция 25, тёмная тема (assets/js/logo.js) */
+.site-logo25{display:inline-flex;align-items:center;line-height:0;
+  --bg:#0B2C22;--ink:#FFFFFF;--ink2:#E4EFE9;--cu:#D2854F;--au:#D8B45A;--body:#06140F;--hi:#3E5A4E;--mk:#7E948A;--au2:#A8893F}
+.site-logo25 svg{display:block;max-width:none}
+.site-logo25 svg.lg text{font-family:Inter,Arial,sans-serif}
+.site-logo25 svg.lg .i8{font-weight:800;letter-spacing:-.025em}
+.site-logo25 svg.lg .f-ink{fill:var(--ink)} .site-logo25 svg.lg .f-cu{fill:var(--cu)} .site-logo25 svg.lg .f-au{fill:var(--au)} .site-logo25 svg.lg .f-wt{fill:#fff}
+.site-logo25 svg.lg .f-bg{fill:var(--bg)} .site-logo25 svg.lg .f-body{fill:var(--body)} .site-logo25 svg.lg .f-au2{fill:var(--au2)} .site-logo25 svg.lg .f-hi{fill:var(--hi)}
+.site-logo25 svg.lg .s-hi{stroke:var(--hi);fill:none} .site-logo25 svg.lg .s-cu{stroke:var(--cu);fill:none} .site-logo25 svg.lg .s-au{stroke:var(--au);fill:none}
+.site-footer__logo .site-logo25{margin-bottom:0}
