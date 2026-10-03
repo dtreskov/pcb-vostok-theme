@@ -158,6 +158,12 @@ function theme_enqueue_frontend_assets(): void
     );
 
     theme_enqueue_css(
+        'legal',
+        'assets/css/components/legal.css',
+        array('layout', 'typography')
+    );
+
+    theme_enqueue_css(
         'frontend',
         'assets/css/frontend.css',
         array(
@@ -174,7 +180,8 @@ function theme_enqueue_frontend_assets(): void
             'section-stage',
             'pcb-tabs',
             'stage-content',
-            'request-form'
+            'request-form',
+            'legal'
         )
     );
 }
@@ -284,6 +291,12 @@ function theme_enqueue_editor_assets(): void
     );
 
     theme_enqueue_css(
+        'legal',
+        'assets/css/components/legal.css',
+        array('layout', 'typography')
+    );
+
+    theme_enqueue_css(
         'gutenberg',
         'assets/css/gutenberg.css',
         array(
@@ -298,7 +311,8 @@ function theme_enqueue_editor_assets(): void
             'section-stage',
             'pcb-tabs',
             'stage-content',
-            'request-form'
+            'request-form',
+            'legal'
         )
     );
 }

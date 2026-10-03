@@ -1,0 +1,59 @@
+/* =================================
+   Legal page (/politics)
+   Политики: ПДн, согласие, cookie
+   ================================= */
+
+.legal{padding-block:clamp(32px,4vw,56px) clamp(48px,6vw,88px)}
+.legal .section-head{max-width:760px;margin-bottom:clamp(24px,3vw,40px)}
+.legal .section-head .section-lead{margin-top:12px}
+.legal h1.section-title{font-size:clamp(30px,3.6vw,44px);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin:0}
+.legal [id]{scroll-margin-top:calc(var(--anchor-offset) + 24px)}
+
+/* документ */
+.legal-doc{max-width:740px} /* ≈70 знаков в строке */
+.legal-doc h2{margin:0}
+.legal-meta{margin-top:8px;color:var(--color-text-grey);font-size:13.5px}
+.legal-doc h2+.section-lead{margin-top:10px;font-size:17px;line-height:1.55}
+.legal-doc h3{font-size:18px;line-height:1.3;margin:34px 0 10px}
+.legal-doc p{margin:0 0 10px;font-size:15.5px;line-height:1.7}
+.legal-doc ul{margin:0 0 12px;padding-left:1.25em}
+.legal-doc li{margin:5px 0;font-size:15.5px;line-height:1.65}
+.legal-doc li::marker{color:var(--color-copper)}
+.legal-doc a{color:var(--color-copper-dark);text-decoration:underline;text-decoration-color:rgba(168,92,40,.35);text-underline-offset:3px}
+.legal-doc a:hover{color:var(--color-copper);text-decoration-color:currentColor}
+
+/* карточка цели обработки */
+.legal-purpose{margin:14px 0;padding:18px 22px;background:var(--color-white);border:1px solid var(--color-separator);border-radius:var(--radius-card)}
+.legal-purpose h4{margin:0 0 8px;font-size:16px;line-height:1.3}
+.legal-facts{list-style:none;padding:0!important;margin:0!important}
+.legal-facts li{margin:6px 0}
+.legal-facts strong{color:var(--color-primary)}
+
+/* --- Оглавление сбоку --- */
+.legal-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:clamp(32px,4vw,64px);align-items:start}
+.legal-toc{position:sticky;top:calc(var(--anchor-offset) + 24px);max-height:calc(100vh - var(--anchor-offset) - 48px);overflow-y:auto;border-left:2px solid var(--color-separator);padding-left:18px;font-size:14px;line-height:1.4}
+.legal-toc__label{margin:0 0 12px;font-weight:700;color:var(--color-text-black)}
+.legal-toc ol{list-style:none;margin:0;padding:0}
+.legal-toc>ol>li+li{margin-top:16px}
+.legal-toc>ol>li>a{font-weight:600;color:var(--color-text-black)}
+.legal-toc ol ol{display:grid;gap:5px;margin-top:8px}
+.legal-toc ol ol a{color:var(--color-text-grey);font-size:13px}
+.legal-toc a:hover{color:var(--color-copper)!important}
+.legal-docs .legal-doc+.legal-doc{margin-top:56px;padding-top:48px;border-top:1px solid var(--color-separator)}
+
+/* =================================
+   Responsive
+   ================================= */
+/* узкий экран ИЛИ оглавление не помещается по высоте — переносим его в начало */
+@media (max-width:1199px), (max-height:740px){
+  .legal-layout{grid-template-columns:minmax(0,1fr);gap:28px}
+  .legal-toc{position:static;max-height:none;overflow:visible;padding:16px 20px;background:var(--color-white);border:1px solid var(--color-separator);border-radius:var(--radius-card)}
+  .legal-toc__label{margin-bottom:8px}
+  .legal-toc ol ol{display:none}
+  .legal-toc>ol{display:grid;gap:6px}
+  .legal-toc>ol>li+li{margin-top:0}
+  .legal-toc>ol>li>a{font-weight:500;color:var(--color-copper-dark)}
+}
+@media (max-width:767px){
+  .legal-purpose{padding:16px}
+}
