@@ -398,15 +398,30 @@ function theme_enqueue_scripts(): void
         true
     );
 
-    wp_enqueue_script(
-        'theme-calculator',
-        get_theme_file_uri('assets/js/calculator.js'),
-        array(),
-        filemtime(
-            get_theme_file_path('assets/js/calculator.js')
-        ),
-        true
-    );
+    /*
+     * Калькулятор и JSZip (распаковка ZIP с Gerber прямо в браузере)
+     * подключаются только на странице калькулятора (ID 709, slug calculator).
+     */
+    if (is_page(array(709, 'calculator'))) {
+
+        wp_enqueue_script(
+            'jszip',
+            get_theme_file_uri('assets/js/vendor/jszip.min.js'),
+            array(),
+            '3.10.1',
+            true
+        );
+
+        wp_enqueue_script(
+            'theme-calculator',
+            get_theme_file_uri('assets/js/calculator.js'),
+            array('jszip'),
+            filemtime(
+                get_theme_file_path('assets/js/calculator.js')
+            ),
+            true
+        );
+    }
 }
 
 add_action(
