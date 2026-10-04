@@ -38,13 +38,12 @@
 #b102f .pulse{display:none}
 #b102f .glow{opacity:.28;filter:blur(3px)}
 #b102f .blink{animation:blink8t 1.6s ease-in-out infinite}
-@keyframes float12{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-9px,0)}}
 .hero--v131 h1,.hero--v131 p{margin:0}
 .hero--v131 svg{display:block;max-width:100%}
 .hero--v131 .wrap{width:min(90vw,1290px);margin:0 auto}
 .hero--v131 .rs{width:100%;height:auto;overflow:visible}
 .hero--v131 .v{position:relative;overflow:hidden;color:#fff;background:var(--primary-dark);border-bottom:2px solid var(--copper)}
-.hero--v131 .main{position:relative;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:clamp(28px,5vw,64px);padding:clamp(48px,7vw,92px) 0 clamp(32px,4vw,48px)}
+.hero--v131 .main{position:relative;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:clamp(28px,5vw,64px);padding:clamp(44px,5.4vw,77px) 0 clamp(32px,4vw,48px)}
 .hero--v131 .txt{min-width:0}
 .hero--v131 .board{position:relative;filter:drop-shadow(0 26px 34px rgba(0,0,0,.5))}
 .hero--v131 .h1{font-size:clamp(32px,4.5vw,56px);font-weight:800;letter-spacing:-.03em;line-height:1.12;color:#fff}
@@ -89,10 +88,16 @@
 .hero--v131 .ext7t{left:-200%;top:-62.5%;width:400%;height:225%}
 .hero--v131 .vf7{opacity:0;animation-name:vf7;animation-timing-function:ease-out;animation-iteration-count:infinite}
 .hero--v131 .board12{aspect-ratio:400/320}
+@keyframes float12{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-9px,0)}}
 .hero--v131 .board12 .rs12{position:absolute;left:10%;top:10%;width:80%;height:80%;
   animation:float12 7s ease-in-out infinite;will-change:transform;backface-visibility:hidden}
 @media (prefers-reduced-motion:reduce){
 .hero--v131 .board12 .rs12{animation:none}
+}
+/* Firefox: покачивание платы даёт артефакты отрисовки — отключаем только там (2026-10-03).
+   -moz-appearance понимает только Firefox */
+@supports (-moz-appearance:none){
+.hero--v131 .board12 .rs12{animation:none;will-change:auto}
 }
 .hero--v131 .attrs12{position:relative}
 .hero--v131 .attrs12__in{display:flex}
@@ -122,3 +127,14 @@
 #main.hero--v131::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:200px;
   
   background:radial-gradient(800px 800px at 100% 100%,#1B6B4E 0%,#14543E 34%,#0B2C22 78%);pointer-events:none}
+
+/* Колонка текста — над первой иконкой атрибутов (2026-10-03).
+   Отступ общий: на него же выровнена первая ячейка атрибутов.
+   На ≥1440 — 48px (как было при центрировании ячейки), на узких
+   экранах уменьшается к 14px — внутреннему отступу ячейки. */
+.hero--v131{--hero-inset:clamp(14px,calc(11.14vw - 112px),48px)}
+.hero--v131 .txt{padding-left:var(--hero-inset)}
+.hero--v131 .attrs12__in>.a12:first-child{justify-content:flex-start;padding-left:var(--hero-inset)}
+@media (max-width:1199px){
+.hero--v131{--hero-inset:14px}
+}

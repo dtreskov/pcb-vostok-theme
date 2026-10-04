@@ -27,6 +27,57 @@
 }
 
 /* =================================
+   Page content (wp:post-content)
+   Добавлено 2026-10-03: WP выводит содержимое страницы в обёртке
+   div.entry-content.wp-block-post-content — прямом потомке <main>.
+   Правило выше ограничивало 1290px всю обёртку, поэтому .alignfull
+   (hero) не мог выйти на всю ширину, а на экранах уже 1290px у секций
+   пропадали боковые поля. Раньше это давал constrained layout самого
+   post-content. Теперь обёртка во всю ширину, а ширину держат её дети:
+   min(90vw, 1290px) — как у шапки, подвала и .wrap в hero.
+   ================================= */
+
+.site-main > .wp-block-post-content {
+    max-width: none;
+}
+
+.wp-block-post-content > :where(:not(.alignwide):not(.alignfull)) {
+    max-width: var(--content-size);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.wp-block-post-content > .alignwide {
+    max-width: 90vw;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.wp-block-post-content > .alignfull {
+    max-width: none;
+}
+
+/* =================================
+   Site blocks
+   Добавлено 2026-10-03:
+   - фоны секций (::before, width:100vw) шире окна на ширину полосы
+     прокрутки — горизонтальный скролл обрезаем. clip, а не hidden:
+     clip не создаёт контейнер прокрутки, sticky-шапка продолжает работать;
+   - отступ blockGap ядра WP (24px) перед <main> и подвалом убираем:
+     над hero он давал пустую полосу, обрезая фоновый рисунок сверху,
+     перед подвалом — светлую полосу после тёмной формы заявки.
+   ================================= */
+
+.wp-site-blocks {
+    overflow-x: clip;
+}
+
+.wp-site-blocks > .site-main,
+.wp-site-blocks > footer {
+    margin-block-start: 0;
+}
+
+/* =================================
    Section head
    ================================= */
 
@@ -121,6 +172,13 @@
         var(--width-border-main)
         solid
         var(--color-copper);
+}
+
+/* Последняя секция страницы стоит вплотную к подвалу: её нижняя линия
+   легла бы на верхнюю границу подвала (двойная толщина). Разделитель
+   оставляем один — у подвала (2026-10-03). */
+.wp-block-post-content > .section--dark:last-child::before {
+    border-bottom: 0;
 }
 
 .section--dark .section-title,

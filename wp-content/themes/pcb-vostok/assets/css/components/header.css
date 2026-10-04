@@ -8,7 +8,7 @@ html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 68px)}
 @property --p{ syntax:'<number>'; inherits:true; initial-value:0; }
 
 .wp-site-blocks > header{
-  --logo-h-start:50px;
+  --logo-h-start:clamp(28px,9vw,50px);              /* 50px от 556px ширины; уже — меньше, чтобы логотип и бургер помещались */
   --hdr-pad:12px;                                   /* отступ сверху и снизу */
   --k:1.6881;                                       /* уточняется скриптом логотипа */
   --logo-h:calc(var(--logo-h-start) / (1 + var(--p) * (var(--k) - 1)));
@@ -46,9 +46,11 @@ html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 68px)}
 .lg .f-body{fill:var(--body)} .lg .f-hi{fill:var(--hi)}
 .lg .s-hi{stroke:var(--hi);fill:none} .lg .s-cu{stroke:var(--cu);fill:none} .lg .s-au{stroke:var(--au);fill:none}
 /* слова: сдвиг к чипу + рост от края, обращённого к чипу; чип и дорожки неподвижны */
-.lg .wtxt{transform-box:fill-box;scale:var(--sc)}
-.lg .wtxt--a{translate:calc(var(--tight) * 1px) 0;transform-origin:right center}
-.lg .wtxt--w{translate:calc(var(--tight) * -1px) 0;transform-origin:left center}
+/* точка привязки слова (край к чипу) — начало координат группы, см. header.js (.wtxt-pin);
+   transform-box:fill-box не используем: Firefox по нему терял первую букву логотипа */
+.lg .wtxt{transform-box:view-box;transform-origin:0 0;scale:var(--sc)}
+.lg .wtxt--a{translate:calc(var(--tight) * 1px) 0}
+.lg .wtxt--w{translate:calc(var(--tight) * -1px) 0}
 /* дорожки и центральные выводы втягиваются в чип */
 .lg .tr,.lg .stub{stroke-dasharray:1 1.1;stroke-dashoffset:0;transition:stroke-dashoffset .35s cubic-bezier(.5,0,.3,1)}
 .lg .cap,.lg .via{transform-box:fill-box;transform-origin:center;transition:opacity .2s ease,transform .2s ease}
@@ -165,3 +167,128 @@ header:not(.is-compact) .lg .cap,header:not(.is-compact) .lg .via{transition-del
 .site-logo25 svg.lg .f-bg{fill:var(--bg)} .site-logo25 svg.lg .f-body{fill:var(--body)} .site-logo25 svg.lg .f-au2{fill:var(--au2)} .site-logo25 svg.lg .f-hi{fill:var(--hi)}
 .site-logo25 svg.lg .s-hi{stroke:var(--hi);fill:none} .site-logo25 svg.lg .s-cu{stroke:var(--cu);fill:none} .site-logo25 svg.lg .s-au{stroke:var(--au);fill:none}
 .site-footer__logo .site-logo25{margin-bottom:0}
+
+/* =====================================================
+   Бургер-меню (2026-10-03).
+   Уровни шапки выбирает header.js по ширине (атрибут data-hdr):
+     0 — всё в строке;
+     1 — в строке логотип, кнопки, контакты-иконки, бургер; разделы — в панели;
+     2 — в строке логотип, контакты-иконки, бургер; разделы и кнопки — в панели;
+     3 — в строке логотип и бургер; в панели всё.
+   Скрипт переносит те же узлы между строкой (.site-header__bar) и панелью
+   (#site-menu), поэтому копирование контактов и подсветка раздела работают
+   в обоих местах. Вид задаётся контейнером, а не уровнем.
+   Селекторы с header.is-collapsed перебивают правила компактной шапки.
+   ===================================================== */
+.site-header__menu{display:contents}
+.site-header__bar{display:none}
+.site-burger{display:none}
+.site-burger__close{display:none}
+
+/* примерка уровней в header.js — без переходов (иначе ширина логотипа меряется посреди анимации) */
+header.is-measuring,header.is-measuring *,header.is-measuring *::before,header.is-measuring *::after{transition:none!important}
+
+header.is-collapsed .site-header{position:relative}
+
+/* ---------- строка ---------- */
+header.is-collapsed .site-header__bar{display:flex;align-items:center;gap:10px;margin-left:auto}
+header.is-collapsed .site-header__bar:empty{display:none}
+header.is-collapsed .site-burger{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:42px;height:42px;margin-left:auto;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:var(--radius-pill);
+  background:rgba(255,255,255,.07);color:var(--color-white);cursor:pointer;transition:background .25s ease,border-color .25s ease}
+header.is-collapsed .site-header__bar:not(:empty) + .site-burger{margin-left:0}
+header.is-collapsed .site-burger:hover{background:rgba(255,255,255,.12)}
+header.is-menu-open .site-burger{border-color:var(--color-copper)}
+header.is-collapsed .site-burger:focus-visible{outline:2px solid var(--color-copper);outline-offset:2px}
+header.is-collapsed .site-burger svg{width:20px;height:20px}
+header.is-menu-open .site-burger__open{display:none}
+header.is-menu-open .site-burger__close{display:inline}
+
+/* кнопки в строке — сдвоенная пилюля, как в компактной шапке */
+.site-header__actions{display:flex;align-items:center;margin:0;padding:0;list-style:none}
+.site-header__bar .site-nav__item--accent{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);padding-block:4px}
+.site-header__bar .site-nav__item--req{margin-left:0;padding-left:4px;border-right:0;border-radius:var(--radius-pill) 0 0 var(--radius-pill)}
+.site-header__bar .site-nav__item--calc{padding-right:4px;border-left:0;border-radius:0 var(--radius-pill) var(--radius-pill) 0}
+.site-header__bar .site-nav__item--accent::before{display:none}
+.site-header__bar .site-nav__item--accent .site-nav__link{min-height:32px;padding:0 16px;border-radius:var(--radius-pill);
+  font-size:13.5px;font-weight:600;line-height:1;transition:background .25s ease,color .25s ease}
+.site-header__bar .site-nav__item--accent br{display:none}
+.site-header__bar .site-nav__t::before,.site-header__bar .site-nav__t::after{display:none}
+.site-header__bar .site-nav__item--calc .site-nav__full{display:none}
+.site-header__bar .site-nav__item--calc .site-nav__short{display:block}
+.site-header__bar .site-nav__item--req .site-nav__link{background:var(--color-copper-dark);color:#fff}
+.site-header__bar .site-nav__item--req .site-nav__link:hover{background:var(--color-copper);color:#fff}
+.site-header__bar .site-nav__item--calc .site-nav__link{color:#fff}
+.site-header__bar .site-nav__item--calc .site-nav__link:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* контакты в строке — капсула с иконками, как в компактной шапке */
+.site-header__bar .site-header__contacts{flex-direction:row;align-items:center;gap:2px;padding:4px;border-radius:var(--radius-pill);
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);animation-name:ctIn2}
+.site-header__bar .site-header__label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.site-header__bar .site-header__contacts a{border-radius:50%}
+.site-header__bar .site-header__icon{box-sizing:content-box;width:16px;height:16px;padding:8px;border-radius:50%}
+.site-header__bar .site-header__email .site-header__icon{background:var(--color-copper-dark);color:#fff}
+.site-header__bar .site-header__email a:hover .site-header__icon{background:var(--color-copper)}
+.site-header__bar .site-header__phone a:hover .site-header__icon{background:rgba(255,255,255,.1);color:#fff}
+
+/* ---------- панель ---------- */
+header.is-collapsed .site-header__menu{display:none}
+header.is-collapsed.is-menu-open .site-header__menu{display:block;position:absolute;top:100%;left:0;right:0;
+  max-height:calc(100vh - var(--hdr-h) - 2px);overflow-y:auto;box-sizing:border-box;
+  padding:10px max(var(--content-spacing), calc((100% - var(--content-size)) / 2 + var(--content-spacing))) 22px;
+  background:var(--color-primary-dark);border-bottom:2px solid var(--color-copper);box-shadow:0 14px 28px rgba(11,44,34,.3);
+  animation:menuIn .2s ease}
+@keyframes menuIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+header.is-collapsed .site-header__menu .site-nav{margin:0}
+header.is-collapsed .site-header__menu .site-nav__list{display:flex;flex-wrap:wrap;align-items:center}
+header.is-collapsed .site-header__menu .site-nav__item{flex:0 0 100%;margin:0;padding:0;border:0;border-radius:0;background:none;animation:none}
+header.is-collapsed .site-header__menu .site-nav__item::before{display:none}
+
+/* разделы: строка с тем же эффектом наведения, что в полной шапке —
+   медная дорожка с золотым отверстием на конце */
+header.is-collapsed .site-header__menu .site-nav__item .site-nav__link{display:inline-flex;min-height:0;padding:12px 0;border-radius:0;
+  background:none;color:var(--color-white);font-size:16px;font-weight:500;line-height:1.2;text-align:left}
+header.is-collapsed .site-header__menu .site-nav__link br{display:none}
+header.is-collapsed .site-header__menu .site-nav__t{white-space:nowrap;line-height:1.2}
+header.is-collapsed .site-header__menu .site-nav__t--2l::after{top:auto;bottom:-6px}
+header.is-collapsed .site-header__menu .site-nav__t--2l::before{top:auto;bottom:-9px}
+
+/* кнопки в панели — сдвоенная пилюля в одну строку под разделами */
+header.is-collapsed .site-header__menu .site-nav__item--accent{flex:0 0 auto;margin-top:14px;padding-block:4px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18)}
+header.is-collapsed .site-header__menu .site-nav__item--req{padding-left:4px;border-right:0;border-radius:var(--radius-pill) 0 0 var(--radius-pill)}
+header.is-collapsed .site-header__menu .site-nav__item--calc{padding-right:4px;border-left:0;border-radius:0 var(--radius-pill) var(--radius-pill) 0}
+header.is-collapsed .site-header__menu .site-nav__item--accent .site-nav__link{min-height:38px;padding:0 18px;border-radius:var(--radius-pill);
+  font-size:14.5px;font-weight:600;line-height:1;transition:background .25s ease,color .25s ease}
+header.is-collapsed .site-header__menu .site-nav__item--accent .site-nav__t::before,
+header.is-collapsed .site-header__menu .site-nav__item--accent .site-nav__t::after{display:none}
+header.is-collapsed .site-header__menu .site-nav__item--calc .site-nav__full{display:block}
+header.is-collapsed .site-header__menu .site-nav__item--calc .site-nav__short{display:none}
+header.is-collapsed .site-header__menu .site-nav__item--req .site-nav__link{background:var(--color-copper-dark);color:#fff}
+header.is-collapsed .site-header__menu .site-nav__item--req .site-nav__link:hover{background:var(--color-copper);color:#fff}
+header.is-collapsed .site-header__menu .site-nav__item--calc .site-nav__link{background:none;color:#fff}
+header.is-collapsed .site-header__menu .site-nav__item--calc .site-nav__link:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* контакты в панели — с подписями и тем же эффектом наведения, что в полной шапке */
+header.is-collapsed .site-header__menu .site-header__contacts{flex-direction:column;align-items:flex-start;gap:12px;margin-top:18px;padding:16px 0 0;
+  border:0;border-top:1px solid rgba(255,255,255,.14);border-radius:0;background:none;animation:none}
+header.is-collapsed .site-header__menu .site-header__label{position:relative;width:auto;height:auto;overflow:visible;clip:auto}
+header.is-collapsed .site-header__menu .site-header__phone a{font-size:16px}
+header.is-collapsed .site-header__menu .site-header__email a{font-size:14px}
+header.is-collapsed .site-header__menu .site-header__contacts .site-header__icon,
+header.is-collapsed .site-header__menu .site-header__contacts a:hover .site-header__icon{box-sizing:border-box;width:20px;height:20px;padding:0;
+  border-radius:0;background:none;color:var(--color-copper)}
+
+/* панель уже сдвоенной пилюли — две отдельные кнопки во всю ширину (по ширине самой панели) */
+header.is-collapsed .site-header__menu .site-nav{container-type:inline-size}
+@container (max-width:430px){
+  header.is-collapsed .site-header__menu .site-nav__item--accent{flex:0 0 100%;box-sizing:border-box;margin-top:10px;padding:4px;
+    border:1px solid rgba(255,255,255,.18);border-radius:var(--radius-pill)}
+  header.is-collapsed .site-header__menu .site-nav__item--req{margin-top:16px}
+  header.is-collapsed .site-header__menu .site-nav__item--accent .site-nav__link{display:flex;justify-content:center;width:100%;box-sizing:border-box}
+}
+
+@media (prefers-reduced-motion:reduce){
+  header.is-collapsed.is-menu-open .site-header__menu{animation:none}
+}

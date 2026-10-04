@@ -1,3 +1,15 @@
+/* Ссылки меню ведут на /#якорь — так они работают с любой страницы (контакты,
+   калькулятор, политики). Если якорь есть на текущей странице (главная), делаем
+   ссылку локальной (#якорь): переход без перезагрузки, его ловят подсветка раздела
+   ниже и utils.js (открытие спойлера раздела). Выполняется до них. (2026-10-03) */
+(function(){
+  'use strict';
+  [].forEach.call(document.querySelectorAll('.wp-site-blocks > header a[href^="/#"]'), function(a){
+    var id = a.getAttribute('href').slice(2);
+    if (id && document.getElementById(id)) a.setAttribute('href', '#' + id);
+  });
+})();
+
 /* Шапка сайта: логотип (концепция 25), сжатие при скролле, подсветка раздела, копирование контактов */
 
 /* ===== логотип: построитель концепции 25 + разметка для анимаций ===== */
@@ -114,13 +126,23 @@ function decorate(svg){
   var chip = svg.querySelector('[data-k="u"]');
   [].forEach.call(chip.querySelectorAll('path.s-cu'), function(p){ p.setAttribute('pathLength','1'); p.classList.add('stub'); });
   [].forEach.call(chip.querySelectorAll('circle'), function(c){ if ((c.getAttribute('style')||'').indexOf('--bg') > -1) c.classList.add('via'); });
+  /* слова: g.wtxt-pin (translate к точке привязки) > g.wtxt (CSS scale/translate от 0 0)
+     > g.wtxt-in (translate обратно) > text. Точка привязки — край слова, обращённый к чипу.
+     Без transform-box:fill-box — Firefox по нему терял первую букву при перерисовке. */
   ['a','w'].forEach(function(k){
     var t = svg.querySelector('text[data-k="' + k + '"]');
-    if (!t.parentNode.classList.contains('wtxt')){
+    var inner = t.parentNode, pin;
+    if (!inner.classList.contains('wtxt-in')){
+      pin = document.createElementNS(NS,'g'); pin.setAttribute('class','wtxt-pin');
       var g = document.createElementNS(NS,'g'); g.setAttribute('class','wtxt wtxt--' + k);
-      t.parentNode.insertBefore(g, t); g.appendChild(t);
-    }
-    hdr.style.setProperty(k === 'a' ? '--wa' : '--ww', t.getBBox().width.toFixed(2));
+      inner = document.createElementNS(NS,'g'); inner.setAttribute('class','wtxt-in');
+      t.parentNode.insertBefore(pin, t); pin.appendChild(g); g.appendChild(inner); inner.appendChild(t);
+    } else pin = inner.parentNode.parentNode;
+    var tb = t.getBBox(), dx = t._dx || 0;
+    var ox = k === 'a' ? dx + tb.x + tb.width : dx + tb.x, oy = tb.y + tb.height / 2;
+    pin.setAttribute('transform', 'translate(' + ox.toFixed(2) + ' ' + oy.toFixed(2) + ')');
+    inner.setAttribute('transform', 'translate(' + (-ox).toFixed(2) + ' ' + (-oy).toFixed(2) + ')');
+    hdr.style.setProperty(k === 'a' ? '--wa' : '--ww', tb.width.toFixed(2));
   });
   var vb = svg.getAttribute('viewBox').split(' ').map(Number);
   hdr.style.setProperty('--k', (54 / (44 * 0.727)).toFixed(4));   /* высота корпуса / высота прописных */
@@ -209,3 +231,80 @@ run();
   });
 })();
 
+
+/* ===== бургер-меню (2026-10-03): уровни шапки по ширине окна, см. header.css ===== */
+(function(){
+  'use strict';
+  var hdr = document.querySelector('.wp-site-blocks > header');
+  if (!hdr) return;
+  var inner = hdr.querySelector('.site-header__inner'), menu = hdr.querySelector('#site-menu'),
+      btn = hdr.querySelector('.site-burger'), bar = hdr.querySelector('.site-header__bar'),
+      nav = hdr.querySelector('.site-nav'), list = hdr.querySelector('.site-nav__list'),
+      contacts = hdr.querySelector('.site-header__contacts');
+  if (!inner || !menu || !btn || !bar || !list) return;
+  var accent = [].slice.call(list.querySelectorAll('.site-nav__item--accent'));
+  var actions = document.createElement('ul'); actions.className = 'site-header__actions';
+  var ctHome = contacts && contacts.parentNode, ctNext = contacts && contacts.nextSibling;
+  var level = -1;
+
+  function setOpen(on){
+    hdr.classList.toggle('is-menu-open', on);
+    btn.setAttribute('aria-expanded', String(on));
+    btn.setAttribute('aria-label', on ? 'Закрыть меню' : 'Открыть меню');
+  }
+  /* раскладка уровня: те же узлы — в строку или обратно на место (в панель) */
+  function arrange(l){
+    accent.forEach(function(li){ list.appendChild(li); });          /* кнопки — последние в списке */
+    if (contacts) ctHome.insertBefore(contacts, ctNext);
+    if (actions.parentNode) actions.parentNode.removeChild(actions);
+    hdr.classList.toggle('is-collapsed', l > 0);
+    if (l === 1){ accent.forEach(function(li){ actions.appendChild(li); }); bar.appendChild(actions); }
+    if (contacts && (l === 1 || l === 2)) bar.appendChild(contacts);
+  }
+  function overflows(){
+    return inner.scrollWidth > inner.clientWidth + 1 || (nav && nav.scrollWidth > nav.clientWidth + 1);
+  }
+  function fits(){
+    hdr.classList.remove('is-compact'); var a = !overflows();
+    hdr.classList.add('is-compact');    var b = !overflows();
+    return a && b;
+  }
+  /* Уровень зависит только от ширины окна: каждая раскладка примеряется в полной
+     и компактной шапке (компактная шире — кнопки-пилюли и контакты в строку).
+     Примерка синхронная, без переходов, до отрисовки кадра — на экране не видна. */
+  function check(){
+    var wasCompact = hdr.classList.contains('is-compact');
+    hdr.classList.add('is-measuring');
+    var l = 0;
+    for (; l < 3; l++){ arrange(l); if (fits()) break; }
+    if (l === 3) arrange(3);
+    hdr.classList.toggle('is-compact', wasCompact);
+    getComputedStyle(hdr).getPropertyValue('--p'); void hdr.offsetWidth;   /* фиксируем стиль до возврата переходов */
+    hdr.classList.remove('is-measuring');
+    hdr.setAttribute('data-hdr', l);
+    if (l === 0) setOpen(false);
+    level = l;
+  }
+  var queued = false;
+  function later(){ if (!queued){ queued = true; requestAnimationFrame(function(){ queued = false; check(); }); } }
+
+  window.addEventListener('resize', later);
+  window.addEventListener('pv-logo-ready', later);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(later);
+  /* ширина логотипа и подписей меняется после загрузки шрифта и сборки логотипа */
+  if ('ResizeObserver' in window){
+    var ro = new ResizeObserver(later);
+    [hdr.querySelector('.logo-crop'), list].forEach(function(el){ if (el) ro.observe(el); });
+  }
+
+  btn.addEventListener('click', function(){ setOpen(!hdr.classList.contains('is-menu-open')); });
+  menu.addEventListener('click', function(e){ if (e.target.closest('.site-nav a')) setOpen(false); });
+  bar.addEventListener('click', function(e){ if (e.target.closest('.site-nav a')) setOpen(false); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && hdr.classList.contains('is-menu-open')){ setOpen(false); btn.focus(); }
+  });
+  document.addEventListener('click', function(e){
+    if (hdr.classList.contains('is-menu-open') && !hdr.contains(e.target)) setOpen(false);
+  });
+  check();
+})();
