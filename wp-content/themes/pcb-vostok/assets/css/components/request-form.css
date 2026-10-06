@@ -1,8 +1,9 @@
 /* =================================
    Форма заявки (#request)
 
-   Разметка: inc/request-form.html, шорткод [pcb_request_form context="home|calc"].
-   Логика:   assets/js/request-form.js.
+   Разметка: блоки Gutenberg в страницах (секция #request главной, этап 4 калькулятора) —
+             группы, абзацы, «Детали» и HTML-блоки с полями (form="rq-form").
+   Логика:   assets/js/request-form.js. Хуки — только классы.
 
    Два контекста:
    .request--home — главная: тёмная секция, форма слева, «Что приложить» справа;
@@ -90,7 +91,9 @@
 }
 
 .is-invalid .request-err { display: block; }
-.is-invalid input { border-color: var(--rq-error-line); }
+.is-invalid input,
+.is-invalid textarea { border-color: var(--rq-error-line); }
+.is-invalid .request-drop { border-color: var(--rq-error-line); }
 
 /* --- выбор услуги: сегменты на всю ширину --- */
 
@@ -188,19 +191,22 @@
     stroke-linejoin: round;
 }
 
-.request-drop__pick {
+.request-drop em {
     color: var(--color-gold);
     font-weight: 500;
     text-decoration: underline;
     text-underline-offset: 3px;
 }
 
-.request-drop small {
+.request-drop__hint {
     display: block;
     max-width: 46ch;
     font-size: 12.5px;
     color: var(--rq-dim);
 }
+
+.request-drop em { font-style: normal; }
+.request-drop input[type="file"] { display: none; }
 
 .request-drop__more,
 .request-drop__over { display: none; }
@@ -317,14 +323,19 @@
 
 /* --- кнопка слева, капча справа --- */
 
+/* два столбца: слева кнопка (вся оставшаяся ширина) и под ней согласие, справа — капча */
 .request-actions {
     grid-column: 1 / -1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "submit captcha" "agree captcha";
+    align-items: start;
+    gap: 12px 20px;
 }
+
+.request-actions .request-submit { grid-area: submit; width: 100%; min-width: 0; }
+.request-actions .request-captcha { grid-area: captcha; }
+.request-actions .request-agree { grid-area: agree; }
 
 .request-submit {
     position: relative;
@@ -376,10 +387,10 @@
 /* --- согласие под кнопкой --- */
 
 .request-agree {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0 10px;
     font-size: 12.5px;
     line-height: 1.5;
     color: var(--rq-muted);
@@ -387,11 +398,13 @@
 
 .request-agree input { width: 16px; height: 16px; margin: 1px 0 0; flex: 0 0 auto; accent-color: var(--color-copper); }
 .request-agree a { color: var(--color-primary-light); }
-.request-agree .request-err { margin-top: 4px; }
+.request-agree .request-err { grid-column: 2; margin-top: 4px; }
+.request-agree p { cursor: pointer; }
 
 /* --- успех --- */
 
 .request-success {
+    display: none;
     grid-column: 1 / -1;
     padding: clamp(28px, 4vw, 44px);
     border: 1px solid rgba(216, 180, 90, 0.45);
@@ -419,6 +432,7 @@
 }
 
 .request-form.is-done > :not(.request-success) { display: none; }
+.request-form.is-done > .request-success { display: block; }
 
 
 /* =================================
@@ -469,7 +483,8 @@
     color: var(--color-gold);
 }
 
-.request-checklist small { display: block; font-size: 12.5px; color: #8FA9A0; }
+.request-checklist strong { display: block; font-size: 13.5px; font-weight: 400; color: var(--color-primary-light); }
+.request-checklist li:has(strong) { font-size: 12.5px; color: #8FA9A0; }
 
 .request-sidebar .request-dim { margin: 16px 0 0; font-size: 12.5px; color: #8FA9A0; }
 
@@ -507,7 +522,9 @@
 .request--calc .request-field input:focus,
 .request--calc .request-field textarea:focus { border-color: var(--color-copper); box-shadow: 0 0 0 3px rgba(192, 112, 58, 0.3); }
 .request--calc .request-field ::placeholder { color: #6B7973; }
-.request--calc .is-invalid input { border-color: var(--color-copper-dark); background: var(--color-copper-light); }
+.request--calc .is-invalid input,
+.request--calc .is-invalid textarea { border-color: var(--color-copper-dark); background: var(--color-copper-light); }
+.request--calc .is-invalid .request-drop { border-color: var(--color-copper-dark); }
 
 /* .cx-seg */
 .request--calc .request-services { gap: 2px; background: var(--color-section-alt); border-color: #C9D2CD; }
@@ -606,7 +623,9 @@
 .request-calc__q[aria-expanded="true"] span { background: var(--color-copper); color: var(--color-white); }
 .request-calc__q:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; }
 
-.request-calc__more {
+.request-calc__more { display: none; }
+.request-calc__more.is-open {
+    display: block;
     position: relative;
     z-index: 1;
     grid-row: 2;
@@ -625,13 +644,13 @@
 
 /* спойлер «Что приложить к заявке» — у правого края строки */
 .request-attach { grid-row: 1; grid-column: 2; justify-self: end; min-width: 0; }
-.request-attach:has(details[open]) { grid-column: 1 / -1; justify-self: stretch; }
+.request-attach[open] { grid-column: 1 / -1; justify-self: stretch; }
 .request-attach summary { min-height: 30px; padding-block: 3px; }
 .request-attach .cx-faq__body { padding: 0 18px 14px; gap: 6px; }
 
-.request-attach > .cx-faq__item[open] { border-color: transparent; background: transparent; box-shadow: none; }
+.request-attach[open] { border-color: transparent; background: transparent; box-shadow: none; }
 
-.request-attach > .cx-faq__item[open] > summary {
+.request-attach[open] > summary {
     position: relative;
     z-index: 2;
     width: fit-content;
@@ -643,7 +662,7 @@
     background: var(--color-white);
 }
 
-.request-attach > .cx-faq__item[open] > .cx-faq__body {
+.request-attach[open] > .cx-faq__body {
     position: relative;
     z-index: 1;
     box-sizing: border-box;
@@ -662,9 +681,9 @@
     /* пояснение к «?» — сразу под пилюлей, спойлер — ниже */
     .request-calc__more { grid-row: 2; }
     .request-attach,
-    .request-attach:has(details[open]) { grid-row: 3; grid-column: 1 / -1; justify-self: stretch; }
-    .request-attach > .cx-faq__item[open] > summary { width: auto; margin-left: -1px; }
-    .request-attach > .cx-faq__item[open] > .cx-faq__body { border-radius: 0 0 var(--radius-faq) var(--radius-faq); }
+    .request-attach[open] { grid-row: 3; grid-column: 1 / -1; justify-self: stretch; }
+    .request-attach[open] > summary { width: auto; margin-left: -1px; }
+    .request-attach[open] > .cx-faq__body { border-radius: 0 0 var(--radius-faq) var(--radius-faq); }
 }
 
 /* .cx-drop */
@@ -674,13 +693,13 @@
 .request--calc .request-drop svg { width: 26px; height: 26px; margin-bottom: 6px; stroke: var(--color-copper); stroke-width: 1.7; }
 .request--calc .request-drop__idle,
 .request--calc .request-drop__more { font-size: 16px; font-weight: 600; color: var(--color-text-black); }
-.request--calc .request-drop__pick { color: #975224; font-weight: 600; }
+.request--calc .request-drop em { color: #975224; font-weight: 600; }
 .request--calc .request-drop.is-over .request-drop__over { color: var(--color-copper-dark); }
-.request--calc .request-drop small { margin-top: 4px; font-size: 14px; color: #4A5852; }
+.request--calc .request-drop__hint { margin-top: 4px; font-size: 14px; color: #4A5852; }
 .request--calc .has-files .request-drop { flex-direction: row; justify-content: flex-start; gap: 14px; padding: 14px 18px; text-align: left; }
 .request--calc .has-files .request-drop svg { width: 24px; height: 24px; margin: 0; flex: 0 0 24px; }
 .request--calc .has-files .request-drop__idle,
-.request--calc .has-files .request-drop small { display: none; }
+.request--calc .has-files .request-drop__hint { display: none; }
 .request--calc .has-files .request-drop__more { display: block; font-size: 15px; }
 .request--calc .has-files .request-drop.is-over .request-drop__more { display: none; }
 
@@ -713,8 +732,10 @@
 .request--calc .request-total { display: none; }
 
 .request-attach__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-separator); }
-.request-attach__list li { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid var(--color-separator); font-size: 14px; color: var(--color-text-black); }
-.request-attach__list li span:last-child { text-align: right; font-size: 13px; color: #4A5852; }
+.request-attach__list { list-style: none; }
+/* пункт: <strong>Название</strong> пояснение — название слева, пояснение справа */
+.request-attach__list li { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid var(--color-separator); font-size: 13px; color: #4A5852; text-align: right; }
+.request-attach__list li strong { flex: 0 0 auto; font-size: 14px; font-weight: 400; color: var(--color-text-black); text-align: left; }
 
 /* текст на фоне этапа */
 .request--calc .request-mail,
@@ -754,11 +775,12 @@
     .request--calc .request-services label { padding: 0 6px; font-size: 13px; white-space: normal; line-height: 1.15; }
     .request-submit { width: 100%; min-width: 0; }
     .request-captcha { width: 100%; }
+    /* узко: капча — над кнопкой, согласие — под ней */
+    .request-actions { grid-template-columns: minmax(0, 1fr); grid-template-areas: "captcha" "submit" "agree"; }
     .request-file { grid-template-columns: auto minmax(0, 1fr) auto; }
     .request-file__size { grid-column: 2; grid-row: 2; margin-top: -6px; font-size: 12px; }
     .request-file__rm { grid-row: 1 / span 2; grid-column: 3; }
-    .request-attach__list li { flex-direction: column; gap: 0; }
-    .request-attach__list li span:last-child { text-align: left; }
+    .request-attach__list li { flex-direction: column; gap: 0; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -766,3 +788,33 @@
     .request-form *::before,
     .request-form *::after { transition: none !important; animation: none !important; }
 }
+
+
+/* =================================
+   Редактор Gutenberg: показываем скрытые на сайте части, чтобы их можно было править
+   ================================= */
+
+.editor-styles-wrapper .request-success,
+.editor-styles-wrapper .request-calc__more,
+.editor-styles-wrapper .request-drop__more,
+.editor-styles-wrapper .request-drop__over {
+    display: block;
+    outline: 1px dashed rgba(192, 112, 58, 0.6);
+    outline-offset: 2px;
+}
+
+.editor-styles-wrapper .request-success::before,
+.editor-styles-wrapper .request-calc__more::before,
+.editor-styles-wrapper .request-drop__more::before,
+.editor-styles-wrapper .request-drop__over::before {
+    display: block;
+    margin-bottom: 4px;
+    font: 600 11px/1.3 var(--font-family);
+    color: var(--color-copper);
+}
+
+.editor-styles-wrapper .request-success::before { content: "Показывается после отправки. В тексте: {номер} — номер заявки, {почта} — почта клиента"; }
+.editor-styles-wrapper .request-calc__more::before { content: "Пояснение по «?»"; }
+.editor-styles-wrapper .request-drop__more::before { content: "Когда файлы уже выбраны (калькулятор)"; }
+.editor-styles-wrapper .request-drop__over::before { content: "Пока файл перетаскивают над зоной"; }
+

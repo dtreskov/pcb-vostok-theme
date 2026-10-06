@@ -1967,7 +1967,8 @@
     position: relative;
     z-index: 1;
     box-sizing: border-box;
-    width: calc(200% + var(--space-sm) + 2px);
+    /* ширина строки = 2 ячейки по (контент + 2 × 1px рамки) + зазор */
+    width: calc(200% + var(--space-sm) + 4px);
     margin-left: -1px;
     padding-top: 12px;
     border: 1px solid var(--color-copper);
@@ -1977,7 +1978,7 @@
 
 /* пункты правой колонки: ответ тянется влево */
 .cx-faq > .cx-faq__item:nth-child(even)[open] > .cx-faq__body {
-    margin-left: calc(-100% - var(--space-sm) - 3px);
+    margin-left: calc(-100% - var(--space-sm) - 3px);   /* до левого края строки: своя рамка 1px + зазор + соседняя ячейка */
     border-radius: var(--radius-faq) 0 var(--radius-faq) var(--radius-faq);
 }
 

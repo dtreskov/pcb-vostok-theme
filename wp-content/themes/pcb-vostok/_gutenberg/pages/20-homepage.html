@@ -1046,9 +1046,141 @@
 
 <!-- wp:group {"className":"section-content","layout":{"type":"constrained"}} -->
 <div class="wp-block-group section-content"><!-- wp:group {"className":"request-layout","layout":{"type":"default"}} -->
-<div class="wp-block-group request-layout"><!-- wp:html -->
-[pcb_request_form context="home"]
+<div class="wp-block-group request-layout"><!-- wp:group {"className":"request-form","layout":{"type":"default"}} -->
+<div class="wp-block-group request-form"><!-- wp:html -->
+<form id="rq-form" class="request-form__el" method="post" enctype="multipart/form-data" novalidate hidden></form>
+<input type="hidden" name="source" value="home" form="rq-form">
+<div class="request-hp" aria-hidden="true"><label>Не заполняйте это поле <input type="text" name="pcb_hp_check" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore form="rq-form"></label></div>
 <!-- /wp:html -->
+
+<!-- wp:group {"className":"request-contacts","layout":{"type":"default"}} -->
+<div class="wp-block-group request-contacts"><!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
+<div class="wp-block-group request-field"><!-- wp:html -->
+<label for="rf-email">Электронная почта <i>*</i></label>
+<input type="email" id="rf-email" name="email" placeholder="имя@компания.ru" autocomplete="email" aria-required="true" form="rq-form">
+<span class="request-err">Укажите почту в формате имя@компания.ru</span>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
+<div class="wp-block-group request-field"><!-- wp:html -->
+<label for="rf-phone">Телефон</label>
+<input type="tel" id="rf-phone" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" form="rq-form">
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
+<div class="wp-block-group request-field"><!-- wp:html -->
+<label for="rf-name">Имя</label>
+<input type="text" id="rf-name" name="name" placeholder="Как к вам обращаться" autocomplete="name" form="rq-form">
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
+<div class="wp-block-group request-field"><!-- wp:html -->
+<label for="rf-company">Компания</label>
+<input type="text" id="rf-company" name="company" placeholder="Название организации" autocomplete="organization" form="rq-form">
+<!-- /wp:html --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-field request-field\u002d\u002dfull","layout":{"type":"default"}} -->
+<div class="wp-block-group request-field request-field--full"><!-- wp:paragraph {"className":"request-label"} -->
+<p class="request-label">Услуга</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:html -->
+<div class="request-services" role="radiogroup" aria-label="Услуга">
+  <label><input type="radio" name="service" value="turnkey" checked form="rq-form"><span>Платы под ключ</span></label>
+  <label><input type="radio" name="service" value="pcb" form="rq-form"><span>Только платы</span></label>
+  <label><input type="radio" name="service" value="components" form="rq-form"><span>Только компоненты</span></label>
+  <label><input type="radio" name="service" value="other" form="rq-form"><span>Другое</span></label>
+</div>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-field request-field\u002d\u002dfull","layout":{"type":"default"}} -->
+<div class="wp-block-group request-field request-field--full"><!-- wp:html -->
+<label for="rf-message">Описание задачи</label>
+<textarea id="rf-message" name="message" placeholder="Количество слоёв, материал, особые требования: рентген-контроль, контроль импеданса, метод полупакетов, загрузка ПО…" form="rq-form"></textarea>
+<!-- /wp:html -->
+
+<!-- wp:paragraph {"className":"request-hint"} -->
+<p class="request-hint">Не хотите описывать вручную? Посчитайте плату в <a href="/calculator">онлайн-калькуляторе</a> — параметры и архив перенесутся в заявку одной кнопкой.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-field request-field\u002d\u002dfull request-field\u002d\u002dfiles","layout":{"type":"default"}} -->
+<div class="wp-block-group request-field request-field--full request-field--files"><!-- wp:paragraph {"className":"request-label"} -->
+<p class="request-label">Производственные файлы</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:group {"className":"request-drop","layout":{"type":"default"}} -->
+<div class="wp-block-group request-drop"><!-- wp:html -->
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"/><path d="M12 11v6"/><path d="M9.5 13.5l2.5 -2.5l2.5 2.5"/></svg>
+<input type="file" name="files[]" multiple hidden form="rq-form">
+<!-- /wp:html -->
+
+<!-- wp:paragraph {"className":"request-drop__idle"} -->
+<p class="request-drop__idle">Перетащите файлы сюда или <em>выберите на компьютере</em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":"request-drop__more"} -->
+<p class="request-drop__more">Добавить ещё файлы — <em>выбрать</em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":"request-drop__over"} -->
+<p class="request-drop__over">Отпустите, чтобы приложить</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":"request-drop__hint"} -->
+<p class="request-drop__hint">Лучше одним архивом ZIP/RAR или проектом целиком из САПР. До 10 файлов, до 50 МБ вместе.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:paragraph {"className":"request-mail"} -->
+<p class="request-mail">Большой проект — пришлите на почту <a href="mailto:info@pcb-vostok.ru">info@pcb-vostok.ru</a> или предоставьте ссылкой</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-actions","layout":{"type":"default"}} -->
+<div class="wp-block-group request-actions"><!-- wp:html -->
+<button class="request-submit" type="submit" form="rq-form"><span class="request-submit__spin" aria-hidden="true"></span><span data-submit-label>Отправить заявку</span><span class="request-submit__fill" aria-hidden="true"></span></button>
+<!-- /wp:html -->
+
+<!-- wp:html -->
+<div class="request-captcha"></div>
+<!-- /wp:html -->
+
+<!-- wp:group {"className":"request-agree","layout":{"type":"default"}} -->
+<div class="wp-block-group request-agree"><!-- wp:html -->
+<input type="checkbox" id="rf-agree" name="consent" value="1" aria-required="true" form="rq-form">
+<!-- /wp:html -->
+
+<!-- wp:paragraph -->
+<p>Даю <a href="/politics#consent">согласие на обработку персональных данных</a> и подтверждаю, что ознакомлен(а) с <a href="/politics#privacy">политикой обработки персональных данных</a></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"request-success","layout":{"type":"default"}} -->
+<div class="wp-block-group request-success"><!-- wp:html -->
+<div class="request-success__ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5l10 -10"/></svg></div>
+<!-- /wp:html -->
+
+<!-- wp:heading {"level":3,"className":"request-success__title"} -->
+<h3 class="wp-block-heading request-success__title">Заявка {номер} отправлена</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"className":"request-success__text"} -->
+<p class="request-success__text">Изучим файлы и свяжемся с вами по почте {почта}. Подтверждение мы отправили туда же.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:html -->
+<button class="request-again" type="button">Отправить ещё одну заявку</button>
+<!-- /wp:html --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
 
 <!-- wp:group {"tagName":"aside","className":"request-sidebar","layout":{"type":"default"}} -->
 <aside class="wp-block-group request-sidebar"><!-- wp:heading {"level":3} -->
@@ -1057,27 +1189,27 @@
 
 <!-- wp:list {"ordered":true,"className":"request-checklist"} -->
 <ol class="wp-block-list request-checklist"><!-- wp:list-item -->
-<li>BOM</li>
+<li><strong>BOM</strong></li>
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Pick&amp;Place</li>
+<li><strong>Pick&amp;Place</strong></li>
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Gerber со сверловкой</li>
+<li><strong>Gerber со сверловкой</strong></li>
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Чертёж</li>
+<li><strong>Чертёж</strong></li>
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Параметры платы<small>тираж, слои, материал, финишное покрытие, толщина меди, цвет маски, шелкография</small></li>
+<li><strong>Параметры платы</strong> тираж, слои, материал, финишное покрытие, толщина меди, цвет маски, шелкография</li>
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Stackup<small>для плат от 6 слоёв и при контролируемом импедансе</small></li>
+<li><strong>Stackup</strong> для плат от 6 слоёв и при контролируемом импедансе</li>
 <!-- /wp:list-item --></ol>
 <!-- /wp:list -->
 

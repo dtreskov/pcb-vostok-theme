@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Форма заявки — шорткод [pcb_request_form context="home|calc"].
+ * Форма заявки — подключение на сайте.
  *
- * Одна разметка (inc/request-form.html) для главной (#request) и для
- * страницы калькулятора (этап 4). Блоки <!--home-->…<!--/home--> и
- * <!--calc-->…<!--/calc--> остаются только в своём контексте.
+ * Сама форма собрана из блоков Gutenberg прямо в страницах (секция #request главной
+ * и этап 4 страницы калькулятора) — её тексты, порядок и оформление правятся в редакторе.
+ * Стили: assets/css/components/request-form.css, логика: assets/js/request-form.js,
+ * приём заявок: inc/request-handler.php (POST /wp-json/pcb/v1/request).
  *
- * Приём заявки — inc/request-handler.php (POST /wp-json/pcb/v1/request).
+ * Здесь — настройки для скрипта формы и виджет Yandex SmartCaptcha.
  */
 
 /* Ключ клиента Yandex SmartCaptcha (публичный). Можно задать здесь или в wp-config.php.
@@ -16,38 +17,28 @@ if (!defined('PCB_SMARTCAPTCHA_SITEKEY')) {
     define('PCB_SMARTCAPTCHA_SITEKEY', '');
 }
 
-function pcb_request_form_shortcode($atts): string
+/* Есть ли форма на текущей странице: ищем корневую группу формы в контенте */
+function pcb_request_form_on_page(): bool
 {
-    $atts = shortcode_atts(array('context' => 'home'), $atts, 'pcb_request_form');
-    $context = $atts['context'] === 'calc' ? 'calc' : 'home';
-
-    $file = get_theme_file_path('inc/request-form.html');
-    if (!file_exists($file)) {
-        return '';
+    if (!is_singular()) {
+        return false;
     }
-    $html = file_get_contents($file);
-
-    // служебный комментарий в начале файла
-    $html = preg_replace('/^\s*<!--.*?-->\s*/s', '', $html, 1);
-
-    // контекстные блоки
-    $other = $context === 'calc' ? 'home' : 'calc';
-    $html = preg_replace('/<!--' . $other . '-->.*?<!--\/' . $other . '-->\s*/s', '', $html);
-    $html = preg_replace('/<!--\/?' . $context . '-->\s*/', '', $html);
-
-    if (PCB_SMARTCAPTCHA_SITEKEY !== '') {
-        $captcha = '<div class="smart-captcha request-captcha" data-sitekey="'
-            . esc_attr(PCB_SMARTCAPTCHA_SITEKEY) . '"></div>';
-        wp_enqueue_script('yandex-smartcaptcha', 'https://smartcaptcha.yandexcloud.net/captcha.js', array(), null, true);
-    } else {
-        $captcha = '<div class="request-captcha request-captcha--stub">Антиробот-проверка (SmartCaptcha) — подключится с ключом</div>';
-    }
-
-    return strtr($html, array(
-        '{{context}}'  => $context,
-        '{{endpoint}}' => esc_url(rest_url('pcb/v1/request')),
-        '{{captcha}}'  => $captcha,
-    ));
+    $post = get_post();
+    return $post && strpos((string) $post->post_content, 'request-form') !== false;
 }
 
-add_shortcode('pcb_request_form', 'pcb_request_form_shortcode');
+add_action('wp_enqueue_scripts', function () {
+    if (!wp_script_is('theme-request-form', 'registered') && !wp_script_is('theme-request-form', 'enqueued')) {
+        return;
+    }
+    wp_add_inline_script('theme-request-form', 'window.PCBRequest = ' . wp_json_encode(array(
+        'endpoint' => rest_url('pcb/v1/request'),
+        'sitekey'  => PCB_SMARTCAPTCHA_SITEKEY,
+        'mail'     => 'info@pcb-vostok.ru',
+    )) . ';', 'before');
+
+    if (PCB_SMARTCAPTCHA_SITEKEY !== '' && pcb_request_form_on_page()) {
+        // render=onload: виджет рендерит request-form.js в .request-captcha (window.pcbCaptchaReady)
+        wp_enqueue_script('yandex-smartcaptcha', 'https://smartcaptcha.yandexcloud.net/captcha.js?render=onload&onload=pcbCaptchaReady', array('theme-request-form'), null, true);
+    }
+}, 20);

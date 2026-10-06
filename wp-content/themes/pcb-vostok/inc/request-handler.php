@@ -3,7 +3,7 @@
 /**
  * Заявки с сайта: приём формы, проверка, хранение, письма.
  *
- * Форма — inc/request-form.html (шорткод [pcb_request_form]), отправка —
+ * Форма — блоки Gutenberg в страницах (inc/request-form.php — настройки и капча), отправка —
  * assets/js/request-form.js: multipart POST на /wp-json/pcb/v1/request.
  *
  * Хранение: закрытый тип записей pcb_request («Заявки» в админке).
@@ -41,6 +41,12 @@ const PCB_RQ_STATUSES   = array(
     'quoted' => 'Расчёт отправлен',
     'closed' => 'Закрыта',
 );
+
+function pcb_rq_service_label($code): string
+{
+    $code = (string) $code;
+    return PCB_RQ_SERVICES[$code] ?? ($code !== '' ? $code : '—');
+}
 
 function pcb_rq_const(string $name, $default = '')
 {
@@ -157,7 +163,12 @@ function pcb_rq_submit(WP_REST_Request $req)
     $phone   = $field('phone', 40);
     $name    = $field('name', 120);
     $company = $field('company', 200);
-    $service = isset($p['service']) && isset(PCB_RQ_SERVICES[$p['service']]) ? $p['service'] : 'other';
+    // услуги правятся в редакторе страницы: известные коды — из PCB_RQ_SERVICES, новый вариант
+    // сохраняется как есть (значением radio может быть и просто название услуги)
+    $service = isset($p['service']) ? mb_substr(sanitize_text_field(wp_unslash($p['service'])), 0, 80) : '';
+    if ($service === '') {
+        $service = 'other';
+    }
     $source  = isset($p['source']) && $p['source'] === 'calc' ? 'calc' : 'home';
     $message = isset($p['message']) ? mb_substr(sanitize_textarea_field(wp_unslash($p['message'])), 0, 20000) : '';
     $calc    = array();
@@ -178,6 +189,11 @@ function pcb_rq_submit(WP_REST_Request $req)
     $files = pcb_rq_collect_files($req->get_file_params());
     if (is_wp_error($files)) {
         return $files;
+    }
+
+    // пустая заявка не нужна: должно быть описание задачи или хотя бы один файл
+    if (trim($message) === '' && !$files) {
+        return pcb_rq_error('Приложите файлы или опишите задачу — хотя бы одно из двух.');
     }
 
     set_transient($rk, $count + 1, PCB_RQ_RATE_TTL);
@@ -462,7 +478,7 @@ function pcb_rq_notify(int $id): string
 {
     $m = function ($k) use ($id) { return get_post_meta($id, '_pcb_' . $k, true); };
     $number = $m('number');
-    $service = PCB_RQ_SERVICES[$m('service')] ?? '';
+    $service = pcb_rq_service_label($m('service'));
     $lines = array(
         'Заявка ' . $number . ' · ' . ($m('source') === 'calc' ? 'со страницы калькулятора' : 'с главной'),
         '',
@@ -548,7 +564,7 @@ add_action('manage_pcb_request_posts_custom_column', function ($col, $id) {
             }
             break;
         case 'pcb_service':
-            echo esc_html(PCB_RQ_SERVICES[get_post_meta($id, '_pcb_service', true)] ?? '—');
+            echo esc_html(pcb_rq_service_label(get_post_meta($id, '_pcb_service', true)));
             break;
         case 'pcb_source':
             echo get_post_meta($id, '_pcb_source', true) === 'calc' ? 'Калькулятор' : 'Главная';
@@ -584,7 +600,7 @@ function pcb_rq_metabox($post): void
         'Телефон'  => $m('phone'),
         'Имя'      => $m('name'),
         'Компания' => $m('company'),
-        'Услуга'   => PCB_RQ_SERVICES[$m('service')] ?? '',
+        'Услуга'   => pcb_rq_service_label($m('service')),
         'Откуда'   => $m('source') === 'calc' ? 'Калькулятор' : 'Главная',
         'Страница' => $m('page'),
         'Переход с' => $m('referrer'),
