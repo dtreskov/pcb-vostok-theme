@@ -6,7 +6,7 @@
  *   Распаковка ZIP — assets/js/vendor/jszip.min.js (подключается раньше).
  * — Слияние источников: IPC-2581 → .gbrjob → Gerber, расхождения помечаются.
  * — Оценка монтажа: быстрая и подробная, автоподстановка из IPC-2581.
- * — Итоговая панель и текстовая сводка для будущей формы заявки.
+ * — Итоговая панель и текстовая сводка для формы заявки (window.PCBCalc → assets/js/request-form.js).
  *
  * ВНИМАНИЕ: ставки в объекте R — демонстрационные, формула цены ещё не утверждена.
  */
@@ -86,10 +86,10 @@
     if (!files.length) return;
     files.forEach(function (f) {
       store = store.filter(function (it) { return it.name !== f.name; }); // тот же файл — заменяем
-      var it = { id: ++seq, name: f.name, size: f.size, kind: '?', status: 'busy', note: '', entries: [], ipc: [] };
+      var it = { id: ++seq, file: f, name: f.name, size: f.size, kind: '?', status: 'busy', note: '', entries: [], ipc: [] };
       store.push(it);
       busyCount++;
-      readItem(f, it).then(function () { busyCount--; renderFiles(); if (!busyCount) setTimeout(analyseAll, 350); });
+      readItem(f, it).then(function () { busyCount--; renderFiles(); if (!busyCount) setTimeout(safeAnalyse, 350); });
     });
     renderFiles();
   }
@@ -145,7 +145,7 @@
       var sz = document.createElement('span'); sz.className = 'cx-fsize'; sz.textContent = kb(it.size);
       var del = document.createElement('button'); del.type = 'button'; del.className = 'cx-fdel'; del.textContent = '×';
       del.setAttribute('aria-label', 'Удалить ' + it.name);
-      del.addEventListener('click', function () { store = store.filter(function (x) { return x !== it; }); renderFiles(); analyseAll(); });
+      del.addEventListener('click', function () { store = store.filter(function (x) { return x !== it; }); renderFiles(); safeAnalyse(); });
       li.appendChild(tp); li.appendChild(nm); li.appendChild(sz); li.appendChild(del);
       list.appendChild(li);
     });
@@ -158,7 +158,17 @@
     if (sub) { var s = document.createElement('span'); s.textContent = sub; $('#calc-file-status').appendChild(s); }
     $('#calc-live').textContent = title + (sub ? '. ' + sub : '');
   }
-  $('#calc-reset').addEventListener('click', function () { store = []; renderFiles(); analyseAll(); });
+  $('#calc-reset').addEventListener('click', function () { store = []; renderFiles(); safeAnalyse(); });
+
+  /* Ошибка разбора не должна оставлять калькулятор в состоянии «Разбираем файлы…» */
+  function safeAnalyse() {
+    try { analyseAll(); }
+    catch (e) {
+      if (window.console) console.error('Калькулятор: ошибка разбора файлов', e);
+      setHead('err', 'Не удалось разобрать файлы', 'Заполните параметры вручную или приложите файлы к заявке — разберём их сами.');
+      recalc();
+    }
+  }
 
   /* ================= Разбор IPC-2581 ================= */
   function parseIPC(text) {
@@ -324,8 +334,15 @@
     if (copper.length) G.layers = copper.length;
     var mins = copperText.map(minAperture).filter(Boolean); if (mins.length) G.track = Math.min.apply(null, mins);
     if (drills.length) { var di = drills.map(function (d) { return drillInfo(d.text); }), mn = di.map(function (d) { return d.min; }).filter(Boolean); if (mn.length) G.hole = { min: Math.min.apply(null, mn), hits: di.reduce(function (s, d) { return s + d.hits; }, 0) }; }
-    gerberPads = paste.reduce(function (s, p) { return s + flashes(p.text); }, 0);
-    gerberBottom = paste.filter(function (p) { return /Bot|b[._]paste|\.gbp$/i.test(p.text.slice(0, 200) + p.name); }).reduce(function (s, p) { return s + flashes(p.text); }, 0);
+    // слой пасты на сторону — один: в архиве бывают копии одного слоя из разных выгрузок
+    // (KiCad 5 пишет и F.Paste, и F_Paste) — берём тот, где площадок больше, а не сумму
+    var pasteBySide = {};
+    paste.forEach(function (p) {
+      var bot = /Bot|b[._]paste|\.gbp$/i.test(p.text.slice(0, 200) + p.name), n = flashes(p.text), k = bot ? 'bot' : 'top';
+      if (!(k in pasteBySide) || n > pasteBySide[k]) pasteBySide[k] = n;
+    });
+    gerberPads = (pasteBySide.top || 0) + (pasteBySide.bot || 0);
+    gerberBottom = pasteBySide.bot || 0;
     ipcAsm = ipc && ipc.asm ? ipc.asm : null;
     if (ipcAsm) ipc.sides = ipcAsm.sides;
     if (gerberPads) G.sides = gerberBottom > 0 ? 2 : 1;
@@ -357,10 +374,10 @@
     var apply = {
       sides: function (v) { el('sides').value = String(v); },
       size: function (v) { el('len').value = Math.round(Math.max(v.w, v.h) * 10) / 10; el('wid').value = Math.round(Math.min(v.w, v.h) * 10) / 10; },
-      layers: function (v) { el('layers').value = nearest(el('layers'), v).value; syncInner(); },
-      thick: function (v) { el('thick').value = nearest(el('thick'), v).value; },
-      cuout: function (v) { el('cuout').value = nearest(el('cuout'), v).value; },
-      cuin: function (v) { el('cuin').value = nearest(el('cuin'), v).value; },
+      layers: function (v) { var o = nearest(el('layers'), v); if (!o) return false; el('layers').value = o.value; syncInner(); },
+      thick: function (v) { var o = nearest(el('thick'), v); if (!o) return false; el('thick').value = o.value; },
+      cuout: function (v) { var o = nearest(el('cuout'), v); if (!o) return false; el('cuout').value = o.value; },
+      cuin: function (v) { var o = nearest(el('cuin'), v); if (!o) return false; el('cuin').value = o.value; },
       hole: function (v) { el('hole').value = Math.round(v.min * 100) / 100; },
       track: function (v) { el('track').value = Math.round(v * 1000) / 1000; },
       mat: function (v) { var m = matMap(v); if (!m) return false; el('mat').value = m; },
@@ -449,21 +466,6 @@
   $('#calc-finish-ok').addEventListener('click', function () { finishPending = false; $('#calc-finish-confirm').hidden = true; setBadge('finish', 'manual'); recalc(); });
 
   /* ================= Демо-проекты ================= */
-  function demoGerberZip() {
-    var z = new JSZip(), hdr = '%FSLAX46Y46*%\n%MOMM*%\n';
-    function cu(l, side) { return '%TF.FileFunction,Copper,L' + l + ',' + side + '*%\n' + hdr + '%ADD10C,0.150*%\n%ADD11C,0.250*%\nD10*\nX1000000Y1000000D02*\nX20000000Y1000000D01*\nM02*\n'; }
-    z.file('demo-board-F_Cu.gbr', cu(1, 'Top')); z.file('demo-board-In1_Cu.gbr', cu(2, 'Inr')); z.file('demo-board-In2_Cu.gbr', cu(3, 'Inr')); z.file('demo-board-B_Cu.gbr', cu(4, 'Bot'));
-    z.file('demo-board-Edge_Cuts.gbr', '%TF.FileFunction,Profile,NP*%\n' + hdr + '%ADD10C,0.100*%\nD10*\nX0Y0D02*\nX80000000Y0D01*\nX80000000Y55000000D01*\nX0Y55000000D01*\nX0Y0D01*\nM02*\n');
-    function pasteL(n, side) { var s = '%TF.FileFunction,Paste,' + side + '*%\n' + hdr + '%ADD10R,0.600X0.500*%\nD10*\n'; for (var i = 0; i < n; i++) s += 'X' + (2000000 + (i % 40) * 1800000) + 'Y' + (3000000 + Math.floor(i / 40) * 5000000) + 'D03*\n'; return s + 'M02*\n'; }
-    z.file('demo-board-F_Paste.gbr', pasteL(312, 'Top')); z.file('demo-board-B_Paste.gbr', pasteL(48, 'Bot'));
-    z.file('demo-board-F_Mask.gbr', '%TF.FileFunction,Soldermask,Top*%\n' + hdr + 'M02*\n'); z.file('demo-board-B_Mask.gbr', '%TF.FileFunction,Soldermask,Bot*%\n' + hdr + 'M02*\n');
-    z.file('demo-board-F_Silkscreen.gbr', '%TF.FileFunction,Legend,Top*%\n' + hdr + 'M02*\n');
-    var drl = 'M48\nMETRIC\nT1C0.300\nT2C0.800\n%\nT1\n'; for (var i = 0; i < 120; i++) drl += 'X' + (5 + i * 0.5).toFixed(2) + 'Y10.00\n'; drl += 'T2\n'; for (i = 0; i < 12; i++) drl += 'X' + (10 + i * 5) + '.00Y50.00\n'; drl += 'M30\n';
-    z.file('demo-board-PTH.drl', drl);
-    z.file('demo-board.gbrjob', JSON.stringify({ Header: { GenerationSoftware: { Vendor: 'KiCad', Application: 'Pcbnew', Version: '8.0' } }, GeneralSpecs: { Size: { X: 80, Y: 55 }, LayerNumber: 4, BoardThickness: 1.6 }, DesignRules: [{ Layers: 'Outer', MinLineWidth: 0.15 }], MaterialStackup: [{ Type: 'Legend', Color: 'White' }, { Type: 'SolderMask', Color: 'Green', Thickness: 0.01 }, { Type: 'Copper', Name: 'F.Cu', Thickness: 0.035 }, { Type: 'Dielectric', Material: 'FR4', Thickness: 0.2 }, { Type: 'Copper', Name: 'In1.Cu', Thickness: 0.0175 }, { Type: 'Dielectric', Material: 'FR4', Thickness: 1.065 }, { Type: 'Copper', Name: 'In2.Cu', Thickness: 0.0175 }, { Type: 'Dielectric', Material: 'FR4', Thickness: 0.2 }, { Type: 'Copper', Name: 'B.Cu', Thickness: 0.035 }] }, null, 2));
-    z.file('demo-board.kicad_pro', '{}');
-    return z.generateAsync({ type: 'blob' }).then(function (b) { return new File([b], 'demo-board.zip', { type: 'application/zip' }); });
-  }
   function demoIPC() {
     var L = function (n, fn, side) { return '<Layer name="' + n + '" layerFunction="' + fn + '" polarity="POSITIVE" side="' + side + '"/>'; };
     var specs = '<Spec name="MASK_S"><General type="MATERIAL"><Property text="SOLDERMASK"/><Property text="Color : Green"/></General></Spec>' +
@@ -501,9 +503,24 @@
     return Promise.resolve(new File([xml], 'demo-board.cvg', { type: 'application/xml' }));
   }
   function scrollToFiles() { $('#calc-drop').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }
-  function loadDemo(make) { store = []; renderFiles(); make().then(function (f) { handleFiles([f]); scrollToFiles(); }); } // демо заменяет уже загруженные файлы
-  $('#calc-demo').addEventListener('click', function () { if (typeof JSZip === 'undefined') return; loadDemo(demoGerberZip); });
-  $('#calc-demo-ipc').addEventListener('click', function () { loadDemo(demoIPC); });
+  /* Демо-проект заменяет загруженные файлы: если среди них есть файлы клиента — сначала спрашиваем. */
+  var demoNames = {};
+  function loadDemo(make) {
+    store = []; renderFiles();
+    make().then(function (f) { demoNames[f.name] = true; handleFiles([f]); scrollToFiles(); });
+  }
+  var demoWarn = $('#calc-demo-warn');
+  $('#calc-demo-ipc').addEventListener('click', function () {
+    var own = store.filter(function (it) { return !demoNames[it.name]; });
+    if (!own.length) { demoWarn.hidden = true; loadDemo(demoIPC); return; }
+    $('#calc-demo-warn-text').textContent = (own.length === 1 ? 'Вы уже загрузили файл ' + own[0].name : 'Вы уже загрузили свои файлы (' + own.length + ')') +
+      '. Демо-проект заменит ' + (own.length === 1 ? 'его' : 'их') + ', а поля калькулятора заполнятся данными примера.';
+    $('#calc-demo-cancel').textContent = own.length === 1 ? 'Оставить мой файл' : 'Оставить мои файлы';
+    demoWarn.hidden = false;
+    $('#calc-demo-replace').focus();
+  });
+  $('#calc-demo-replace').addEventListener('click', function () { demoWarn.hidden = true; loadDemo(demoIPC); });
+  $('#calc-demo-cancel').addEventListener('click', function () { demoWarn.hidden = true; $('#calc-demo-ipc').focus(); });
 
   /* ================= Монтаж: режимы ================= */
   function asmMode() { var r = $('input[name="asm"]:checked'); return r ? r.value : 'quick'; }
@@ -646,10 +663,12 @@
     if (g.BoardThickness) out.thick = +g.BoardThickness;
     if (g.Finish && !/^none$/i.test(g.Finish)) out.finish = g.Finish;
     var st = j.MaterialStackup || [], cu = st.filter(function (s) { return s.Type === 'Copper'; });
-    if (cu.length) {
-      out.cuout = Math.round(+cu[0].Thickness * 1000);
-      if (cu.length > 2) out.cuin = Math.round(+cu[1].Thickness * 1000);
-    }
+    // толщина меди есть не у всех САПР (KiCad 5 пишет слои без Thickness) — берём только реальные числа
+    var um = function (s) { var t = parseFloat(s && s.Thickness); return isFinite(t) && t > 0 ? Math.round(t * 1000) : null; };
+    if (cu.length && um(cu[0]) != null) out.cuout = um(cu[0]);
+    if (cu.length > 2 && um(cu[1]) != null) out.cuin = um(cu[1]);
+    if (out.thick != null && !(isFinite(out.thick) && out.thick > 0)) delete out.thick;
+    if (out.layers != null && !(isFinite(out.layers) && out.layers > 0)) delete out.layers;
     st.forEach(function (s) {
       if (s.Type === 'SolderMask' && s.Color && !out.mask) out.mask = s.Color;
       if (s.Type === 'Legend' && s.Color && !out.silk) out.silk = s.Color;
@@ -662,6 +681,7 @@
   /* Сопоставление значений из файла со списками */
   function nearest(sel, v) {
     var best = null, d = Infinity;
+    if (typeof v !== 'number' || !isFinite(v)) return null;
     [].forEach.call(sel.options, function (o) { var dd = Math.abs(parseFloat(o.value) - v); if (dd < d) { d = dd; best = o; } });
     return best;
   }
@@ -806,28 +826,93 @@
   }
 
   function selText(key) { var e = el(key); return e && e.selectedOptions ? e.selectedOptions[0].textContent : ''; }
-  function renderSummaryText(r) {
-    var lines = [];
-    lines.push('Тираж: ' + (val('qty') || '—') + ' шт');
-    lines.push('Габариты: ' + (val('len') || '—') + ' × ' + (val('wid') || '—') + ' мм');
-    lines.push('Слоёв: ' + val('layers') + ', толщина ' + selText('thick') + ' мм, медь ' + val('cuout') + ' мкм');
-    lines.push('Материал: ' + selText('mat') + ', покрытие: ' + selText('finish'));
-    lines.push('Маска: ' + selText('mask') + ', маркировка: ' + selText('silk'));
-    lines.push('Компоненты: ' + selText('sides').toLowerCase());
-    var m = asmMode(); lines.push('Монтаж: ' + ({ none: 'без монтажа', quick: 'быстрая оценка', detail: 'подробная оценка' })[m]);
-    lines.push('Проверка по ПМИ: входит в заказ');
-    if (finishPending) lines.push('Финишное покрытие: не уточнено (в расчёте HASL)');
-    if (r.ok) lines.push('Оценка калькулятора: ' + (r.engineer ? 'расчёт инженером (' + r.warn.join(', ') + ')' : fmt(r.lo) + ' – ' + fmtR(r.hi)));
+  /* Текстовая сводка всех заполненных полей — для формы заявки (кнопка «Прикрепить данные из калькулятора»). */
+  function buildSummary(r) {
+    var L = [], lc = function (t) { return t ? t.charAt(0).toLowerCase() + t.slice(1) : t; };
+    var has = function (k) { return String(val(k)).trim() !== ''; };
+    var dec = function (k) { return String(val(k)).trim().replace('.', ','); };
+    // плата
+    L.push('Тираж: ' + (val('qty') || '—') + ' шт');
+    L.push('Габариты: ' + (dec('len') || '—') + ' × ' + (dec('wid') || '—') + ' мм');
+    L.push('Слоёв: ' + val('layers') + (has('thick') ? ', толщина ' + selText('thick') + ' мм' : ''));
+    var cu = [];
+    if (has('cuout')) cu.push('наружные слои ' + val('cuout') + ' мкм');
+    if (!el('cuin').disabled && has('cuin')) cu.push('внутренние ' + val('cuin') + ' мкм');
+    if (cu.length) L.push('Медь: ' + cu.join(', '));
+    if (has('mat')) L.push('Материал: ' + selText('mat'));
+    L.push('Финишное покрытие: ' + (finishPending ? 'не уточнено (в расчёте HASL)' : selText('finish')));
+    var ms = [];
+    if (has('mask')) ms.push('маска ' + lc(selText('mask')));
+    if (has('silk')) ms.push('маркировка ' + lc(selText('silk')));
+    if (ms.length) L.push('Цвет: ' + ms.join(', '));
+    var ex = [];
+    if (has('track')) ex.push('мин. ширина дорожки ' + dec('track') + ' мм');
+    if (has('hole')) ex.push('мин. отверстие ' + dec('hole') + ' мм');
+    if (ex.length) L.push('Топология: ' + ex.join(', '));
+    L.push('Компоненты: ' + lc(selText('sides')) + '; поставка: ' + lc(selText('panel')));
+    var req = $$('.cx-checks input:checked').map(function (i) { return lc(i.parentNode.textContent.trim()); });
+    if (req.length) L.push('Особые требования: ' + req.join(', '));
+    // монтаж
+    var m = asmMode();
+    if (m === 'none') L.push('Монтаж: без монтажа');
+    else if (m === 'quick') {
+      L.push('Монтаж (быстрая оценка): простые SMD — ' + (val('q_smd') || 0) + ', DIP-выводов — ' + (val('q_dip') || 0) +
+        ', BGA — ' + (val('q_bga') || 0) + ', QFN/QFP и др. многовыводные — ' + (val('q_qfn') || 0));
+    } else {
+      var rows = $$('.cx-table tbody tr').map(function (tr) {
+        var ins = tr.querySelectorAll('input'), n = ins[0] ? +ins[0].value || 0 : 0;
+        if (!n) return null;
+        var pins = ins[1] ? +ins[1].value || 0 : 0;
+        return tr.querySelector('th').textContent.trim() + ' — ' + n + ' шт' + (pins ? ' × ' + pins + ' выв.' : '');
+      }).filter(Boolean);
+      L.push('Монтаж (подробная оценка)' + (rows.length ? ':' : ': корпуса не указаны'));
+      rows.forEach(function (t) { L.push('  · ' + t); });
+    }
+    if (m !== 'none') L.push('Проверка по ПМИ: входит в заказ');
+    // оценка
+    if (r && r.ok) {
+      L.push('Оценка калькулятора: ' + (r.engineer ? 'расчёт инженером' : fmt(r.lo) + ' – ' + fmtR(r.hi) + ' (≈ ' + fmtR(r.per) + ' за плату)'));
+      if (!r.engineer && r.lines && r.lines.length) L.push('Из чего складывается: ' + r.lines.map(function (l) { return l.name + ' ' + (l.text || '≈ ' + fmtR(l.v)); }).join('; '));
+      if (r.warn && r.warn.length) L.push('Требует расчёта инженером: ' + r.warn.join(', '));
+      if (r.term) L.push('Срок: ' + r.term);
+    } else if (r && r.reason) L.push('Оценка калькулятора: нет — ' + lc(r.reason));
     var okFiles = store.filter(function (it) { return it.status === 'ok'; }).map(function (it) { return it.name; });
-    if (okFiles.length) lines.push('Файлы проекта: ' + okFiles.join(', ') + ' — приложатся к заявке');
-    $('#calc-summary-text').textContent = lines.join('\n');
+    if (okFiles.length) L.push('Файлы проекта: ' + okFiles.join(', ') + ' — приложены к заявке');
+    return L.join('\n');
   }
+  function renderSummaryText(r) {
+    summaryText = buildSummary(r);
+    var out = $('#calc-summary-text'); if (out) out.textContent = summaryText;
+  }
+  var summaryText = '';
 
-  root.addEventListener('input', function (e) { if (e.target.matches('input,select')) recalc(); });
-  root.addEventListener('change', function (e) { if (e.target.matches('input,select')) recalc(); });
+  /* Для формы заявки (assets/js/request-form.js): сводка и загруженные файлы. */
+  window.PCBCalc = {
+    getSummary: function () { return buildSummary(lastRes || compute()); },
+    /* структурированные данные расчёта — для аналитики заявок (/panel) */
+    getData: function () {
+      var r = lastRes || compute(), d = {};
+      ['qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel'].forEach(function (k) { d[k] = val(k); });
+      if (el('cuin').disabled) delete d.cuin;
+      d.special = $$('.cx-checks input:checked').map(function (i) { return i.dataset.key; });
+      d.asm = asmMode();
+      d.asm_values = {};
+      $$('[data-key^="q_"], [data-key^="d_"], [data-key^="p_"]').forEach(function (i) { if (+i.value) d.asm_values[i.dataset.key] = +i.value; });
+      d.finish_pending = finishPending;
+      if (r && r.ok) { d.estimate = r.engineer ? 'engineer' : { lo: Math.round(r.lo), hi: Math.round(r.hi), per: Math.round(r.per) }; d.term = r.term; d.warn = r.warn; }
+      d.files = store.filter(function (it) { return it.status === 'ok'; }).map(function (it) { return it.name; });
+      return d;
+    },
+    getFiles: function () { return store.filter(function (it) { return it.status === 'ok' && it.file; }).map(function (it) { return it.file; }); }
+  };
+
+  /* поля формы заявки (этап 4, #request) на расчёт не влияют */
+  function isCalcField(t) { return t.matches('input,select') && !t.closest('#request'); }
+  root.addEventListener('input', function (e) { if (isCalcField(e.target)) recalc(); });
+  root.addEventListener('change', function (e) { if (isCalcField(e.target)) recalc(); });
 
   $('#calc-cta').addEventListener('click', function () {
-    $('#calc-request').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    $('#request').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     sumBox.classList.remove('is-open'); $('#calc-summary-toggle').setAttribute('aria-expanded', 'false');
   });
   var sumBox = $('#calc-summary');

@@ -1,0 +1,115 @@
+<!--
+  Форма заявки — общая разметка для главной (#request) и страницы калькулятора (этап 4).
+  Выводится шорткодом [pcb_request_form context="home|calc"] (inc/request-form.php).
+  Фрагменты в маркерах home и calc остаются только в своём контексте.
+  Плейсхолдер captcha — виджет Yandex SmartCaptcha (или заглушка, пока не задан ключ).
+  Стили: assets/css/components/request-form.css, логика: assets/js/request-form.js.
+-->
+<form class="request-form" id="request-form" method="post" enctype="multipart/form-data" novalidate data-request-form data-context="{{context}}" data-endpoint="{{endpoint}}">
+  <input type="hidden" name="source" value="{{context}}">
+  <div class="request-hp" aria-hidden="true"><label>Сайт <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+  <div class="request-contacts">
+    <div class="request-field" data-field="email">
+      <label for="rf-email">Электронная почта <i>*</i></label>
+      <input type="email" id="rf-email" name="email" placeholder="имя@компания.ru" autocomplete="email" required>
+      <span class="request-err" id="rf-email-err">Укажите почту в формате имя@компания.ru</span>
+    </div>
+    <div class="request-field">
+      <label for="rf-phone">Телефон</label>
+      <input type="tel" id="rf-phone" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel">
+    </div>
+    <div class="request-field">
+      <label for="rf-name">Имя</label>
+      <input type="text" id="rf-name" name="name" placeholder="Как к вам обращаться" autocomplete="name">
+    </div>
+    <div class="request-field">
+      <label for="rf-company">Компания</label>
+      <input type="text" id="rf-company" name="company" placeholder="Название организации" autocomplete="organization">
+    </div>
+  </div>
+
+  <div class="request-field request-field--full">
+    <span class="request-label" id="rf-service-lbl">Услуга</span>
+    <div class="request-services" role="radiogroup" aria-labelledby="rf-service-lbl">
+      <label><input type="radio" name="service" value="turnkey" checked><span>Платы под ключ</span></label>
+      <label><input type="radio" name="service" value="pcb"><span>Только платы</span></label>
+      <label><input type="radio" name="service" value="components"><span>Только компоненты</span></label>
+      <label><input type="radio" name="service" value="other"><span>Другое</span></label>
+    </div>
+  </div>
+
+  <div class="request-field request-field--full">
+    <label for="rf-message">Описание задачи</label>
+    <textarea id="rf-message" name="message" data-message placeholder="Количество слоёв, материал, особые требования: рентген-контроль, контроль импеданса, метод полупакетов, загрузка ПО…"></textarea>
+    <!--home-->
+    <p class="request-hint">Не хотите описывать вручную? Посчитайте плату в <a href="/calculator">онлайн-калькуляторе</a> — параметры и архив перенесутся в заявку одной кнопкой.</p>
+    <!--/home-->
+    <!--calc-->
+    <div class="request-calc">
+      <div class="request-calc__group">
+        <button class="request-calc__btn" type="button" data-calc-attach data-on="Данные прикреплены" data-off="Прикрепить данные из калькулятора"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"/></svg><span data-calc-label>Прикрепить данные из калькулятора</span></button>
+        <button class="request-calc__q" type="button" aria-expanded="false" aria-controls="rf-calc-help" aria-label="Что делает кнопка" data-calc-help><span>?</span></button>
+      </div>
+      <div class="request-attach">
+        <details class="cx-faq__item">
+          <summary>Что приложить к заявке</summary>
+          <div class="cx-faq__body">
+            <ul class="request-attach__list">
+              <li><span>BOM</span><span></span></li>
+              <li><span>Pick&amp;Place</span><span></span></li>
+              <li><span>Gerber со сверловкой</span><span></span></li>
+              <li><span>Чертёж</span><span></span></li>
+              <li><span>Параметры платы</span><span>тираж, слои, материал, покрытие, медь, маска, шелкография</span></li>
+              <li><span>Stackup</span><span>от 6 слоёв и при контроле импеданса</span></li>
+            </ul>
+            <p>Или пришлите проект целиком из САПР.<br>Нет части файлов? Пришлите, что есть, — подскажем, что дослать.</p>
+          </div>
+        </details>
+      </div>
+      <p class="request-calc__more" id="rf-calc-help" hidden>Архив, загруженный в калькулятор, приложится к заявке, параметры расчёта допишутся в описание после вашего текста.</p>
+    </div>
+    <!--/calc-->
+  </div>
+
+  <div class="request-field request-field--full" data-field="files">
+    <span class="request-label">Производственные файлы</span>
+    <div class="request-drop" data-drop tabindex="0" role="button" aria-describedby="rf-drop-hint">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"/><path d="M12 11v6"/><path d="M9.5 13.5l2.5 -2.5l2.5 2.5"/></svg>
+      <span class="request-drop__idle">Перетащите файлы сюда или <span class="request-drop__pick">выберите на компьютере</span></span>
+      <span class="request-drop__more">Добавить ещё файлы — <span class="request-drop__pick">выбрать</span></span>
+      <span class="request-drop__over">Отпустите, чтобы приложить</span>
+      <small id="rf-drop-hint">Лучше одним архивом ZIP/RAR или проектом целиком из САПР. До 10 файлов, до 50 МБ вместе.</small>
+      <input type="file" name="files[]" multiple hidden data-file>
+    </div>
+    <div class="request-filebox">
+      <div class="request-files__head"><span class="request-files__badge" aria-hidden="true"></span><p class="request-files__status" data-files-status></p></div>
+      <ul class="request-files" data-files></ul>
+    </div>
+    <p class="request-total" data-files-total></p>
+    <p class="request-mail">Большой проект — пришлите на почту <a href="mailto:info@pcb-vostok.ru">info@pcb-vostok.ru</a> или предоставьте ссылкой</p>
+  </div>
+
+
+  <div class="request-alert" role="alert" data-alert hidden></div>
+
+  <div class="request-actions">
+    <button class="request-submit" type="submit" data-submit><span class="request-submit__spin" aria-hidden="true"></span><span data-submit-label>Отправить заявку</span><span class="request-submit__fill" aria-hidden="true"></span></button>
+    {{captcha}}
+  </div>
+
+  <div class="request-agree" data-field="agree">
+    <input type="checkbox" id="rf-agree" name="consent" value="1" required>
+    <div>
+      <label for="rf-agree">Даю <a href="/politics#consent">согласие на обработку персональных данных</a> и подтверждаю, что ознакомлен(а) с <a href="/politics#privacy">политикой обработки персональных данных</a></label>
+      <span class="request-err">Без согласия отправить заявку нельзя</span>
+    </div>
+  </div>
+
+  <div class="request-success" role="status" data-success hidden>
+    <div class="request-success__ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5l10 -10"/></svg></div>
+    <h3>Заявка отправлена</h3>
+    <p data-success-text>Изучим файлы и свяжемся с вами по почте.</p>
+    <button class="request-again" type="button" data-again>Отправить ещё одну заявку</button>
+  </div>
+</form>

@@ -9,7 +9,11 @@ require_once get_theme_file_path(
 );
 
 require_once get_theme_file_path(
-    'inc/fluent-forms.php'
+    'inc/request-form.php'
+);
+
+require_once get_theme_file_path(
+    'inc/request-handler.php'
 );
 
 /**
@@ -349,11 +353,11 @@ function theme_enqueue_scripts(): void
     );
 
     wp_enqueue_script(
-        'theme-file-uploader',
-        get_theme_file_uri('assets/js/file-uploader.js'),
+        'theme-request-form',
+        get_theme_file_uri('assets/js/request-form.js'),
         array(),
         filemtime(
-            get_theme_file_path('assets/js/file-uploader.js')
+            get_theme_file_path('assets/js/request-form.js')
         ),
         true
     );

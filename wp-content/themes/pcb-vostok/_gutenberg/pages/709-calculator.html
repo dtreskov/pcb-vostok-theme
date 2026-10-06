@@ -44,7 +44,7 @@
         </details>
 
         <div class="cx-faq">
-          <details class="cx-faq__item">
+          <details class="cx-faq__item" name="calc-faq">
             <summary>Какие файлы подойдут</summary>
             <div class="cx-faq__body">
               <p><b>Файл IPC-2581 (.xml или .cvg)</b> — лучший вариант. Один файл заполнит параметры платы и монтажа: габариты, слои, толщину, медь, материал, отверстия, число и типы компонентов, стороны монтажа. Покрытие и цвет маски — если они указаны в проекте.</p>
@@ -53,7 +53,7 @@
               <p>Файлы можно добавлять по одному или вместе. Если данные в них расходятся, мы отметим это у поля. RAR и 7z калькулятор не читает — перепакуйте проект в ZIP или приложите архив к заявке.</p>
             </div>
           </details>
-          <details class="cx-faq__item">
+          <details class="cx-faq__item" name="calc-faq">
             <summary>Как выгрузить из САПР</summary>
             <div class="cx-faq__body">
               <p>Есть два способа:</p>
@@ -96,20 +96,24 @@
               <p class="cx-note-beta"><span class="cx-beta">Beta</span> Пути в меню уточняем — в вашей версии САПР они могут отличаться.</p>
             </div>
           </details>
-          <details class="cx-faq__item">
+          <details class="cx-faq__item" name="calc-faq">
             <summary>Куда попадают файлы</summary>
             <div class="cx-faq__body">
               <p><b>Никуда.</b> Файлы разбираются прямо в вашем браузере и не отправляются на сервер. К нам они попадут, только если вы сами приложите их к заявке.</p>
               <p>Не хотите загружать? Откройте файлы в бесплатной программе с открытым кодом — <b>KiCad GerbView</b> или <b>gerbv</b> — и перенесите значения в поля вручную.</p>
             </div>
           </details>
-          <details class="cx-faq__item">
+          <details class="cx-faq__item" name="calc-faq">
             <summary>Демо-проект</summary>
             <div class="cx-faq__body">
               <p>Нет файлов под рукой — загрузим пример: четырёхслойную плату 80 × 55 мм. Увидите, как калькулятор заполняет поля и что отмечает для проверки.</p>
-              <div class="cx-demo-btns">
-                <button type="button" class="cx-btn cx-btn--sm" id="calc-demo-ipc">Файл IPC-2581</button>
-                <button type="button" class="cx-btn cx-btn--sm cx-btn--ghost" id="calc-demo">ZIP с Gerber и .gbrjob</button>
+              <button type="button" class="cx-btn cx-btn--sm" id="calc-demo-ipc">Попробовать на демо-проекте</button>
+              <div class="cx-demo-warn" id="calc-demo-warn" role="alert" hidden>
+                <p id="calc-demo-warn-text"></p>
+                <div class="cx-demo-warn__acts">
+                  <button type="button" class="cx-btn cx-btn--sm" id="calc-demo-replace">Заменить демо-проектом</button>
+                  <button type="button" class="cx-btn cx-btn--sm cx-btn--ghost" id="calc-demo-cancel">Оставить мои файлы</button>
+                </div>
               </div>
             </div>
           </details>
@@ -240,7 +244,7 @@
       </div>
     </section>
 
-    <section class="cx-stage cx-stage--last" id="calc-assembly" aria-labelledby="h-asm">
+    <section class="cx-stage" id="calc-assembly" aria-labelledby="h-asm">
       <p class="cx-stage__num" aria-hidden="true">3</p>
       <div class="cx-stage__body">
         <h2 id="h-asm" class="cx-stage__title">Компоненты и монтаж</h2>
@@ -311,6 +315,14 @@
         <p class="cx-empty" data-mode="none" hidden>Платы будут поставлены без монтажа.</p>
       </div>
     </section>
+    <section class="cx-stage cx-stage--last request request--calc" id="request" aria-labelledby="h-req">
+      <p class="cx-stage__num" aria-hidden="true">4</p>
+      <div class="cx-stage__body">
+        <h2 id="h-req" class="cx-stage__title">Отправка на точный расчёт</h2>
+        <p class="cx-stage__lead">В калькуляторе — ориентировочная цена. Приложите данные расчёта и файлы проекта: точную стоимость назовём после их разбора.</p>
+        [pcb_request_form context="calc"]
+      </div>
+    </section>
   </div>
 
   <aside class="cx-sum" id="calc-summary" aria-label="Итог расчёта">
@@ -339,16 +351,5 @@
 </div>
 <!-- /wp:html -->
 
-<!-- wp:html -->
-  <section class="cx-request" id="calc-request" aria-labelledby="h-req">
-  <div class="cx-wrap">
-    <h2 id="h-req" class="cx-request__title">Отправка на точный расчёт</h2>
-    <p class="cx-request__lead">Здесь будет форма заявки. Параметры и оценка перенесутся в неё автоматически, загруженный ZIP приложится к заявке.</p>
-    <div class="cx-request__stub">
-      <p class="cx-request__label">Так будет выглядеть сводка в сообщении заявки:</p>
-      <pre id="calc-summary-text"></pre>
-    </div>
-  </div>
-</section>
-<!-- /wp:html --></div>
+</div>
 <!-- /wp:group -->

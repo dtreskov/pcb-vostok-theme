@@ -1033,102 +1033,27 @@
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 
-<!-- wp:group {"className":"section section\u002d\u002ddark","layout":{"type":"constrained"},"anchor":"request"} -->
-<div id="request" class="wp-block-group section section--dark"><!-- wp:group {"className":"section-head","layout":{"type":"constrained"}} -->
-<div class="wp-block-group section-head"><!-- wp:paragraph {"className":"section-eyebrow"} -->
-<p class="section-eyebrow">Связаться с нами</p>
-<!-- /wp:paragraph -->
-
-<!-- wp:heading {"className":"section-title"} -->
-<h2 class="wp-block-heading section-title">Форма заявки</h2>
+<!-- wp:group {"className":"section section\u002d\u002ddark request request\u002d\u002dhome","layout":{"type":"constrained"},"anchor":"request"} -->
+<div id="request" class="wp-block-group section section--dark request request--home"><!-- wp:group {"className":"section-head","layout":{"type":"constrained"}} -->
+<div class="wp-block-group section-head"><!-- wp:heading {"className":"section-title"} -->
+<h2 class="wp-block-heading section-title">Заявка на расчёт</h2>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"className":"section-lead"} -->
-<p class="section-lead">Укажите предпочтительный способ связи. Чем подробнее вы заполните заявку, тем быстрее мы сможем разобраться в задаче, подготовить ответ и учесть историю ваших обращений.</p>
+<p class="section-lead">Пришлите производственные файлы и опишите задачу. Мы изучим проект, рассчитаем стоимость и свяжемся с вами.</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:group -->
 
 <!-- wp:group {"className":"section-content","layout":{"type":"constrained"}} -->
-<div class="wp-block-group section-content"><!-- wp:html -->
-<form id="request-form" hidden></form>
+<div class="wp-block-group section-content"><!-- wp:group {"className":"request-layout","layout":{"type":"default"}} -->
+<div class="wp-block-group request-layout"><!-- wp:html -->
+[pcb_request_form context="home"]
 <!-- /wp:html -->
-
-<!-- wp:group {"className":"request-layout","layout":{"type":"default"}} -->
-<div class="wp-block-group request-layout"><!-- wp:group {"className":"request-form","layout":{"type":"default"}} -->
-<div class="wp-block-group request-form"><!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
-<div class="wp-block-group request-field"><!-- wp:html -->
-<label for="rf-email">Электронная почта <i>*</i></label>
-<input type="email" id="rf-email" name="email" form="request-form" placeholder="имя.компания@домен.ru" required>
-<!-- /wp:html --></div>
-<!-- /wp:group -->
-
-<!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
-<div class="wp-block-group request-field"><!-- wp:html -->
-<label for="rf-phone">Телефон</label>
-<input type="tel" id="rf-phone" name="phone" form="request-form" placeholder="+7 (123) 456-78-99">
-<!-- /wp:html --></div>
-<!-- /wp:group -->
-
-<!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
-<div class="wp-block-group request-field"><!-- wp:html -->
-<label for="rf-name">Имя</label>
-<input type="text" id="rf-name" name="name" form="request-form" placeholder="Как к вам обращаться">
-<!-- /wp:html --></div>
-<!-- /wp:group -->
-
-<!-- wp:group {"className":"request-field","layout":{"type":"default"}} -->
-<div class="wp-block-group request-field"><!-- wp:html -->
-<label for="rf-company">Компания</label>
-<input type="text" id="rf-company" name="company" form="request-form" placeholder="Название организации">
-<!-- /wp:html --></div>
-<!-- /wp:group -->
-
-<!-- wp:group {"className":"request-field request-field\u002d\u002dfull","layout":{"type":"default"}} -->
-<div class="wp-block-group request-field request-field--full"><!-- wp:html -->
-<label for="rf-message">Текст сообщения</label>
-<textarea id="rf-message" name="message" form="request-form" placeholder="Опишите задачу: тираж, количество слоёв, материал, нужен ли монтаж и функциональная проверка"></textarea>
-<!-- /wp:html --></div>
-<!-- /wp:group -->
-
-<!-- wp:group {"className":"request-field request-field\u002d\u002dfull","layout":{"type":"default"}} -->
-<div class="wp-block-group request-field request-field--full"><!-- wp:html -->
-<label>Производственные файлы</label>
-<div class="request-drop" id="request-dropzone">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M12 11v6" /><path d="M9.5 13.5l2.5 -2.5l2.5 2.5" /></svg>
-    Перетащите файлы сюда или
-    <label for="rf-files">выберите на компьютере</label>
-    <input type="file" id="rf-files" name="files" form="request-form" multiple hidden>
-    <small>Лучше архивом ZIP/RAR. Можно прислать проект целиком из САПР.</small>
-</div>
-<!-- /wp:html --></div>
-<!-- /wp:group -->
-
-<!-- wp:group {"className":"request-field request-field\u002d\u002dfull","layout":{"type":"default"}} -->
-<div class="wp-block-group request-field request-field--full"><!-- wp:paragraph {"className":"request-captcha"} -->
-<p class="request-captcha">Антиробот-проверка (hCaptcha) — виджет подключим при доработке логики формы.</p>
-<!-- /wp:paragraph --></div>
-<!-- /wp:group -->
-
-<!-- wp:group {"className":"request-agree","layout":{"type":"default"}} -->
-<div class="wp-block-group request-agree"><!-- wp:html -->
-<input type="checkbox" id="rf-agree" form="request-form" required>
-<label for="rf-agree">Соглашаюсь с <a href="#">политикой обработки персональных данных</a> и даю согласие на обработку моих персональных данных.</label>
-<!-- /wp:html --></div>
-<!-- /wp:group -->
-
-<!-- wp:html -->
-<button class="wp-element-button request-submit" type="submit" form="request-form">Отправить</button>
-<!-- /wp:html --></div>
-<!-- /wp:group -->
 
 <!-- wp:group {"tagName":"aside","className":"request-sidebar","layout":{"type":"default"}} -->
 <aside class="wp-block-group request-sidebar"><!-- wp:heading {"level":3} -->
-<h3 class="wp-block-heading">Что приложить (ZIP/RAR)</h3>
+<h3 class="wp-block-heading">Что приложить</h3>
 <!-- /wp:heading -->
-
-<!-- wp:paragraph -->
-<p>Либо пришлите проект целиком из САПР.</p>
-<!-- /wp:paragraph -->
 
 <!-- wp:list {"ordered":true,"className":"request-checklist"} -->
 <ol class="wp-block-list request-checklist"><!-- wp:list-item -->
@@ -1136,7 +1061,7 @@
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Pick and place</li>
+<li>Pick&amp;Place</li>
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
@@ -1148,16 +1073,16 @@
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Параметры печатной платы: тираж, слои, материал, финишное покрытие, толщина меди, цвет маски, шелкография</li>
+<li>Параметры платы<small>тираж, слои, материал, финишное покрытие, толщина меди, цвет маски, шелкография</small></li>
 <!-- /wp:list-item -->
 
 <!-- wp:list-item -->
-<li>Stackup — для плат от 6 слоёв и при контролируемом импедансе</li>
+<li>Stackup<small>для плат от 6 слоёв и при контролируемом импедансе</small></li>
 <!-- /wp:list-item --></ol>
 <!-- /wp:list -->
 
 <!-- wp:paragraph {"className":"request-dim"} -->
-<p class="request-dim">Нет части файлов? Пришлите, что есть — разберёмся и подскажем, чего не хватает.</p>
+<p class="request-dim">Или пришлите проект целиком из САПР.<br>Нет части файлов? Пришлите, что есть, — подскажем, что дослать.</p>
 <!-- /wp:paragraph --></aside>
 <!-- /wp:group --></div>
 <!-- /wp:group --></div>
