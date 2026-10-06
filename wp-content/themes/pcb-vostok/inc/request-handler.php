@@ -127,8 +127,10 @@ function pcb_rq_submit(WP_REST_Request $req)
     $p = $req->get_body_params();
     $mail = 'info@pcb-vostok.ru';
 
-    // ловушка для ботов: скрытое поле должно остаться пустым — отвечаем «успехом», ничего не сохраняя
-    if (!empty($p['website'])) {
+    // ловушка для ботов: скрытое поле должно остаться пустым — отвечаем «успехом», ничего не сохраняя.
+    // Имя поля нарочно нестандартное: браузеры не подставляют в него автозаполнение.
+    if (!empty($p['pcb_hp_check'])) {
+        error_log('PCB request: honeypot filled, ip ' . pcb_rq_ip());
         return rest_ensure_response(array('success' => true, 'number' => ''));
     }
 
@@ -227,8 +229,11 @@ function pcb_rq_submit(WP_REST_Request $req)
         update_post_meta($post_id, $k, $v);
     }
 
-    pcb_rq_notify((int) $post_id);
-    pcb_rq_autoreply((int) $post_id);
+    // результат отправки писем сохраняем в заявке — видно в админке, если почта не настроена
+    update_post_meta($post_id, '_pcb_mail', array(
+        'notify' => pcb_rq_notify((int) $post_id),
+        'client' => pcb_rq_autoreply((int) $post_id),
+    ));
 
     return rest_ensure_response(array('success' => true, 'number' => $number));
 }
@@ -403,6 +408,20 @@ function pcb_rq_mail_from(): string
     return pcb_rq_const('PCB_MAIL_FROM', pcb_rq_const('PCB_SMTP_USER', 'info@pcb-vostok.ru'));
 }
 
+/* Последняя ошибка wp_mail — чтобы записать её в заявку */
+$GLOBALS['pcb_rq_mail_error'] = '';
+add_action('wp_mail_failed', function ($error) {
+    $GLOBALS['pcb_rq_mail_error'] = is_wp_error($error) ? $error->get_error_message() : 'ошибка отправки';
+    error_log('PCB request mail failed: ' . $GLOBALS['pcb_rq_mail_error']);
+});
+
+function pcb_rq_send($to, string $subject, string $body, array $headers): string
+{
+    $GLOBALS['pcb_rq_mail_error'] = '';
+    $ok = wp_mail($to, $subject, $body, $headers);
+    return $ok ? 'ok' : ('ошибка: ' . ($GLOBALS['pcb_rq_mail_error'] !== '' ? $GLOBALS['pcb_rq_mail_error'] : 'wp_mail вернул false'));
+}
+
 /* SMTP вместо mail(): включается, если в wp-config.php задан PCB_SMTP_HOST */
 add_action('phpmailer_init', function ($mailer) {
     if (pcb_rq_const('PCB_SMTP_HOST') === '') {
@@ -416,6 +435,18 @@ add_action('phpmailer_init', function ($mailer) {
     $mailer->Username   = pcb_rq_const('PCB_SMTP_USER');
     $mailer->Password   = pcb_rq_const('PCB_SMTP_PASS');
     $mailer->CharSet    = 'UTF-8';
+    // подробный журнал SMTP — только при проверке почты из админки
+    if (!empty($GLOBALS['pcb_rq_smtp_debug'])) {
+        $mailer->SMTPDebug   = 2;
+        $mailer->Debugoutput = function ($str) {
+            $str = rtrim($str);
+            // логин и пароль в SMTP-диалоге идут base64-строками — не показываем
+            if (preg_match('/^CLIENT -> SERVER:\s*[A-Za-z0-9+\/=]{6,}$/', $str) || preg_match('/AUTH\s+PLAIN\s+\S+/i', $str)) {
+                $str = preg_replace('/(CLIENT -> SERVER:\s*(AUTH\s+PLAIN\s+)?).*/i', '$1***', $str);
+            }
+            $GLOBALS['pcb_rq_smtp_log'][] = $str;
+        };
+    }
 });
 
 function pcb_rq_headers(string $reply_to): array
@@ -427,7 +458,7 @@ function pcb_rq_headers(string $reply_to): array
     );
 }
 
-function pcb_rq_notify(int $id): void
+function pcb_rq_notify(int $id): string
 {
     $m = function ($k) use ($id) { return get_post_meta($id, '_pcb_' . $k, true); };
     $number = $m('number');
@@ -464,10 +495,10 @@ function pcb_rq_notify(int $id): void
     $lines[] = 'Открыть заявку: ' . admin_url('post.php?post=' . $id . '&action=edit');
 
     $to = array_filter(array_map('trim', explode(',', pcb_rq_const('PCB_REQUEST_NOTIFY', 'info@pcb-vostok.ru'))));
-    wp_mail($to, 'Новая заявка ' . $number . ' · ' . $service, implode("\n", $lines), pcb_rq_headers($m('email')));
+    return pcb_rq_send($to, 'Новая заявка ' . $number . ' · ' . $service, implode("\n", $lines), pcb_rq_headers($m('email')));
 }
 
-function pcb_rq_autoreply(int $id): void
+function pcb_rq_autoreply(int $id): string
 {
     $email  = get_post_meta($id, '_pcb_email', true);
     $name   = get_post_meta($id, '_pcb_name', true);
@@ -482,7 +513,7 @@ function pcb_rq_autoreply(int $id): void
         'PCB Восток',
         home_url('/'),
     ));
-    wp_mail($email, 'Заявка ' . $number . ' получена — PCB Восток', $body, pcb_rq_headers($notify));
+    return pcb_rq_send($email, 'Заявка ' . $number . ' получена — PCB Восток', $body, pcb_rq_headers($notify));
 }
 
 
@@ -499,6 +530,7 @@ add_filter('manage_pcb_request_posts_columns', function ($cols) {
         'pcb_service' => 'Услуга',
         'pcb_source'  => 'Откуда',
         'pcb_files'   => 'Файлы',
+        'pcb_mail'    => 'Письма',
         'date'        => 'Дата',
     );
 });
@@ -523,6 +555,11 @@ add_action('manage_pcb_request_posts_custom_column', function ($col, $id) {
             break;
         case 'pcb_files':
             echo (int) count((array) get_post_meta($id, '_pcb_files', true));
+            break;
+        case 'pcb_mail':
+            $mail = (array) get_post_meta($id, '_pcb_mail', true);
+            $ok = ($mail['notify'] ?? '') === 'ok' && ($mail['client'] ?? '') === 'ok';
+            echo $ok ? 'отправлены' : '<span style="color:#b32d2e">' . esc_html('не ушли — откройте заявку') . '</span>';
             break;
     }
 }, 10, 2);
@@ -552,6 +589,8 @@ function pcb_rq_metabox($post): void
         'Страница' => $m('page'),
         'Переход с' => $m('referrer'),
         'Капча'    => $m('captcha'),
+        'Письмо менеджерам' => ((array) $m('mail'))['notify'] ?? '—',
+        'Письмо клиенту'    => ((array) $m('mail'))['client'] ?? '—',
     );
     foreach ($rows as $label => $value) {
         printf('<tr><th style="width:140px">%s</th><td>%s</td></tr>', esc_html($label), esc_html((string) $value));
@@ -587,3 +626,59 @@ add_action('save_post_pcb_request', function ($id) {
         update_post_meta($id, '_pcb_status', $s);
     }
 });
+
+
+/* =================================
+   Админка → Заявки → «Проверка почты»: настройки и тестовое письмо с журналом SMTP
+   ================================= */
+
+add_action('admin_menu', function () {
+    add_submenu_page('edit.php?post_type=pcb_request', 'Проверка почты', 'Проверка почты', 'edit_pcb_requests', 'pcb-request-mail', 'pcb_rq_mail_page');
+});
+
+function pcb_rq_mail_page(): void
+{
+    if (!current_user_can('edit_pcb_requests')) {
+        return;
+    }
+    $notify = pcb_rq_const('PCB_REQUEST_NOTIFY', 'info@pcb-vostok.ru');
+    $rows = array(
+        'Кому слать заявки (PCB_REQUEST_NOTIFY)' => $notify . (defined('PCB_REQUEST_NOTIFY') ? '' : ' — по умолчанию, константа не задана'),
+        'Отправитель (From)'                     => pcb_rq_mail_from(),
+        'Способ отправки'                        => pcb_rq_const('PCB_SMTP_HOST') !== '' ? 'SMTP' : 'PHP mail() — PCB_SMTP_HOST не задан',
+        'PCB_SMTP_HOST'                          => pcb_rq_const('PCB_SMTP_HOST', '—'),
+        'PCB_SMTP_PORT / PCB_SMTP_SECURE'        => pcb_rq_const('PCB_SMTP_PORT', '— (465)') . ' / ' . pcb_rq_const('PCB_SMTP_SECURE', '— (ssl)'),
+        'PCB_SMTP_USER'                          => pcb_rq_const('PCB_SMTP_USER', '—'),
+        'PCB_SMTP_PASS'                          => pcb_rq_const('PCB_SMTP_PASS') !== '' ? 'задан' : 'не задан',
+        'Ключ клиента SmartCaptcha'              => pcb_rq_const('PCB_SMARTCAPTCHA_SITEKEY') !== '' ? 'задан' : 'не задан',
+        'Серверный ключ SmartCaptcha'            => pcb_rq_const('PCB_SMARTCAPTCHA_SECRET') !== '' ? 'задан' : 'не задан',
+    );
+    echo '<div class="wrap"><h1>Проверка почты</h1>';
+    echo '<p>Если константы ниже показаны как «не задан», хотя в wp-config.php они есть, — строки define стоят ниже <code>require_once ABSPATH . \'wp-settings.php\';</code>. Перенесите их выше строки «That\'s all, stop editing».</p>';
+    echo '<table class="widefat striped" style="max-width:820px"><tbody>';
+    foreach ($rows as $k => $v) {
+        printf('<tr><th style="width:320px">%s</th><td>%s</td></tr>', esc_html($k), esc_html((string) $v));
+    }
+    echo '</tbody></table>';
+
+    if (isset($_POST['pcb_rq_test']) && check_admin_referer('pcb_rq_test')) {
+        $to = sanitize_email(wp_unslash($_POST['pcb_rq_to'] ?? ''));
+        $GLOBALS['pcb_rq_smtp_debug'] = true;
+        $GLOBALS['pcb_rq_smtp_log'] = array();
+        $res = pcb_rq_send($to, 'Проверка почты — PCB Восток', "Тестовое письмо с сайта: если вы его видите, отправка заявок работает.\n\n" . home_url('/'), pcb_rq_headers(pcb_rq_mail_from()));
+        $GLOBALS['pcb_rq_smtp_debug'] = false;
+        printf('<h2>Результат: %s</h2>', esc_html($res === 'ok' ? 'письмо передано почтовому серверу' : $res));
+        if ($res === 'ok') {
+            echo '<p>Если письмо не пришло — проверьте «Спам» и записи SPF/DKIM домена отправителя.</p>';
+        }
+        if (!empty($GLOBALS['pcb_rq_smtp_log'])) {
+            echo '<h3>Журнал SMTP</h3><pre style="max-width:980px;max-height:420px;overflow:auto;background:#fff;border:1px solid #ccd0d4;padding:10px;white-space:pre-wrap">' . esc_html(implode("\n", $GLOBALS['pcb_rq_smtp_log'])) . '</pre>';
+        }
+    }
+
+    $first = trim(explode(',', $notify)[0]);
+    echo '<h2>Тестовое письмо</h2><form method="post">';
+    wp_nonce_field('pcb_rq_test');
+    printf('<p><input type="email" name="pcb_rq_to" value="%s" class="regular-text" required> <button class="button button-primary" name="pcb_rq_test" value="1">Отправить</button></p>', esc_attr($first));
+    echo '</form></div>';
+}
