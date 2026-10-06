@@ -138,6 +138,12 @@ function theme_enqueue_frontend_assets(): void
     );
 
     theme_enqueue_css(
+        'overview',
+        'assets/css/components/overview.css',
+        array('layout', 'typography')
+    );
+
+    theme_enqueue_css(
         'section-stage',
         'assets/css/components/section-stage.css',
         array('layout', 'typography')
@@ -181,6 +187,7 @@ function theme_enqueue_frontend_assets(): void
             'carousel',
             'calculator',
             'cycle',
+            'overview',
             'section-stage',
             'pcb-tabs',
             'stage-content',
@@ -271,6 +278,12 @@ function theme_enqueue_editor_assets(): void
     );
 
     theme_enqueue_css(
+        'overview',
+        'assets/css/components/overview.css',
+        array('layout', 'typography')
+    );
+
+    theme_enqueue_css(
         'section-stage',
         'assets/css/components/section-stage.css',
         array('layout', 'typography')
@@ -312,6 +325,7 @@ function theme_enqueue_editor_assets(): void
             'carousel',
             'calculator',
             'cycle',
+            'overview',
             'section-stage',
             'pcb-tabs',
             'stage-content',

@@ -1,0 +1,43 @@
+/* =================================
+   #overview — итоговая фраза с изометрией (плата в корпусе устройства)
+   Секция: .section.section--dark.concl.concl--ov.concl--iso
+   Рисунок — изометрия платы из hero (#main), автономная копия, статичный;
+   цвета заданы атрибутами внутри SVG (CSS не доходит до клонов <use> во всех браузерах).
+   ================================= */
+.concl--ov { position: relative; padding-block: clamp(36px, 4.5vw, 64px); }
+.concl--ov .concl__in { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+.concl--ov .text-conclusion { max-width: 60ch; margin: 0; color: var(--color-text-white); }
+.ov-iso__fig { margin: 0; }
+.ov-iso__svg { display: block; width: 100%; height: auto; }
+@media (max-width: 900px) {
+    .concl--ov .concl__in { grid-template-columns: 1fr; }
+    .ov-iso__fig { max-width: 240px; }
+}
+
+/* --- индикация: зелёный горит, оранжевый мигает (как в hero) --- */
+.ov-iso__svg .ov-led-blink { animation: ovblink 1.6s ease-in-out infinite; }
+@keyframes ovblink { 0%, 45% { opacity: 1; } 55%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ov-iso__svg .ov-led-blink { animation: none; } }
+
+/* --- шкала пройденного цикла: волна под фразой --- */
+.ov-copy { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.ov-scale { margin: 0; padding: 0; list-style: none; }
+.ov-scale__ok { display: inline-grid; place-items: center; }
+.ov-scale__ok svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+/* 7 · волна: подпись сверху — узел ниже, подпись снизу — узел выше */
+.ov-wave { --pill: var(--color-gold, #D8B45A); --ink: var(--color-primary-dark, #0B2C22); position: relative; max-width: 640px; }
+.ov-wave__line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.ov-wave__line path { fill: none; stroke: var(--pill); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ov-scale--wave { position: relative; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.ov-scale--wave li { display: grid; grid-template-rows: 20px 26px 26px 20px; row-gap: 4px; justify-items: center; align-items: center; }
+.ov-scale--wave .ov-scale__n { display: inline-grid; place-items: center; height: 26px; padding: 0 9px; border-radius: 999px; background: var(--pill); color: var(--ink); font: 700 12px/1 var(--font-primary, Inter, sans-serif); letter-spacing: .04em; }
+.ov-scale--wave .ov-scale__t { font-size: 13px; line-height: 20px; white-space: nowrap; color: rgba(255, 255, 255, .72); }
+.ov-scale--wave li:nth-child(odd) .ov-scale__t { grid-row: 1; }
+.ov-scale--wave li:nth-child(odd) .ov-scale__n, .ov-scale--wave li:nth-child(odd) .ov-scale__ok { grid-row: 3; }
+.ov-scale--wave li:nth-child(even) .ov-scale__n { grid-row: 2; }
+.ov-scale--wave li:nth-child(even) .ov-scale__t { grid-row: 4; }
+.ov-scale--wave .ov-scale__ok { width: 28px; height: 28px; border-radius: 50%; background: var(--color-copper, #C0703A); color: #fff; }
+@media (max-width: 600px) {
+    .ov-scale--wave .ov-scale__n { padding: 0 6px; font-size: 11px; }
+    .ov-scale--wave .ov-scale__t { font-size: 11px; }
+}
