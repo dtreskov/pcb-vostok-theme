@@ -82,14 +82,22 @@
   drop.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files.length) handleFiles([].slice.call(e.dataTransfer.files)); });
   fileIn.addEventListener('change', function () { handleFiles([].slice.call(fileIn.files)); fileIn.value = ''; });
 
+  /* шаги для /panel/analytics — обрабатывает site-goals.js */
+  function track(d) { try { document.dispatchEvent(new CustomEvent('pcb:track', { detail: d })); } catch (e) { /* без статистики */ } }
+  function errCode(it) { return it.kind === 'zip' ? 'zip' : /RAR/.test(it.note) ? 'rar' : /IPC/.test(it.note) ? 'ipc' : 'format'; }
+
   function handleFiles(files) {
     if (!files.length) return;
+    track({ goal: 'calc_upload' });
     files.forEach(function (f) {
       store = store.filter(function (it) { return it.name !== f.name; }); // тот же файл — заменяем
       var it = { id: ++seq, file: f, name: f.name, size: f.size, kind: '?', status: 'busy', note: '', entries: [], ipc: [] };
       store.push(it);
       busyCount++;
-      readItem(f, it).then(function () { busyCount--; renderFiles(); if (!busyCount) setTimeout(safeAnalyse, 350); });
+      readItem(f, it).then(function () {
+        if (it.status === 'err') track({ ev: [['calc_err', errCode(it)]] });
+        busyCount--; renderFiles(); if (!busyCount) setTimeout(safeAnalyse, 350);
+      });
     });
     renderFiles();
   }
@@ -317,7 +325,7 @@
     ipcDocs.forEach(function (d) {
       if (ipc) return;
       try { ipc = parseIPC(d.text); d.from.note = 'IPC-2581' + (ipc.software ? ' · ' + ipc.software : '') + (ipc.asm ? ' · ' + fmt(ipc.asm.total) + ' компонентов' : ''); }
-      catch (x) { d.from.status = 'err'; d.from.note = 'не удалось прочитать XML'; errs++; }
+      catch (x) { d.from.status = 'err'; d.from.note = 'не удалось прочитать XML'; errs++; track({ ev: [['calc_err', 'xml']] }); }
     });
     // подписи файлов в списке
     store.forEach(function (it) {
@@ -789,6 +797,7 @@
   var lastRes = null;
   function recalc() {
     var r = compute(); lastRes = r;
+    if (r.ok) track({ goal: 'calc_result' });
     S.br.innerHTML = ''; S.warn.hidden = true; S.per.textContent = ''; S.state.textContent = ''; S.term.innerHTML = '';
     S.total.classList.remove('is-muted');
     if (!r.ok) {

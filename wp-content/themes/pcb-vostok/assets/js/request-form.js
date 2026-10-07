@@ -27,6 +27,9 @@
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var uid = 0;
 
+  /* шаги для /panel/analytics — обрабатывает site-goals.js */
+  function track(d) { try { document.dispatchEvent(new CustomEvent('pcb:track', { detail: d })); } catch (e) { /* без статистики */ } }
+
   function fmt(b) { return b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(b / 1024)) + ' КБ'; }
   function ext(n) { var m = /\.([a-z0-9]+)$/i.exec(n); return m ? m[1].toUpperCase().slice(0, 5) : 'FILE'; }
   function plural(k, a, b, c) { var m = k % 10, h = k % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; }
@@ -195,6 +198,7 @@
     if (attach) attach.addEventListener('toggle', function () { if (attach.open) setHelp(false); });
     if (calcBtn) calcBtn.addEventListener('click', function () {
       var api = window.PCBCalc; if (!api || !message) return;
+      track({ goal: 'calc_attach' });
       var own = message.value, k = own.indexOf(CALC_MARK);
       if (k >= 0) own = own.slice(0, k);
       own = own.replace(/\s+$/, '');
@@ -265,6 +269,7 @@
         try { res = JSON.parse(xhr.responseText); } catch (_) {}
         done(); captchaReset();
         if (ok && res.success) {
+          track({ goal: isCalc ? 'request_calc' : 'request_home' });
           setSuccess(res.number || '');
           root.classList.add('is-done');
           if (success) success.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });

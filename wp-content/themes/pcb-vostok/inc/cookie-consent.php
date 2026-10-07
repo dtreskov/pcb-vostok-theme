@@ -47,6 +47,26 @@ function pcb_cookie_enqueue(): void
         )) . ';',
         'before'
     );
+
+    /*
+     * Цели Метрики и обезличенные события для /panel/analytics (плагин pcb-panel).
+     * Если плагин выключен, события просто не принимаются — сайт работает как обычно.
+     */
+    $goals = 'assets/js/site-goals.js';
+
+    wp_enqueue_script(
+        'theme-site-goals',
+        get_theme_file_uri($goals),
+        array('theme-cookie-consent'),
+        filemtime(get_theme_file_path($goals)),
+        array('in_footer' => true, 'strategy' => 'defer')
+    );
+
+    wp_add_inline_script(
+        'theme-site-goals',
+        'window.PCBEvents=' . wp_json_encode(array('endpoint' => rest_url('pcb-panel/v1/e'))) . ';',
+        'before'
+    );
 }
 
 add_action('wp_enqueue_scripts', 'pcb_cookie_enqueue');

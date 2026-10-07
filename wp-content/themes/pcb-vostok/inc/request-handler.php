@@ -145,6 +145,7 @@ function pcb_rq_submit(WP_REST_Request $req)
     $rk = 'pcb_rq_rate_' . md5($ip);
     $count = (int) get_transient($rk);
     if ($count >= PCB_RQ_RATE_LIMIT) {
+        do_action('pcb_event', 'form_err', 'rate'); // обезличенный счётчик для /panel/analytics
         return pcb_rq_error('Слишком много заявок подряд. Попробуйте через несколько минут или напишите нам на почту ' . $mail . '.', 429);
     }
 
@@ -182,17 +183,20 @@ function pcb_rq_submit(WP_REST_Request $req)
     // капча
     $captcha = pcb_rq_check_captcha(isset($p['smart-token']) ? (string) wp_unslash($p['smart-token']) : '', $ip);
     if ($captcha === 'failed') {
+        do_action('pcb_event', 'form_err', 'captcha');
         return pcb_rq_error('Не пройдена проверка «Я не робот». Отметьте её ещё раз и отправьте заявку.');
     }
 
     // файлы — проверяем до сохранения чего-либо
     $files = pcb_rq_collect_files($req->get_file_params());
     if (is_wp_error($files)) {
+        do_action('pcb_event', 'form_err', 'files');
         return $files;
     }
 
     // пустая заявка не нужна: должно быть описание задачи или хотя бы один файл
     if (trim($message) === '' && !$files) {
+        do_action('pcb_event', 'form_err', 'empty');
         return pcb_rq_error('Приложите файлы или опишите задачу — хотя бы одно из двух.');
     }
 
@@ -212,6 +216,7 @@ function pcb_rq_submit(WP_REST_Request $req)
         'post_content' => $message,
     ), true);
     if (is_wp_error($post_id)) {
+        do_action('pcb_event', 'form_err', 'save');
         return pcb_rq_error('Не удалось сохранить заявку. Попробуйте ещё раз или напишите нам на почту ' . $mail . '.', 500);
     }
 
