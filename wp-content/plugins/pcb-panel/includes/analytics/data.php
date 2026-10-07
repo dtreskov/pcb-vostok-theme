@@ -399,11 +399,26 @@ function pcb_an_goal_blocks( &$m, $g ) {
 }
 
 function pcb_an_err_text( WP_Error $e ) {
-	$st = (int) ( $e->get_error_data()['status'] ?? 0 );
-	if ( 401 === $st || 403 === $st ) {
-		return 'Яндекс отклонил токен: он истёк или у него нет нужных прав. Выпустите новый и замените PCB_YANDEX_TOKEN.';
+	$d    = (array) $e->get_error_data();
+	$st   = (int) ( $d['status'] ?? 0 );
+	$code = (string) ( $d['code'] ?? '' );
+	$wm   = ( $d['service'] ?? '' ) === 'webmaster';
+	$name = $wm ? 'Вебмастер' : 'Метрика';
+	$tail = ' Ответ Яндекса: ' . ( $code ? $code . ' — ' : '' ) . $e->get_error_message() . '.';
+
+	if ( 401 === $st || in_array( $code, array( 'INVALID_OAUTH_TOKEN', 'invalid_token' ), true ) ) {
+		return 'Яндекс не принял токен: он истёк или отозван. Получите новый (шаг 4 инструкции) и замените PCB_YANDEX_TOKEN.' . $tail;
 	}
-	return $e->get_error_message();
+	if ( 'HOST_NOT_VERIFIED' === $code ) {
+		return 'Сайт не подтверждён в Вебмастере для аккаунта, которым выпущен токен. Проверьте, что сайт добавлен и подтверждён именно под этим аккаунтом Яндекса.' . $tail;
+	}
+	if ( in_array( $code, array( 'HOST_NOT_LOADED', 'HOST_NOT_INDEXED', 'HOST_NOT_FOUND' ), true ) || ( $wm && 404 === $st ) ) {
+		return 'Вебмастер ещё не собрал данные по сайту: после подтверждения это занимает от нескольких часов до нескольких дней.' . $tail;
+	}
+	if ( 403 === $st ) {
+		return 'Яндекс запретил доступ к сервису «' . $name . '». Скорее всего, у токена нет права ' . ( $wm ? 'webmaster:hostinfo' : 'metrika:read' ) . ': проверьте права приложения на oauth.yandex.ru. Если право добавлено после выпуска токена, получите токен заново — старый токен новых прав не получает.' . $tail;
+	}
+	return $name . ' не ответил.' . $tail;
 }
 
 /* ---------- техническое состояние ---------- */
@@ -442,11 +457,23 @@ function pcb_an_tech( $reqs, $from, $to ) {
 	$rows[] = array( 'name' => 'Файлы, которые калькулятор не разобрал', 'sub' => $sub ? implode( ', ', $sub ) : 'ZIP, RAR, IPC-2581', 'val' => $sum, 'st' => $sum ? 'warn' : 'ok', 'stl' => $sum ? 'Проверить' : 'В порядке' );
 
 	$tok = pcb_ya_token();
-	$ys  = (array) get_option( 'pcb_ya_status', array() );
+	$ys   = (array) get_option( 'pcb_ya_status', array() );
+	$auth = array();
+	$deny = array();
+	foreach ( array( 'metrika' => 'Метрика', 'webmaster' => 'Вебмастер' ) as $k => $l ) {
+		$state = $ys[ $k ]['state'] ?? '';
+		if ( 'auth' === $state ) {
+			$auth[] = $l;
+		} elseif ( 'forbidden' === $state ) {
+			$deny[] = $l . ( ! empty( $ys[ $k ]['code'] ) ? ' (' . $ys[ $k ]['code'] . ')' : '' );
+		}
+	}
 	if ( '' === $tok ) {
 		$rows[] = array( 'name' => 'Токен API Яндекса', 'sub' => 'Метрика и Вебмастер', 'val' => 'не задан', 'st' => 'warn', 'stl' => 'Подключить' );
-	} elseif ( 'auth' === ( $ys['state'] ?? '' ) ) {
-		$rows[] = array( 'name' => 'Токен API Яндекса', 'sub' => 'Яндекс отклонил токен — выпустите новый', 'val' => 'отклонён', 'st' => 'bad', 'stl' => 'Заменить' );
+	} elseif ( $auth ) {
+		$rows[] = array( 'name' => 'Токен API Яндекса', 'sub' => 'Яндекс не принял токен — выпустите новый', 'val' => 'отклонён', 'st' => 'bad', 'stl' => 'Заменить' );
+	} elseif ( $deny ) {
+		$rows[] = array( 'name' => 'Токен API Яндекса', 'sub' => 'Нет доступа: ' . implode( ', ', $deny ) . ' — подробности в сообщении вверху страницы', 'val' => 'частично', 'st' => 'warn', 'stl' => 'Проверить права' );
 	} else {
 		$left = null;
 		if ( defined( 'PCB_YANDEX_TOKEN_ISSUED' ) && strtotime( PCB_YANDEX_TOKEN_ISSUED ) ) {
