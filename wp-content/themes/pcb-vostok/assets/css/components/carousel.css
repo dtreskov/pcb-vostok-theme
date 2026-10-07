@@ -1,400 +1,228 @@
 /* =================================
-   Carousel
+   Carousel (pcar) — единый компонент для #services и #about.
+
+   Разметка (одна анатомия слайда для всех каруселей):
+   .pcar[.pcar--services]
+     .pcar__viewport                  — лента на всю ширину окна (100vw), без фона
+       .pcar__track                   — лента со scroll-snap
+         .pcar__slide × N             — слайд = вся ширина окна
+           .pcar__card[.pcar__card--fig-end]
+             figure.pcar__fig[.pcar__fig--img]  — графика (svg или img)
+             .pcar__body > h3 + p.pcar__text
+     .pcar__nav                       — навигация
+       button.pcar__arrow--prev
+       .pcar__pag > .pcar__dots       — точки (заполняет JS)
+       button.pcar__arrow--next
+
+   Модификаторы:
+   .pcar--services     — лента вплотную к соседям, текст-тезис
+   .pcar__card--fig-end — графика справа (в разметке всё равно идёт первой:
+                          на телефоне она оказывается над заголовком)
+   .pcar__fig--img     — картинка вместо svg, на всю плашку
+   .pcar__fig--bare    — иллюстрация без тёмной плашки
+
+   Навигация: ≥ 1200px — стрелки за полем контента, точки внутри ленты у
+   нижнего края; 768–1199px — стрелки-пилюли у краёв ленты; < 768px —
+   панель «‹ точки ›» под лентой, слайд занимает обычное поле страницы.
+   Без JS лента остаётся горизонтальным скроллом со snap.
+   Сквозная прокрутка (фантомные дубли по краям) — в carousel.js.
    ================================= */
 
+.pcar { position: relative; }
 
-/* =================================
-   Card
-   ================================= */
-
-.carousel-card {
-    display: grid;
-
-    grid-template-columns:
-        25%
-        1fr;
-
-    column-gap: 24px;
-
-    background-color:
-        var(--color-section-alt);
-
-    border-top:
-        1px solid
-        var(--color-card-border);
-
-    border-bottom:
-        1px solid
-        var(--color-card-border);
-
-    box-sizing: border-box;
-}
-
-
-/* =================================
-   Card image
-   Добавлено 2026-09-19: картинка теперь во всю высоту карточки
-   (с небольшими отступами сверху/снизу) и кадрируется, а не тянется.
-   Ширина колонки — 25% карточки (см. .carousel-card выше).
-   ================================= */
-
-.carousel-card > figure {
-    margin: 0;
-    min-width: 0;
-
-    height: 100%;
-    box-sizing: border-box;
-
-    padding-block: var(--space-md);
-}
-
-.carousel-card > figure img {
-    display: block;
-
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    margin: 0;
-}
-
-
-/* =================================
-   Card body
-   Добавлено 2026-09-19: заголовок/текст прижаты к верху,
-   "подробнее" — к низу (см. .arrowlink ниже), высота колонки
-   равна высоте картинки за счёт grid stretch по умолчанию.
-   ================================= */
-
-.carousel-card-body {
-    display: flex;
-    flex-direction: column;
-
-    min-width: 0;
-    min-height: 0;
-
-    height: 100%;
-    box-sizing: border-box;
-
-    padding-block: var(--space-md);
-}
-
-.carousel-card-body h3 {
-    margin: 0 0 8px;
-
-    color: var(--color-text-black);
-
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-}
-
-.carousel-card-body p {
-    margin: 0;
-
-    color: var(--color-text-grey);
-
-    font-size: 14.5px;
-    font-weight: 400;
-    line-height: 1.6;
-}
-
-
-/* =================================
-   Card link
-   ================================= */
-
-.carousel-card-body .arrowlink {
-    display: inline-flex;
-    align-items: center;
-
-    width: fit-content;
-
-    /* было: margin-top: 16px — теперь прижимаем к низу колонки */
-    margin-top: auto;
-
-    color: var(--color-text-copper);
-
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.carousel-card-body .arrowlink svg {
-    display: block;
-
-    width: 18px;
-    height: 18px;
-
-    margin-left: 6px;
-
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-
-    transition:
-        transform var(--transition-fast);
-}
-
-.carousel-card-body .arrowlink:hover svg {
-    transform: translateX(4px);
-}
-
-
-/* =================================
-   Carousel
-   ================================= */
-
-.carousel {
+.pcar__viewport {
     position: relative;
-}
-
-/* Карусель "services" — единственная, что стоит прямо на странице
-   без обёртки .section (сразу после тёмного hero). Добавлено
-   2026-09-18: отступ сверху/снизу тем же токеном, что и у обычных
-   секций (--section-spacing), чтобы не липла к hero и к пагинации
-   было куда дышать. Карусели внутри .section (например #about)
-   этот отступ не задевает — там его уже даёт родительский .section. */
-#services.carousel {
-    padding-block: var(--section-spacing);
-}
-
-
-/* =================================
-   Carousel content
-   ================================= */
-
-.carousel .carousel-content {
-    position: relative;
-
     width: 100vw;
-    max-width: none;
-    min-width: 0;
-
     left: 50%;
     transform: translateX(-50%);
-
-    box-sizing: border-box;
 }
 
-
-/* =================================
-   Slider
-   ================================= */
-
-.carousel-slider {
+.pcar__track {
     display: flex;
-    flex-wrap: nowrap;
-
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-
-    box-sizing: border-box;
-
     overflow-x: auto;
-
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
-
     scrollbar-width: none;
-
     cursor: grab;
-    user-select: none;
-    touch-action: pan-y;
+    touch-action: pan-x pan-y;
 }
+.pcar__track::-webkit-scrollbar { display: none; }
+.pcar__track:focus-visible { outline: 2px solid var(--color-copper); outline-offset: -2px; }
 
-.carousel-slider::-webkit-scrollbar {
-    display: none;
-}
+.pcar.is-dragging .pcar__track { cursor: grabbing; scroll-snap-type: none; scroll-behavior: auto; user-select: none; }
 
-
-/* =================================
-   Slides
-   ================================= */
-
-.carousel-slider > * {
-    flex: 0 0 100%;
-
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-
+.pcar__slide {
+    position: relative;
+    overflow: hidden;
     box-sizing: border-box;
-
+    flex: 0 0 100%;
+    min-width: 0;
     scroll-snap-align: start;
     scroll-snap-stop: always;
+    padding-inline: calc((100vw - var(--content-size)) / 2);
 }
 
-
-/* =================================
-   Carousel card slide
-   ================================= */
-
-
-.carousel-slider > .carousel-card {
-    flex: 0 0 100%;
-
+/* ---------- слайд: графика + текст ---------- */
+.pcar__card {
+    position: relative;
     width: 100%;
-    max-width: 100%;
-
-    padding-inline:
-        calc((100vw - var(--content-size)) / 2);
-
-    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 64px);
+    align-items: center;
+    padding-block: clamp(32px, 4vw, 56px) calc(clamp(32px, 4vw, 56px) + 28px);   /* снизу — место под точки */
 }
+.pcar__card--fig-end { grid-template-columns: minmax(0, 1fr) minmax(0, 34%); }
+.pcar__card--fig-end .pcar__fig { order: 2; }
 
-/* =================================
-   Drag state
-   ================================= */
-
-.carousel-slider.is-dragging {
-    cursor: grabbing;
-
-    scroll-snap-type: none;
-    scroll-behavior: auto;
+.pcar__fig {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 16 / 10;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--color-primary-dark);
 }
+.pcar__fig svg { display: block; width: auto; height: 78%; max-width: 86%; }
+.pcar__fig img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; }
+.pcar__fig--img { background: var(--color-primary-dark); }
 
+/* иллюстрация без плашки: картинка стоит прямо на фоне страницы */
+.pcar__fig--bare { aspect-ratio: auto; overflow: visible; border-radius: 0; background: none; }
+.pcar__fig--bare svg { width: 100%; height: auto; max-width: none; }
 
-/* =================================
-   Prevent dragging and selection
-   ================================= */
-
-.carousel-slider img {
-    -webkit-user-drag: none;
-    user-select: none;
+.pcar__body { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.pcar__body h3 {
+    margin: 0;
+    color: var(--color-text-black);
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
 }
+.pcar__text { margin: var(--space-md) 0 0; max-width: 62ch; color: var(--color-text-grey); font-size: 16.5px; line-height: 1.6; }
 
-.carousel-slider a,
-.carousel-slider button {
-    user-select: none;
+/* ---------- #services: лента-тезис ---------- */
+.pcar--services .pcar__card { min-height: clamp(260px, 24vw, 340px); }
+.pcar--services .pcar__text {
+    max-width: 64ch;
+    color: var(--color-text-black);
+    font-size: clamp(17px, 1.45vw, 19px);
+    font-weight: 500;
+    line-height: 1.55;
+    letter-spacing: 0;
 }
+.pcar--services .text-highlight { color: var(--color-copper-dark); font-weight: 600; }
 
+/* #services — лента вплотную к hero и к «Производственному циклу» */
+/* !important — перебивает отступ blockGap ядра WP между секциями */
+#services.section { padding: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+#services + * { margin-top: 0 !important; }
 
-/* =================================
-   Navigation
-   ================================= */
+/* ---------- навигация ---------- */
+.pcar__nav { position: absolute; inset: 0; pointer-events: none; }
+.pcar__nav > * { pointer-events: auto; }
 
-.carousel-prev,
-.carousel-next {
+.pcar__arrow {
     position: absolute;
-
     top: 50%;
-
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    width: 32px;
+    width: 40px;
     height: 64px;
-
     padding: 0;
-    margin: 0;
-
+    border: 0;
     background: transparent;
-
-    border: none;
-    box-shadow: none;
-
     color: var(--color-copper);
-
     cursor: pointer;
-
     transform: translateY(-50%);
-
-    z-index: 2;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
 }
+.pcar__arrow svg { width: 32px; height: 64px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pcar__arrow:hover { color: var(--color-copper-dark); }
+.pcar__arrow:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; }
+.pcar__arrow--prev { left: -52px; }
+.pcar__arrow--next { right: -52px; }
 
-.carousel-prev svg,
-.carousel-next svg {
-    display: block;
-
-    width: 32px;
-    height: 64px;
-
-    stroke: currentColor;
-}
-
-.carousel-prev {
-    left: -32px;
-}
-
-.carousel-next {
-    right: -32px;
-}
-
-/* =================================
-   Pagination
-   ================================= */
-
- /* =================================
-    Pagination
-    ================================= */
-
-.carousel-pagination {
-    display: flex;
-    justify-content: center;
-
-    gap: var(--space-md);
-
-    margin-top: var(--space-lg);
-}
-
-.carousel-dot {
-    width: 12px;
-    height: 12px;
-
+/* пагинация: точка, растущая в пилюлю */
+.pcar__pag { position: absolute; left: 50%; bottom: 16px; z-index: 2; display: flex; align-items: center; transform: translateX(-50%); }
+.pcar__dots { display: flex; align-items: center; gap: 8px; }
+.pcar__dots button {
+    width: 8px;
+    height: 8px;
     padding: 0;
-
-    background: transparent;
-
-    border: 2px solid var(--color-grey);
-    border-radius: 50%;
-
-    box-sizing: border-box;
-
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: #C9D2CD;
     cursor: pointer;
-
-    transition:
-        border-color var(--transition-fast);
+    transition: width var(--transition-fast), background-color var(--transition-fast);
 }
+.pcar__dots button[aria-current="true"] { width: 28px; background: var(--color-copper); }
 
-.carousel-dot.is-active {
-    background: transparent;
-
-    border-color: var(--color-copper);
-}
-
-
-/* =================================
-   Tablet
-   Заготовка — заполнить при необходимости
-   ================================= */
-
+/* ---------- адаптив ---------- */
 @media (max-width: 1199px) {
-
+    .pcar__slide { padding-inline: max(calc((100vw - var(--content-size)) / 2), 44px); }
+    .pcar__arrow {
+        width: 28px;
+        height: 52px;
+        border: 1px solid var(--color-separator);
+        border-radius: var(--radius-pill);
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 2px 8px rgba(11, 44, 34, .12);
+    }
+    .pcar__arrow svg { width: 14px; height: 28px; stroke-width: 2.2; }
+    .pcar__arrow--prev { left: calc((var(--content-size) - 100vw) / 2 + 8px); }
+    .pcar__arrow--next { right: calc((var(--content-size) - 100vw) / 2 + 8px); }
 }
 
-/* =================================
-   Responsive
-   ================================= */
-
+/* телефон: одна колонка, графика над заголовком, панель навигации под лентой */
 @media (max-width: 767px) {
+    .pcar__slide { padding-inline: calc((100vw - var(--content-size)) / 2); }
+    .pcar__card,
+    .pcar__card--fig-end { grid-template-columns: 1fr; gap: var(--space-md); padding-block: var(--space-lg); }
+    .pcar__card--fig-end .pcar__fig { order: 0; }
+    .pcar--services .pcar__card { min-height: 0; }
+    .pcar__fig { aspect-ratio: 16 / 7; }
+    .pcar__fig--bare { aspect-ratio: auto; width: 100%; max-width: 360px; justify-self: center; }
+    .pcar__text { font-size: 15.5px; }
+    .pcar--services .pcar__text { font-size: 16.5px; line-height: 1.5; }
 
-    .carousel-card {
-        grid-template-columns: 1fr;
-
-        row-gap: 20px;
+    .pcar__nav {
+        position: relative;
+        inset: auto;
+        width: 100vw;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-md);
+        padding: 0 0 var(--space-md);
     }
-
-    .carousel-card > figure {
-        height: 220px;
+    .pcar__arrow,
+    .pcar__arrow--prev,
+    .pcar__arrow--next {
+        position: static;
+        width: 40px;
+        height: 40px;
+        transform: none;
+        box-shadow: none;
+        background: var(--color-page-background, #fff);
     }
+    .pcar__arrow svg { width: 12px; height: 24px; }
+    .pcar__pag { position: static; transform: none; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .pcar__track { scroll-behavior: auto; }
+}
+
+
+/* картинка-файл в слайде без плашки */
+.pcar__fig--bare img { width: 100%; height: auto; object-fit: contain; }

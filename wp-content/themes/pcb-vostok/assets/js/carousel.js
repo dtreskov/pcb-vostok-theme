@@ -1,825 +1,166 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-    document.querySelectorAll(".carousel")
-        .forEach(carousel => {
-
-
-        const slider =
-            carousel.querySelector(".carousel-slider");
-
-
-        if (!slider) {
-            return;
-        }
-
-
-        const prev =
-            carousel.querySelector(".carousel-prev");
-
-
-        const next =
-            carousel.querySelector(".carousel-next");
-
-
-        const pagination =
-            carousel.querySelector(".carousel-pagination");
-
-
-
-        const ANIMATION_TIME = 450;
-
-        const DRAG_START_THRESHOLD = 5;
-
-        const SLIDE_THRESHOLD = 0.2;
-
-        const FAST_SWIPE_DISTANCE = 0.05;
-
-        const FAST_SWIPE_TIME = 250;
-
-
-
-        /*
-         * Remove old clones
-         */
-
-        slider
-            .querySelectorAll(".carousel-clone")
-            .forEach(el => el.remove());
-
-
-
-        const originalCards =
-            Array.from(slider.children);
-
-
-
-        if (originalCards.length === 0) {
-            return;
-        }
-
-
-
-        /*
-         * Pagination
-         */
-
-        const dots = [];
-
-
-        if (
-            pagination &&
-            originalCards.length > 1
-        ) {
-
-            originalCards.forEach(() => {
-
-
-                const dot =
-                    document.createElement("button");
-
-
-                dot.className =
-                    "carousel-dot";
-
-
-                dot.type =
-                    "button";
-
-
-                pagination.appendChild(dot);
-
-
-                dots.push(dot);
-
-
-            });
-
-        }
-
-
-
-        /*
-         * Create clones
-         */
-
-        if (originalCards.length > 1) {
-
-
-            const firstClone =
-                originalCards[0].cloneNode(true);
-
-
-            const lastClone =
-                originalCards[
-                    originalCards.length - 1
-                ].cloneNode(true);
-
-
-
-            firstClone.classList.add(
-                "carousel-clone"
-            );
-
-
-            lastClone.classList.add(
-                "carousel-clone"
-            );
-
-
-
-            slider.insertBefore(
-                lastClone,
-                slider.firstChild
-            );
-
-
-            slider.appendChild(
-                firstClone
-            );
-
-
-        }
-
-
-        /*
-        * Disable native dragging
-        */
-
-
-        slider
-            .querySelectorAll("img, a, button")
-            .forEach(el => {
-
-                el.addEventListener(
-                    "dragstart",
-                    e => e.preventDefault()
-                );
-
-            });
-
-
-        /*
-         * State
-         */
-
-        let currentSlide = 0;
-
-        let correcting = false;
-
-        let animating = false;
-
-        let dragging = false;
-
-        let moved = false;
-
-        let startX = 0;
-
-        let startScroll = 0;
-
-        let startTime = 0;
-
-
-
-        /*
-         * Helpers
-         */
-
-        function getCardStep() {
-
-
-            const cards =
-                slider.children;
-
-
-            if (cards.length < 2) {
-                return slider.clientWidth;
-            }
-
-
-            return (
-                cards[1].offsetLeft -
-                cards[0].offsetLeft
-            );
-
-        }
-
-
-
-
-        function normalize(index) {
-
-
-            const total =
-                originalCards.length;
-
-
-            if (index < 0) {
-                return total - 1;
-            }
-
-
-            if (index >= total) {
-                return 0;
-            }
-
-
-            return index;
-
-        }
-
-
-
-
-        function updatePagination() {
-
-
-            dots.forEach(dot => {
-
-                dot.classList.remove(
-                    "is-active"
-                );
-
-            });
-
-
-
-            dots[currentSlide]
-                ?.classList.add(
-                    "is-active"
-                );
-
-        }
-
-
-
-
-        function setSlide(index) {
-
-
-            currentSlide =
-                normalize(index);
-
-
-            updatePagination();
-
-        }
-
-
-
-
-        /*
-         * Initial position
-         */
-
-        requestAnimationFrame(() => {
-
-
-            slider.style.scrollBehavior =
-                "auto";
-
-
-            slider.scrollLeft =
-                getCardStep();
-
-
-            slider.style.scrollBehavior =
-                "";
-
-
-            updatePagination();
-
-
+/* =================================
+   Carousel (pcar) — assets/js/carousel.js, заменяет прежнюю карусель
+   Один слайд = вся ширина окна. Стрелки по бокам за полем контента
+   (на ширине < 1200px — рядом с пагинацией). Пагинация снизу.
+   Сквозная прокрутка: по краям ленты стоят «фантомные» копии
+   (последний слайд перед первым и первый после последнего). Лента
+   доезжает до копии, а после остановки незаметно перескакивает
+   на настоящий слайд — прокрутка идёт дальше, а не отскакивает.
+   Свайп и прокрутка — нативные (scroll-snap), мышью — перетаскивание,
+   клавиши ← → на сфокусированной ленте.
+   Картинки соседних слайдов загружаются и декодируются заранее (warm).
+   ================================= */
+(function () {
+    'use strict';
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function phantom(node) {
+        var c = node.cloneNode(true);
+        c.classList.add('pcar__slide--clone');
+        c.setAttribute('aria-hidden', 'true');
+        c.setAttribute('inert', '');
+        [].forEach.call(c.querySelectorAll('a, button, [tabindex]'), function (el) { el.setAttribute('tabindex', '-1'); });
+        [].forEach.call(c.querySelectorAll('[id]'), function (el) { el.removeAttribute('id'); });
+        return c;
+    }
+
+    function initPcar(root) {
+        if (root.dataset.ready) return;
+        root.dataset.ready = '1';
+
+        var track = root.querySelector('.pcar__track');
+        var slides = [].slice.call(track.children);
+        var N = slides.length;
+        var dots = root.querySelector('.pcar__dots');
+        var count = root.querySelector('.pcar__count');
+        var prev = root.querySelector('.pcar__arrow--prev');
+        var next = root.querySelector('.pcar__arrow--next');
+        var loop = N > 1;
+        var OFF = loop ? 1 : 0;   /* позиция первого настоящего слайда */
+        var cur = -1, drag = null, moved = false;
+
+        slides.forEach(function (s, i) {
+            s.setAttribute('role', 'group');
+            s.setAttribute('aria-roledescription', 'слайд');
+            s.setAttribute('aria-label', (i + 1) + ' из ' + N);
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.setAttribute('aria-label', 'Карточка ' + (i + 1));
+            b.addEventListener('click', function () { goPos(i + OFF); });
+            dots.appendChild(b);
         });
 
+        if (loop) {
+            track.insertBefore(phantom(slides[N - 1]), slides[0]);
+            track.appendChild(phantom(slides[0]));
+        }
 
+        function width() { return slides[0].offsetWidth || track.clientWidth || 1; }
+        function pos() { return Math.round(track.scrollLeft / width()); }
+        function real(p) { return ((p - OFF) % N + N) % N; }
 
+        function jump(p) {
+            track.style.scrollBehavior = 'auto';
+            track.scrollLeft = p * width();
+            track.style.scrollBehavior = '';
+        }
+        function goPos(p) {
+            p = Math.max(0, Math.min(N - 1 + OFF * 2, p));
+            track.scrollTo({ left: p * width(), behavior: reduce ? 'auto' : 'smooth' });
+            if (reduce) settle();
+        }
+        function step(d) { goPos(pos() + d); }
 
-        /*
-         * Loop correction
-         */
+        function update() {
+            var i = real(pos());
+            if (i === cur) return;
+            cur = i;
+            [].forEach.call(dots.children, function (b, n) { b.setAttribute('aria-current', n === i ? 'true' : 'false'); });
+            if (count) count.innerHTML = '<b>' + pad(i + 1) + '</b> / ' + pad(N);   /* счётчик необязателен */
+            slides.forEach(function (s, n) { s.setAttribute('aria-hidden', n === i ? 'false' : 'true'); });
+            if (!loop) { prev.disabled = i <= 0; next.disabled = i >= N - 1; }
+            warm((i + 1) % N); warm((i - 1 + N) % N);
+        }
 
-        function correctLoopPosition() {
-
-
-            if (correcting) {
-                return;
-            }
-
-
-            const step =
-                getCardStep();
-
-
-            if (!step) {
-                return;
-            }
-
-
-
-            const cards =
-                slider.children;
-
-
-            const index =
-                Math.round(
-                    slider.scrollLeft / step
-                );
-
-
-
-            let target = null;
-
-
-
-            if (index === 0) {
-
-
-                target =
-                    step * (cards.length - 2);
-
-
-            }
-
-
-
-            if (
-                index === cards.length - 1
-            ) {
-
-
-                target =
-                    step;
-
-
-            }
-
-
-
-            if (target !== null) {
-
-
-                correcting = true;
-
-
-                slider.style.scrollBehavior =
-                    "auto";
-
-
-                slider.scrollLeft =
-                    target;
-
-
-
-                requestAnimationFrame(() => {
-
-
-                    slider.style.scrollBehavior =
-                        "";
-
-
-                    correcting = false;
-
-
+        /* заранее загружаем и декодируем картинки соседних слайдов в свободное время,
+           чтобы тяжёлая отрисовка SVG не совпадала со свайпом */
+        var idleCb = window.requestIdleCallback || function (f) { return setTimeout(f, 200); };
+        function warm(n) {
+            var s = slides[n];
+            if (!s || s.dataset.warm) return;
+            s.dataset.warm = '1';
+            idleCb(function () {
+                [].forEach.call(s.querySelectorAll('img'), function (img) {
+                    img.loading = 'eager';
+                    if (img.decode) img.decode().catch(function () {});
                 });
-
-
-            }
-
-        }
-
-
-
-
-        /*
-         * Buttons
-         */
-
-        function moveCarousel(direction) {
-
-
-            if (animating) {
-                return;
-            }
-
-
-            animating = true;
-
-
-
-            slider.scrollTo({
-
-                left:
-                    slider.scrollLeft +
-                    direction * getCardStep(),
-
-                behavior:
-                    "smooth"
-
             });
-
-
-
-            setTimeout(() => {
-
-
-                correctLoopPosition();
-
-
-                setSlide(
-                    currentSlide + direction
-                );
-
-
-                animating = false;
-
-
-            }, 500);
-
-
         }
 
+        /* после остановки на фантоме — перескок на настоящий слайд */
+        function settle() {
+            if (!loop || drag) return;
+            var p = pos();
+            if (Math.abs(track.scrollLeft - p * width()) > 2) return;   /* ещё едем */
+            if (p <= 0) jump(N);
+            else if (p >= N + 1) jump(1);
+            update();
+        }
 
+        var raf = 0, idle = 0;
+        track.addEventListener('scroll', function () {
+            if (!raf) raf = requestAnimationFrame(function () { raf = 0; update(); });
+            clearTimeout(idle);
+            idle = setTimeout(settle, 150);
+        }, { passive: true });
+        track.addEventListener('scrollend', settle);
 
+        prev.addEventListener('click', function () { step(-1); });
+        next.addEventListener('click', function () { step(1); });
 
-        prev?.addEventListener(
-            "click",
-            () => moveCarousel(-1)
-        );
-
-
-
-        next?.addEventListener(
-            "click",
-            () => moveCarousel(1)
-        );
-
-
-
-
-
-        /*
-         * Pagination click
-         */
-
-        dots.forEach((dot, index) => {
-
-
-            dot.addEventListener(
-                "click",
-                () => {
-
-
-                    if (animating) {
-                        return;
-                    }
-
-
-
-                    const diff =
-                        index - currentSlide;
-
-
-
-                    slider.scrollTo({
-
-                        left:
-                            slider.scrollLeft +
-                            diff * getCardStep(),
-
-                        behavior:
-                            "smooth"
-
-                    });
-
-
-
-                    setTimeout(() => {
-
-
-                        correctLoopPosition();
-
-
-                        setSlide(index);
-
-
-                    }, 500);
-
-
-
-                }
-            );
-
-
+        track.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
         });
 
-
-
-
-
-        /*
-         * Drag
-         */
-
-        slider.addEventListener(
-            "pointerdown",
-            e => {
-
-
-                if (
-                    e.target.closest(
-                        "a,button"
-                    )
-                ) {
-                    return;
-                }
-
-
-
-                if (
-                    e.pointerType === "mouse" &&
-                    e.button !== 0
-                ) {
-                    return;
-                }
-
-
-
-                slider.setPointerCapture(
-                    e.pointerId
-                );
-
-
-
-                dragging = true;
-
-                moved = false;
-
-
-                startX =
-                    e.clientX;
-
-
-                startScroll =
-                    slider.scrollLeft;
-
-
-                startTime =
-                    performance.now();
-
-
-
-                slider.style.scrollBehavior =
-                    "auto";
-
-
-                slider.classList.add(
-                    "is-dragging"
-                );
-
-
-            }
-        );
-
-
-
-
-        slider.addEventListener(
-            "pointermove",
-            e => {
-
-
-                if (!dragging) {
-                    return;
-                }
-
-
-
-                const dx =
-                    e.clientX - startX;
-
-
-
-                if (
-                    Math.abs(dx) >
-                    DRAG_START_THRESHOLD
-                ) {
-
-                    moved = true;
-
-                }
-
-
-
-                if (moved) {
-
-
-                    e.preventDefault();
-
-
-                    slider.scrollLeft =
-                        startScroll - dx;
-
-
-                }
-
-
-            }
-        );
-
-
-
-
-
-        function finishDrag() {
-
-
-            if (!dragging) {
-                return;
-            }
-
-
-            dragging = false;
-
-
-
-            slider.classList.remove(
-                "is-dragging"
-            );
-
-
-
-            slider.style.scrollBehavior =
-                "";
-
-
-
-            if (!moved) {
-                return;
-            }
-
-
-
-            const step =
-                getCardStep();
-
-
-
-            const delta =
-                slider.scrollLeft -
-                startScroll;
-
-
-
-            let target =
-                Math.round(
-                    slider.scrollLeft / step
-                ) * step;
-
-
-
-
-            if (
-                Math.abs(delta) >
-                    step * SLIDE_THRESHOLD ||
-
-                (
-                    Math.abs(delta) >
-                        step * FAST_SWIPE_DISTANCE &&
-
-                    performance.now() -
-                    startTime <
-                    FAST_SWIPE_TIME
-                )
-
-            ) {
-
-
-                target =
-                    delta > 0
-
-                    ?
-
-                    Math.ceil(
-                        slider.scrollLeft / step
-                    ) * step
-
-                    :
-
-                    Math.floor(
-                        slider.scrollLeft / step
-                    ) * step;
-
-
-            }
-
-
-
-            slider.scrollTo({
-
-                left:
-                    target,
-
-                behavior:
-                    "smooth"
-
-            });
-
-
-
-
-            setTimeout(() => {
-
-
-                correctLoopPosition();
-
-
-
-                const index =
-                    Math.round(
-                        slider.scrollLeft / step
-                    );
-
-
-
-                setSlide(
-                    (
-                        index - 1 +
-                        originalCards.length
-                    )
-                    %
-                    originalCards.length
-                );
-
-
-
-            }, ANIMATION_TIME);
-
-
-
-
-            setTimeout(() => {
-
-                moved = false;
-
-            }, 100);
-
-
-
+        /* перетаскивание мышью */
+        track.addEventListener('pointerdown', function (e) {
+            if (e.pointerType !== 'mouse' || e.button !== 0) return;
+            drag = { x: e.clientX, left: track.scrollLeft, from: pos() };
+            moved = false;
+        });
+        window.addEventListener('pointermove', function (e) {
+            if (!drag) return;
+            var dx = e.clientX - drag.x;
+            if (!moved && Math.abs(dx) > 5) { moved = true; root.classList.add('is-dragging'); }
+            if (moved) track.scrollLeft = drag.left - dx;
+        });
+        window.addEventListener('pointerup', function (e) {
+            if (!drag) return;
+            var dx = e.clientX - drag.x, from = drag.from;
+            drag = null;
+            root.classList.remove('is-dragging');
+            if (moved) goPos(Math.abs(dx) > 60 ? from + (dx < 0 ? 1 : -1) : from);
+        });
+        track.addEventListener('click', function (e) {
+            if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+        }, true);
+        track.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+        /* при изменении ширины остаёмся на той же карточке */
+        if ('ResizeObserver' in window) {
+            new ResizeObserver(function () { jump((cur < 0 ? 0 : cur) + OFF); }).observe(track);
         }
 
+        jump(OFF);
+        update();
+    }
 
+    window.PcbCarousel = { init: initPcar };
 
-
-        slider.addEventListener(
-            "pointerup",
-            finishDrag
-        );
-
-
-        slider.addEventListener(
-            "pointercancel",
-            finishDrag
-        );
-
-
-        slider.addEventListener(
-            "lostpointercapture",
-            finishDrag
-        );
-
-
-
-
-
-        /*
-         * Resize
-         */
-
-        window.addEventListener(
-            "resize",
-            () => {
-
-
-                slider.style.scrollBehavior =
-                    "auto";
-
-
-                slider.scrollLeft =
-                    getCardStep() *
-                    (currentSlide + 1);
-
-
-
-                slider.style.scrollBehavior =
-                    "";
-
-
-            }
-        );
-
-
-
-    });
-
-
-});
+    function boot() { [].forEach.call(document.querySelectorAll('.pcar'), initPcar); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();

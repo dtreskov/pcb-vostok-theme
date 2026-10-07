@@ -21,22 +21,6 @@
         width: 100% !important;
     }
 
-
-    /* Mobile carousel navigation */
-
-    .carousel-prev,
-    .carousel-next  {
-    display: none !important;
-    }
-
-
-    /* Mobile pagination */
-
-    .carousel-dot,
-    .services-dot {
-        width: 12px;
-        height: 12px;
-    }
 }
 
 

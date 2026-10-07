@@ -352,16 +352,22 @@
             total = t0;
 
             // диапазоны карточек в «глобальном» времени (px)
+            /* Если один из параллельных этапов исключён фильтром услуг
+               (класс is-svc-off), второй получает собственный отрезок пути,
+               а не общий на двоих — иначе его прогресс тянется вдвое дольше. */
+            var pairJoint = P >= 0 &&
+                !steps[P].classList.contains('is-svc-off') &&
+                !steps[P + 1].classList.contains('is-svc-off');
             b.forEach(function (c, i) {
                 if (cols === 1) {
                     var y0 = b[0].y;
                     var r0 = Math.max(0, c.t - y0), r1 = c.btm - y0;
-                    if (P >= 0 && (i === P || i === P + 1)) {
+                    if (pairJoint && (i === P || i === P + 1)) {
                         r0 = Math.max(0, b[P].t - y0); r1 = b[P + 1].btm - y0;
                     }
                     cardRanges.push([r0, r1]); return;
                 }
-                if (P >= 0 && (i === P || i === P + 1)) {
+                if (pairJoint && (i === P || i === P + 1)) {
                     if (parMode === 'link') {
                         var l0 = legs[0];
                         var s0 = along(l0.tr, b[P].l, b[P].y), s1 = along(l0.tr, b[P + 1].r, b[P + 1].y);
@@ -430,6 +436,13 @@
         } else {
             raf = requestAnimationFrame(frame);
         }
+        /* Перезапуск анимации — например, при смене услуги в фильтре
+           (service-filter.js): пересчитать отрезки и проиграть заново. */
+        grid.addEventListener('cycle:restart', function () {
+            build();
+            start = null;
+            if (visible && !raf) raf = requestAnimationFrame(frame);
+        });
     }
 
     function boot() {

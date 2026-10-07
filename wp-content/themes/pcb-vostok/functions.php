@@ -406,6 +406,17 @@ function theme_enqueue_scripts(): void
         true
     );
 
+    /* Переключатель услуг в «Производственном цикле» (#capabilities) */
+    wp_enqueue_script(
+        'theme-service-filter',
+        get_theme_file_uri('assets/js/service-filter.js'),
+        array(),
+        filemtime(
+            get_theme_file_path('assets/js/service-filter.js')
+        ),
+        true
+    );
+
     wp_enqueue_script(
         'theme-audit-board',
         get_theme_file_uri('assets/js/audit-board.js'),
