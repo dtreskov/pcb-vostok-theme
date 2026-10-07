@@ -3,10 +3,13 @@
    Политики: ПДн, согласие, cookie
    ================================= */
 
-.legal{padding-block:clamp(32px,4vw,56px) clamp(48px,6vw,88px)}
-.legal .section-head{max-width:760px;margin-bottom:clamp(24px,3vw,40px)}
-.legal .section-head .section-lead{margin-top:12px}
-.legal h1.section-title{font-size:clamp(30px,3.6vw,44px);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin:0}
+.legal{--legal-toc:280px;--legal-gap:clamp(32px,4vw,64px);padding-block:0 clamp(48px,6vw,88px)}
+
+/* шапка страницы — как у калькулятора (.cx-head): тёмная полоса на всю ширину окна
+   с медной линией снизу; заголовок стоит над колонкой документов, а не над оглавлением */
+.legal-head{padding-block:12px calc(12px + var(--width-border-main));margin-bottom:clamp(28px,3vw,40px);
+  border:0;border-image:linear-gradient(to bottom,var(--color-primary-dark) calc(100% - var(--width-border-main)),var(--color-copper) 0) fill 0 / 0 / 0 100vmax}
+.legal .legal-head__title{margin:0 0 0 calc(var(--legal-toc) + var(--legal-gap));color:var(--color-white);font-size:clamp(24px,2.4vw,32px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
 .legal [id]{scroll-margin-top:calc(var(--anchor-offset) + 24px)}
 
 /* документ */
@@ -30,8 +33,8 @@
 .legal-facts strong{color:var(--color-primary)}
 
 /* --- Оглавление сбоку --- */
-.legal-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:clamp(32px,4vw,64px);align-items:start}
-.legal-toc{position:sticky;top:calc(var(--anchor-offset) + 24px);max-height:calc(100vh - var(--anchor-offset) - 48px);overflow-y:auto;border-left:2px solid var(--color-separator);padding-left:18px;font-size:14px;line-height:1.4}
+.legal-layout{display:grid;grid-template-columns:var(--legal-toc) minmax(0,1fr);gap:var(--legal-gap);align-items:start}
+.legal-toc{position:sticky;top:calc(var(--anchor-offset) + 24px);max-height:calc(100vh - var(--anchor-offset) - 48px);overflow-y:auto;box-shadow:inset 2px 0 0 var(--color-separator);padding-left:18px;font-size:14px;line-height:1.4}
 .legal-toc__label{margin:0 0 12px;font-weight:700;color:var(--color-text-black)}
 .legal-toc ol{list-style:none;margin:0;padding:0}
 .legal-toc>ol>li+li{margin-top:16px}
@@ -39,6 +42,13 @@
 .legal-toc ol ol{display:grid;gap:5px;margin-top:8px}
 .legal-toc ol ol a{color:var(--color-text-grey);font-size:13px}
 .legal-toc a:hover{color:var(--color-copper)!important}
+
+/* подсветка текущего раздела (assets/js/legal-toc.js) */
+.legal-toc a{position:relative;display:inline-block;transition:color var(--transition-fast)}
+.legal-toc a::before{content:'';position:absolute;left:-18px;top:0;bottom:0;width:2px;border-radius:2px;background:var(--color-copper);opacity:0;transition:opacity var(--transition-fast)}
+.legal-toc a.is-active{color:var(--color-copper-dark)!important;font-weight:600}
+.legal-toc a.is-active::before{opacity:1}
+.legal-toc>ol>li>a.is-current{color:var(--color-primary)}
 .legal-docs .legal-doc+.legal-doc{margin-top:56px;padding-top:48px;border-top:1px solid var(--color-separator)}
 
 /* =================================
@@ -47,12 +57,15 @@
 /* узкий экран ИЛИ оглавление не помещается по высоте — переносим его в начало */
 @media (max-width:1199px), (max-height:740px){
   .legal-layout{grid-template-columns:minmax(0,1fr);gap:28px}
-  .legal-toc{position:static;max-height:none;overflow:visible;padding:16px 20px;background:var(--color-white);border:1px solid var(--color-separator);border-radius:var(--radius-card)}
+  .legal .legal-head__title{margin-left:0}
+  .legal-toc{position:static;max-height:none;overflow:visible;box-shadow:none;padding:16px 20px;background:var(--color-white);border:1px solid var(--color-separator);border-radius:var(--radius-card)}
   .legal-toc__label{margin-bottom:8px}
   .legal-toc ol ol{display:none}
   .legal-toc>ol{display:grid;gap:6px}
   .legal-toc>ol>li+li{margin-top:0}
   .legal-toc>ol>li>a{font-weight:500;color:var(--color-copper-dark)}
+  .legal-toc a::before{display:none}
+  .legal-toc a.is-active{font-weight:500}
 }
 @media (max-width:767px){
   .legal-purpose{padding:16px}

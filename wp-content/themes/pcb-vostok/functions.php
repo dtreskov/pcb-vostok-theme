@@ -440,6 +440,23 @@ function theme_enqueue_scripts(): void
             true
         );
     }
+
+    /*
+     * Подсветка текущего раздела в оглавлении —
+     * только на странице «Правовая информация» (ID 81, slug politics).
+     */
+    if (is_page(array(81, 'politics'))) {
+
+        wp_enqueue_script(
+            'theme-legal-toc',
+            get_theme_file_uri('assets/js/legal-toc.js'),
+            array(),
+            filemtime(
+                get_theme_file_path('assets/js/legal-toc.js')
+            ),
+            true
+        );
+    }
 }
 
 add_action(
