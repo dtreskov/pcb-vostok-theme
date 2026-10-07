@@ -16,6 +16,10 @@ require_once get_theme_file_path(
     'inc/request-handler.php'
 );
 
+require_once get_theme_file_path(
+    'inc/cookie-consent.php'
+);
+
 /**
  * Отключаем автогенерируемые WordPress классы и inline-CSS
  * для layout-атрибутов блоков (is-layout-*, wp-container-core-*,

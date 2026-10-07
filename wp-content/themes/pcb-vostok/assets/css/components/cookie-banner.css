@@ -1,0 +1,297 @@
+/* =================================
+   Cookie: уведомление и настройки
+
+   Разметка: inc/cookie-consent.php (вывод в wp_footer).
+   Логика:   assets/js/cookie-consent.js.
+
+   .cookie--pill  — уведомление при первом визите: строка-пилюля по центру внизу
+   .cookie--prefs — панель «Настройки cookie», открывается ссылкой
+                    [data-cookie-settings] в подвале
+   ================================= */
+
+.cookie {
+    position: fixed;
+    z-index: 110;
+
+    box-sizing: border-box;
+
+    font-family: var(--font-family);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--color-text-black);
+
+    animation: cookie-in 0.4s ease both;
+}
+
+.cookie[hidden] { display: none !important; }
+
+.cookie *,
+.cookie *::before,
+.cookie *::after { box-sizing: border-box; }
+
+.cookie p { margin: 0; }
+
+.cookie__title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.cookie__text { color: var(--color-text-grey); }
+
+.cookie__link {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-color: rgba(20, 84, 62, 0.3);
+    text-underline-offset: 3px;
+}
+
+.cookie__link:hover { text-decoration-color: currentColor; }
+
+.cookie__actions { display: flex; gap: 8px; }
+
+/* --- кнопки --- */
+
+.cookie__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 42px;
+    padding: 0 20px;
+
+    border-radius: var(--radius-pill);
+
+    font: 600 14px/1 var(--font-family);
+    white-space: nowrap;
+
+    cursor: pointer;
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.cookie__btn:focus-visible,
+.cookie__close:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 3px; }
+
+/* как .request-submit */
+.cookie__btn--accept { border: 0; background: var(--color-copper-dark); color: var(--color-white); }
+.cookie__btn--accept:hover { background: var(--color-copper); }
+
+.cookie__btn--ghost { border: 1.5px solid #C9D3CD; background: transparent; color: var(--color-text-black); font-weight: 500; }
+.cookie__btn--ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+.cookie__btn--text { height: 38px; padding: 0 12px; border: 0; background: transparent; color: var(--color-text-grey); font-weight: 500; }
+.cookie__btn--text:hover { color: var(--color-text-black); }
+
+/* =================================
+   Уведомление (пилюля)
+   ================================= */
+
+.cookie--pill {
+    left: 50%;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+
+    width: max-content;
+    max-width: calc(100% - 32px);
+
+    display: flex;
+    align-items: center;
+    gap: 8px 16px;
+
+    padding: 8px 8px 8px 22px;
+
+    background: var(--color-white);
+    border: 1px solid var(--color-separator);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 10px 30px rgba(22, 33, 28, 0.14);
+
+    animation-name: cookie-in-pill;
+}
+
+.cookie--pill .cookie__text { color: var(--color-text-black); }
+.cookie--pill .cookie__actions { flex: 0 0 auto; align-items: center; gap: 4px; }
+.cookie--pill .cookie__btn--accept { height: 38px; }
+
+/* =================================
+   Настройки
+   ================================= */
+
+.cookie--prefs {
+    left: 24px;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+
+    width: 420px;
+    max-width: calc(100% - 32px);
+
+    display: grid;
+    gap: 14px;
+
+    padding: 22px;
+
+    background: var(--color-white);
+    border: 1px solid var(--color-separator);
+    border-radius: var(--radius-card);
+    box-shadow: 0 14px 36px rgba(22, 33, 28, 0.14);
+}
+
+.cookie__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.cookie__close {
+    width: 32px;
+    height: 32px;
+    margin: -6px -8px -6px 0;
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text-grey);
+
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.cookie__close:hover { background: var(--color-section-alt); color: var(--color-text-black); }
+.cookie__close svg { width: 16px; height: 16px; }
+
+.cookie__opts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    display: grid;
+
+    border: 1px solid var(--color-separator);
+    border-radius: var(--radius-button);
+}
+
+.cookie__opts li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 14px;
+
+    padding: 12px 14px;
+}
+
+.cookie__opts li + li { border-top: 1px solid var(--color-separator); }
+
+.cookie__opt-name { display: block; font-size: 14px; font-weight: 600; }
+.cookie__opt-desc { display: block; font-size: 12.5px; line-height: 1.45; color: var(--color-text-grey); }
+
+.cookie__always {
+    padding: 3px 10px;
+
+    border-radius: var(--radius-pill);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* переключатель */
+
+.cookie__switch { position: relative; width: 40px; height: 22px; flex: 0 0 auto; }
+
+.cookie__switch input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+
+    margin: 0;
+    opacity: 0;
+
+    cursor: pointer;
+}
+
+.cookie__switch i {
+    position: absolute;
+    inset: 0;
+
+    border-radius: var(--radius-pill);
+    background: #C9D3CD;
+
+    transition: background-color var(--transition-fast);
+}
+
+.cookie__switch i::after {
+    content: "";
+
+    position: absolute;
+    top: 3px;
+    left: 3px;
+
+    width: 16px;
+    height: 16px;
+
+    border-radius: 50%;
+    background: var(--color-white);
+    box-shadow: 0 1px 3px rgba(22, 33, 28, 0.25);
+
+    transition: transform var(--transition-fast);
+}
+
+.cookie__switch input:checked + i { background: var(--color-primary); }
+.cookie__switch input:checked + i::after { transform: translateX(18px); }
+.cookie__switch input:focus-visible + i { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+.cookie--prefs .cookie__actions .cookie__btn { flex: 1 1 auto; }
+
+/* =================================
+   Анимация
+   ================================= */
+
+@keyframes cookie-in      { from { transform: translateY(12px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes cookie-in-pill { from { transform: translate(-50%, 12px); opacity: 0.4; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .cookie { animation: none; }
+}
+
+/* =================================
+   Mobile
+   ================================= */
+
+@media (max-width: 767px) {
+
+    .cookie--pill {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+
+        width: calc(100% - 24px);
+        max-width: none;
+
+        flex-direction: column;
+        align-items: stretch;
+
+        padding: 14px 14px 10px;
+        border-radius: 18px;
+    }
+
+    .cookie--pill .cookie__text { text-align: center; }
+    .cookie--pill .cookie__actions { flex-direction: row-reverse; justify-content: space-between; }
+    .cookie--pill .cookie__btn--accept { flex: 1 1 auto; }
+
+    .cookie--prefs {
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+
+        width: auto;
+        max-width: none;
+
+        padding: 18px 16px 16px;
+    }
+
+    .cookie--prefs .cookie__actions { display: grid; grid-template-columns: 1fr; }
+    .cookie--prefs .cookie__btn--accept { order: -1; }
+}
