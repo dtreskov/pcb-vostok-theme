@@ -223,7 +223,8 @@
   function seo(D) {
     var s = D.seo;
     if (!s) { empty('#pa-seo', D.status.wmMsg || 'Вебмастер не подключён.'); return; }
-    $('#pa-seo').innerHTML = '<div><b>' + fmt(s.shows) + '</b><span>показы в поиске</span></div><div><b>' + fmt(s.clicks) + '</b><span>переходы из поиска</span></div><div><b>' + (s.pos == null ? '—' : String(s.pos).replace('.', ',')) + '</b><span>средняя позиция</span></div><div><b>' + fmt(s.idx) + '</b><span>страниц в поиске</span></div>' + (CFG.seoUrl ? '<a href="' + esc(CFG.seoUrl) + '">Подробнее в разделе SEO →</a>' : '');
+    $('#pa-seo').innerHTML = '<div><b>' + fmt(s.shows) + '</b><span>показы в поиске</span></div><div><b>' + fmt(s.clicks) + '</b><span>переходы из поиска</span></div><div><b>' + (s.pos == null ? '—' : String(s.pos).replace('.', ',')) + '</b><span>средняя позиция</span></div><div><b>' + fmt(s.idx) + '</b><span>страниц в поиске</span></div>' + (CFG.seoUrl ? '<a href="' + esc(CFG.seoUrl) + '">Подробнее в разделе SEO →</a>' : '') +
+      (s.note ? '<p class="pa-empty" style="flex-basis:100%">' + esc(s.note) + '</p>' : '');
   }
 
   /* --- сообщения о подключении --- */

@@ -27,7 +27,7 @@ function pcb_ya_counter() {
 
 /**
  * GET/POST к API. Возвращает массив ответа или WP_Error.
- * Последний результат (ok / код ошибки) запоминается для строки «Токен API Яндекса».
+ * Последний результат по каждому сервису запоминается для строки «Токен API Яндекса».
  */
 function pcb_ya_request( $url, $method = 'GET', $body = null ) {
 	$token = pcb_ya_token();
@@ -43,24 +43,31 @@ function pcb_ya_request( $url, $method = 'GET', $body = null ) {
 		$args['headers']['Content-Type'] = 'application/json';
 		$args['body']                    = wp_json_encode( $body );
 	}
-	$res = wp_remote_request( $url, $args );
+	$service = false !== strpos( $url, 'webmaster' ) ? 'webmaster' : 'metrika';
+	$res     = wp_remote_request( $url, $args );
 	if ( is_wp_error( $res ) ) {
-		pcb_ya_remember_status( 'net', $res->get_error_message() );
+		pcb_ya_remember_status( $service, 'net', '', $res->get_error_message() );
 		return $res;
 	}
 	$code = (int) wp_remote_retrieve_response_code( $res );
 	$data = json_decode( (string) wp_remote_retrieve_body( $res ), true );
 	if ( $code < 200 || $code >= 300 ) {
-		$msg = is_array( $data ) && isset( $data['message'] ) ? $data['message'] : ( 'HTTP ' . $code );
-		pcb_ya_remember_status( 401 === $code || 403 === $code ? 'auth' : 'http', $msg );
-		return new WP_Error( 'pcb_ya_http_' . $code, $msg, array( 'status' => $code ) );
+		// Метрика: {message, errors:[{error_type, message}]}; Вебмастер: {error_code, error_message}
+		$d    = is_array( $data ) ? $data : array();
+		$ycode = (string) ( $d['error_code'] ?? ( $d['errors'][0]['error_type'] ?? '' ) );
+		$msg   = (string) ( $d['error_message'] ?? ( $d['message'] ?? ( $d['errors'][0]['message'] ?? ( 'HTTP ' . $code ) ) ) );
+		pcb_ya_remember_status( $service, 401 === $code ? 'auth' : ( 403 === $code ? 'forbidden' : 'http' ), $ycode, $msg );
+		return new WP_Error( 'pcb_ya_http_' . $code, $msg, array( 'status' => $code, 'code' => $ycode, 'service' => $service ) );
 	}
-	pcb_ya_remember_status( 'ok', '' );
+	pcb_ya_remember_status( $service, 'ok', '', '' );
 	return is_array( $data ) ? $data : array();
 }
 
-function pcb_ya_remember_status( $state, $msg ) {
-	update_option( 'pcb_ya_status', array( 'state' => $state, 'msg' => mb_substr( (string) $msg, 0, 200 ), 'time' => time() ), false );
+/** Последний ответ каждого сервиса — для строки «Токен API Яндекса». */
+function pcb_ya_remember_status( $service, $state, $code, $msg ) {
+	$all             = (array) get_option( 'pcb_ya_status', array() );
+	$all[ $service ] = array( 'state' => $state, 'code' => $code, 'msg' => mb_substr( (string) $msg, 0, 200 ), 'time' => time() );
+	update_option( 'pcb_ya_status', $all, false );
 }
 
 /** Запрос с кешем. $key — короткое имя, $params — то, от чего зависит ответ. */
@@ -302,10 +309,19 @@ function pcb_wm_summary( $date1, $date2 ) {
 			return $ids;
 		}
 		list( $uid, $host ) = $ids;
-		$base = 'https://api.webmaster.yandex.net/v4/user/' . $uid . '/hosts/' . rawurlencode( $host );
+		// host_id вида https:pcb-vostok.ru:443 передаётся в пути как есть — двоеточия не кодируем
+		$hid  = preg_match( '~^[a-z]+:[A-Za-z0-9.-]+:\d+$~', $host ) ? $host : rawurlencode( $host );
+		$base = 'https://api.webmaster.yandex.net/v4/user/' . $uid . '/hosts/' . $hid;
 		$q    = 'query_indicator=TOTAL_SHOWS&query_indicator=TOTAL_CLICKS&query_indicator=AVG_SHOW_POSITION&date_from=' . $date1 . '&date_to=' . $date2;
 		$hist = pcb_ya_request( $base . '/search-queries/all/history?' . $q );
+		$idx  = pcb_ya_request( $base . '/search-urls/in-search/history?date_from=' . $date1 . '&date_to=' . $date2 );
+		$hist_idx = is_wp_error( $idx ) ? array() : (array) ( $idx['history'] ?? array() );
+		$last     = $hist_idx ? end( $hist_idx ) : null;
 		if ( is_wp_error( $hist ) ) {
+			// 404: сайт подтверждён недавно, Вебмастер ещё не собрал статистику поиска — показываем то, что есть
+			if ( 404 === (int) ( $hist->get_error_data()['status'] ?? 0 ) && ! is_wp_error( $idx ) ) {
+				return array( 'shows' => null, 'clicks' => null, 'pos' => null, 'idx' => $last ? (int) $last['value'] : null, 'note' => 'Вебмастер ещё не собрал статистику поисковых запросов — после подтверждения сайта это занимает до нескольких дней.' );
+			}
 			return $hist;
 		}
 		$ind   = $hist['indicators'] ?? array();
@@ -320,9 +336,6 @@ function pcb_wm_summary( $date1, $date2 ) {
 			$pos += $p['value'] * $k;
 			$w   += $k;
 		}
-		$idx  = pcb_ya_request( $base . '/search-urls/in-search/history?date_from=' . $date1 . '&date_to=' . $date2 );
-		$hist_idx = is_wp_error( $idx ) ? array() : (array) ( $idx['history'] ?? array() );
-		$last     = $hist_idx ? end( $hist_idx ) : null;
 		return array(
 			'shows'  => (int) round( $shows ),
 			'clicks' => (int) round( $sum( 'TOTAL_CLICKS' ) ),
