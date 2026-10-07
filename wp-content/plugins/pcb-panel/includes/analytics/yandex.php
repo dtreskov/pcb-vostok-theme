@@ -96,6 +96,7 @@ function pcb_ya_flush_cache() {
 	}
 	delete_option( 'pcb_ya_cache_keys' );
 	delete_transient( 'pcb_ya_goal_map' );
+	delete_transient( 'pcb_wm_host' ); // выбор сайта в Вебмастере тоже пересчитаем
 }
 
 /* =================================
@@ -280,16 +281,25 @@ function pcb_wm_ids() {
 		if ( is_wp_error( $r ) ) {
 			return $r;
 		}
-		$want  = wp_parse_url( defined( 'PCB_WEBMASTER_HOST' ) ? PCB_WEBMASTER_HOST : home_url(), PHP_URL_HOST );
-		$first = '';
+		$want_url = defined( 'PCB_WEBMASTER_HOST' ) ? PCB_WEBMASTER_HOST : home_url();
+		$want     = wp_parse_url( $want_url, PHP_URL_HOST );
+		$scheme   = wp_parse_url( $want_url, PHP_URL_SCHEME ) ?: 'https';
+		$first    = '';
+		$best     = -1;
 		foreach ( (array) ( $r['hosts'] ?? array() ) as $h ) {
 			if ( empty( $h['verified'] ) ) {
 				continue;
 			}
 			$first = $first ?: $h['host_id'];
-			if ( wp_parse_url( $h['ascii_host_url'] ?? '', PHP_URL_HOST ) === $want ) {
+			$u     = (string) ( $h['ascii_host_url'] ?? '' );
+			if ( wp_parse_url( $u, PHP_URL_HOST ) !== $want ) {
+				continue;
+			}
+			// если в Вебмастере добавлены и http-, и https-версии — берём ту, на которой работает сайт
+			$score = ( wp_parse_url( $u, PHP_URL_SCHEME ) === $scheme ? 2 : 0 ) + ( 0 === strpos( $u, 'https:' ) ? 1 : 0 );
+			if ( $score > $best ) {
+				$best = $score;
 				$host = $h['host_id'];
-				break;
 			}
 		}
 		$host = $host ?: $first;
