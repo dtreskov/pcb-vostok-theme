@@ -14,7 +14,12 @@ $current = isset( $all[ $GLOBALS['pcb_panel_tab'] ?? '' ] ) ? $GLOBALS['pcb_pane
 $unseen  = isset( $tabs['crm'] ) ? pcb_crm_unseen_count() : 0;
 $user    = wp_get_current_user();
 
-if ( 'crm-card' === $view ) {
+$bare = ! empty( $GLOBALS['pcb_panel_bare'] );
+if ( 'crm-reply' === $view ) {
+	$title = 'Письмо по заявке ' . pcb_rq_label( $GLOBALS['pcb_panel_request_id'] );
+} elseif ( 'profile' === $view ) {
+	$title = 'Мой профиль';
+} elseif ( 'crm-card' === $view ) {
 	$title = 'Заявка ' . pcb_rq_label( $GLOBALS['pcb_panel_request_id'] );
 } elseif ( 'crm-journal' === $view ) {
 	$title = 'Журнал действий';
@@ -34,7 +39,7 @@ if ( 'crm-card' === $view ) {
 <title><?php echo esc_html( $title . ' — панель PCB Восток' ); ?></title>
 <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/globals.css' ) ); ?>">
 <link rel="stylesheet" href="<?php echo esc_url( PCB_PANEL_URL . 'assets/panel.css?ver=' . PCB_PANEL_VERSION ); ?>">
-<style>.pp-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--color-copper-dark);color:#fff;font-size:12px;font-weight:600;line-height:1}</style>
+<style>.pp-user__name{color:inherit!important;text-decoration:none}.pp-user__name:hover{color:var(--color-text-primary)!important;text-decoration:underline}.pp-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--color-copper-dark);color:#fff;font-size:12px;font-weight:600;line-height:1}</style>
 </head>
 <body class="pp">
 
@@ -45,7 +50,7 @@ if ( 'crm-card' === $view ) {
 			<span class="pp-brand__sub">панель</span>
 		</a>
 
-		<?php if ( $tabs ) : ?>
+		<?php if ( $tabs && ! $bare ) : ?>
 		<nav class="pp-tabs" aria-label="Разделы панели">
 			<?php foreach ( $tabs as $slug => $tab ) : ?>
 				<a class="pp-tab<?php echo $slug === $current ? ' is-on' : ''; ?>"
@@ -57,7 +62,7 @@ if ( 'crm-card' === $view ) {
 
 		<div class="pp-user">
 			<?php if ( $user->exists() ) : ?>
-				<span class="pp-user__name"><?php echo esc_html( $user->display_name ); ?></span>
+				<a class="pp-user__name" href="<?php echo esc_url( pcb_panel_url( 'profile' ) ); ?>" title="Мой профиль: подпись в письмах"><?php echo esc_html( $user->display_name ); ?></a>
 				<span class="pp-role<?php echo current_user_can( 'manage_options' ) ? '' : ' pp-role--ro'; ?>"><?php echo esc_html( pcb_panel_role_label() ); ?></span>
 				<a class="pp-logout" href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>">Выйти</a>
 			<?php endif; ?>

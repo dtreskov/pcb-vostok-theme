@@ -27,6 +27,18 @@
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var uid = 0;
 
+  /* Яндекс Метрика — только если посетитель согласился на аналитические cookie (cookie-consent.js).
+     ClientID уходит вместе с заявкой (связь заявки с визитами в CRM), код заявки после отправки —
+     в параметры посетителя Метрики (pcb_request), без контактов. См. README плагина pcb-panel. */
+  function ymOn() { var C = window.PCBConsent; return !!(C && C.metrika && typeof window.ym === 'function' && C.get && C.get() === 'all'); }
+  function ymClientId(cb) {
+    if (!ymOn()) { cb(''); return; }
+    var done = false, finish = function (v) { if (!done) { done = true; cb(v ? String(v) : ''); } };
+    try { window.ym(window.PCBConsent.metrika, 'getClientID', finish); } catch (e) { finish(''); }
+    setTimeout(function () { finish(''); }, 800); // Метрика не ответила — отправляем без неё
+  }
+  function ymRequest(code) { if (code && ymOn()) { try { window.ym(window.PCBConsent.metrika, 'userParams', { pcb_request: code }); } catch (e) { /* без Метрики */ } } }
+
   /* шаги для /panel/analytics — обрабатывает site-goals.js */
   function track(d) { try { document.dispatchEvent(new CustomEvent('pcb:track', { detail: d })); } catch (e) { /* без статистики */ } }
 
@@ -254,6 +266,10 @@
       }
 
       root.classList.add('is-sending'); submit.disabled = true;
+      ymClientId(function (cid) { if (cid) data.append('ym_client_id', cid); send(data); });
+    });
+
+    function send(data) {
       var bars = function (p) { [].forEach.call(list.querySelectorAll('.request-file__bar i'), function (b) { b.style.width = p + '%'; }); };
       var xhr = new XMLHttpRequest();
       xhr.open('POST', CFG.endpoint);
@@ -270,6 +286,7 @@
         done(); captchaReset();
         if (ok && res.success) {
           track({ goal: isCalc ? 'request_calc' : 'request_home' });
+          ymRequest(res.number);
           setSuccess(res.number || '');
           root.classList.add('is-done');
           if (success) success.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
@@ -279,7 +296,7 @@
       };
       xhr.onerror = function () { done(); captchaReset(); showAlert('Не удалось отправить заявку — проверьте соединение и попробуйте ещё раз.'); };
       xhr.send(data);
-    });
+    }
 
     ['input', 'change'].forEach(function (ev) {
       root.addEventListener(ev, function (e) {

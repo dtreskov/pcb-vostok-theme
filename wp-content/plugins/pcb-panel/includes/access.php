@@ -28,6 +28,11 @@ function pcb_panel_handle_request() {
 	$allowed = pcb_panel_allowed_tabs();
 	$slug    = sanitize_key( (string) get_query_var( 'pcb_panel_tab' ) );
 
+	// «Мой профиль» (подпись в письмах) — не вкладка, доступен всем пользователям панели
+	if ( 'profile' === $slug ) {
+		pcb_panel_render( 'profile', 200, '' );
+	}
+
 	// /panel без вкладки — первая разрешённая.
 	if ( '' === $slug ) {
 		if ( ! $allowed ) {
@@ -70,10 +75,22 @@ function pcb_panel_render_item( $slug, $item ) {
 	// по коду клиента открываем канонический адрес — с внутренним номером
 	$number = (string) get_post_meta( $id, '_pcb_number', true );
 	if ( strtoupper( $item ) !== $number ) {
-		wp_safe_redirect( pcb_rq_panel_url( $id ), 302 );
+		$sub = sanitize_key( (string) get_query_var( 'pcb_panel_sub' ) );
+		wp_safe_redirect( pcb_rq_panel_url( $id ) . ( '' !== $sub ? $sub . '/' : '' ), 302 );
 		exit;
 	}
 	$GLOBALS['pcb_panel_request_id'] = $id;
+	$sub = sanitize_key( (string) get_query_var( 'pcb_panel_sub' ) );
+	if ( 'reply' === $sub ) {
+		if ( ! current_user_can( 'pcb_crm_edit' ) ) {
+			pcb_panel_render( 'forbidden', 403 );
+		}
+		$GLOBALS['pcb_panel_bare'] = true; // отдельное окно: без вкладок
+		pcb_panel_render( 'crm-reply', 200, 'crm' );
+	}
+	if ( '' !== $sub ) {
+		pcb_panel_render( 'notfound', 404, 'crm' );
+	}
 	pcb_crm_mark_seen( $id );
 	pcb_panel_render( 'crm-card', 200, 'crm' );
 }

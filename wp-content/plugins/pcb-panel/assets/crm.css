@@ -65,6 +65,7 @@
 .crm-history { font-size: 13.5px; }
 
 .crm-form { display: grid; gap: var(--space-sm); margin-bottom: var(--space-md); }
+.crm-form[hidden], .crm-sent[hidden], .crm-box [hidden] { display: none !important; }
 .crm-form:last-child { margin-bottom: 0; }
 .crm-form label { display: grid; gap: 4px; font-size: 13px; font-weight: 500; color: var(--color-text-grey); }
 .crm-form label[hidden] { display: none; }
@@ -105,3 +106,93 @@
     .crm-search input { width: 100%; }
     .crm-search { width: 100%; }
 }
+
+/* ---------- 0.4.0: правки, сворачивание, важные заметки, письма ---------- */
+
+.crm-box__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); margin-bottom: var(--space-md); }
+.crm-box__head h2 { margin-bottom: 0; }
+.crm-link {
+    padding: 0; border: 0; background: none; cursor: pointer;
+    font: 500 13.5px/1.4 var(--font-family); color: var(--color-text-copper-dark); text-decoration: underline; text-underline-offset: 2px;
+}
+.crm-link:hover { color: var(--color-text-primary); }
+.crm-link:disabled { opacity: .5; cursor: default; }
+
+/* исправленное менеджером значение */
+.crm-edited, .crm-edited a { color: var(--color-text-copper-dark); font-weight: 600; }
+
+/* сворачиваемые блоки */
+.crm-fold > summary {
+    display: flex; align-items: baseline; gap: var(--space-sm); cursor: pointer; list-style: none;
+}
+.crm-fold > summary::-webkit-details-marker { display: none; }
+.crm-fold > summary h2 { margin-bottom: 0; }
+.crm-fold > summary::after {
+    content: ''; margin-left: auto; align-self: center; width: 8px; height: 8px;
+    border-right: 2px solid var(--color-copper); border-bottom: 2px solid var(--color-copper);
+    transform: rotate(45deg); transition: transform var(--transition-fast);
+}
+.crm-fold[open] > summary { margin-bottom: var(--space-md); }
+.crm-fold[open] > summary::after { transform: rotate(225deg); }
+.crm-fold > summary .crm-sub { display: inline; margin: 0; }
+.crm-dl dt.crm-dl__sub { padding-left: var(--space-md); }
+
+/* метки */
+.crm-tag {
+    display: inline-block; padding: 1px 8px; border-radius: var(--radius-pill);
+    background: var(--color-section-alt); color: var(--color-text-grey); font-size: 12px;
+}
+.crm-tag--sent { background: var(--color-primary-light); color: var(--color-text-primary); }
+.crm-tag--important { background: var(--color-copper-dark); color: var(--color-white); font-weight: 600; margin-bottom: 4px; }
+.crm-flag {
+    display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 4px;
+    border-radius: 50%; background: var(--color-copper-dark); color: var(--color-white); font-size: 12px; font-weight: 700;
+}
+
+/* важные заметки — подсвечены, пока не снята отметка */
+.crm-notes li.is-important {
+    padding: var(--space-sm) var(--space-md); border: 0; border-radius: 8px;
+    background: var(--color-copper-light); box-shadow: inset 3px 0 0 var(--color-copper);
+}
+.crm-notes .crm-link { margin-top: 4px; }
+
+/* формы */
+.crm-form input[type=text], .crm-form input[type=email], .crm-form input[type=tel] {
+    box-sizing: border-box; width: 100%; height: 38px; padding: 0 12px;
+    border: 1px solid var(--color-separator); border-radius: 8px; background: var(--color-white);
+    color: var(--color-text-black); font: 400 14.5px/1 var(--font-family);
+}
+.crm-form input:focus { outline: none; border-color: var(--color-primary); }
+.crm-form input[readonly] { background: var(--color-section-alt); color: var(--color-text-grey); }
+.crm-form--inline { margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px dashed var(--color-separator); }
+.crm-form__acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); }
+.crm-check { display: inline-flex !important; grid-auto-flow: column; align-items: center; gap: 6px !important; font-size: 14px !important; color: var(--color-text-black) !important; cursor: pointer; }
+.crm-check input { width: 16px; height: 16px; accent-color: var(--color-copper-dark); }
+
+.crm-drop {
+    display: grid; gap: 4px; padding: var(--space-md); text-align: center; cursor: pointer;
+    border: 1.5px dashed var(--color-copper); border-radius: var(--radius-card); background: var(--color-copper-light);
+    color: var(--color-text-black) !important;
+}
+.crm-drop.is-over { background: var(--color-primary-light); border-color: var(--color-primary); }
+.crm-drop input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.crm-picked { list-style: none; margin: 0; padding: 0; font-size: 13.5px; color: var(--color-text-grey); }
+
+/* переписка */
+.crm-mails { list-style: none; margin: 0 0 var(--space-sm); padding: 0; display: grid; gap: var(--space-sm); }
+.crm-mails summary { cursor: pointer; }
+.crm-mails .crm-text { margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md); border-radius: 8px; background: var(--color-section-alt); font-size: 14px; }
+
+/* окно письма и профиль */
+.crm-reply, .crm-profile { max-width: 720px; }
+.crm-profile { display: grid; gap: var(--space-md); }
+.crm-mailform { gap: var(--space-md); }
+.crm-signature { padding: var(--space-md); border-radius: 8px; background: var(--color-section-alt); font-size: 14px; }
+.crm-signature .crm-text { margin-top: 4px; color: var(--color-text-grey); }
+.crm-attach { display: grid; gap: 6px; margin: 0; padding: var(--space-md); border: 1px solid var(--color-separator); border-radius: 8px; }
+.crm-attach legend { padding: 0 6px; font-size: 13px; color: var(--color-text-grey); }
+.crm-attach .crm-sub { display: inline; }
+
+/* Метрика */
+.crm-copy { cursor: copy; padding: 1px 6px; border-radius: 4px; background: var(--color-section-alt); }
+.crm-metrika-links { display: flex; flex-wrap: wrap; gap: var(--space-md); margin: var(--space-md) 0 4px !important; font-size: 14px; }

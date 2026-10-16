@@ -44,7 +44,51 @@ add_action( 'rest_api_init', function () {
 		'permission_callback' => $can( 'pcb_crm_edit' ),
 		'args'                => $id_arg,
 		'callback'            => function ( WP_REST_Request $r ) {
-			return pcb_crm_rest_result( pcb_crm_add_note( (int) $r['id'], (string) $r['text'] ) );
+			return pcb_crm_rest_result( pcb_crm_add_note( (int) $r['id'], (string) $r['text'], ! empty( $r['important'] ) ) );
+		},
+	) );
+
+	// снять / поставить «Важно» у заметки: { note: <id записи журнала>, flag: important | resolved }
+	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\d+)/note-flag', array(
+		'methods'             => 'POST',
+		'permission_callback' => $can( 'pcb_crm_edit' ),
+		'args'                => $id_arg,
+		'callback'            => function ( WP_REST_Request $r ) {
+			return pcb_crm_rest_result( pcb_crm_note_flag( (int) $r['note'], (int) $r['id'], (string) $r['flag'] ) );
+		},
+	) );
+
+	// правка контактов: { email, phone, name, company } — любые из полей
+	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\d+)/contacts', array(
+		'methods'             => 'POST',
+		'permission_callback' => $can( 'pcb_crm_edit' ),
+		'args'                => $id_arg,
+		'callback'            => function ( WP_REST_Request $r ) {
+			$vals = array_intersect_key( (array) $r->get_params(), pcb_crm_contact_fields() );
+			return pcb_crm_rest_result( pcb_crm_set_contacts( (int) $r['id'], $vals ) );
+		},
+	) );
+
+	// добавить файлы (multipart, поле files[])
+	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\d+)/files', array(
+		'methods'             => 'POST',
+		'permission_callback' => $can( 'pcb_crm_edit' ),
+		'args'                => $id_arg,
+		'callback'            => function ( WP_REST_Request $r ) {
+			$res = pcb_crm_add_files( (int) $r['id'], $r->get_file_params(), 'manager' );
+			return is_wp_error( $res ) ? $res : array( 'ok' => true, 'added' => count( $res ) );
+		},
+	) );
+
+	// письмо клиенту (multipart): subject, body, attach[] — ключи файлов заявки, files[] — новые вложения
+	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\d+)/email', array(
+		'methods'             => 'POST',
+		'permission_callback' => $can( 'pcb_crm_edit' ),
+		'args'                => $id_arg,
+		'callback'            => function ( WP_REST_Request $r ) {
+			return pcb_crm_rest_result( pcb_crm_send_email(
+				(int) $r['id'], (string) $r['subject'], (string) $r['body'], (array) ( $r['attach'] ?? array() ), $r->get_file_params()
+			) );
 		},
 	) );
 
@@ -55,6 +99,21 @@ add_action( 'rest_api_init', function () {
 		'callback'            => function ( WP_REST_Request $r ) {
 			$res = pcb_crm_delete( (int) $r['id'], 'purge' === $r['mode'] ? 'purge' : 'archive' );
 			return is_wp_error( $res ) ? $res : array( 'ok' => true, 'redirect' => pcb_panel_url( 'crm' ) );
+		},
+	) );
+} );
+
+// подпись в письмах — своя у каждого пользователя панели
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'pcb-panel/v1', '/me/signature', array(
+		'methods'             => 'POST',
+		'permission_callback' => function () {
+			return current_user_can( 'pcb_panel_access' );
+		},
+		'callback'            => function ( WP_REST_Request $r ) {
+			$sig = trim( mb_substr( sanitize_textarea_field( (string) $r['signature'] ), 0, 1000 ) );
+			update_user_meta( get_current_user_id(), 'pcb_mail_signature', $sig );
+			return array( 'ok' => true );
 		},
 	) );
 } );

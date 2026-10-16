@@ -53,12 +53,12 @@ function pcb_crm_set_service( $id, $service ) {
 }
 
 /** Заметка хранится только в журнале (действие note). */
-function pcb_crm_add_note( $id, $text ) {
+function pcb_crm_add_note( $id, $text, $important = false ) {
 	$text = trim( mb_substr( sanitize_textarea_field( (string) $text ), 0, 5000 ) );
 	if ( '' === $text ) {
 		return new WP_Error( 'pcb_crm', 'Пустая заметка.', array( 'status' => 400 ) );
 	}
-	pcb_crm_log( $id, 'note', '', $text );
+	pcb_crm_log( $id, 'note', $important ? 'important' : '', $text );
 	return true;
 }
 
@@ -85,7 +85,6 @@ function pcb_crm_unseen_count() {
  * Тексты заметок в журнале стираются: в них могут быть персональные данные.
  */
 function pcb_crm_delete( $id, $mode = 'archive' ) {
-	global $wpdb;
 	$mode = 'purge' === $mode ? 'purge' : 'archive';
 	$dir  = '';
 	if ( 'purge' === $mode ) {
@@ -94,7 +93,7 @@ function pcb_crm_delete( $id, $mode = 'archive' ) {
 		$dir = pcb_rq_files_archive( $id );
 	}
 	pcb_crm_log( $id, 'purge' === $mode ? 'deleted' : 'deleted_archived', '', $dir );
-	$wpdb->update( pcb_crm_log_table(), array( 'new_value' => '(заметка удалена вместе с заявкой)' ), array( 'request_id' => (int) $id, 'action' => 'note' ) );
+	pcb_crm_scrub_log( $id );
 
 	$GLOBALS['pcb_crm_deleting'] = (int) $id; // чтобы хук ниже не обработал файлы второй раз
 	$ok = wp_delete_post( $id, true );
@@ -107,8 +106,201 @@ add_action( 'before_delete_post', function ( $id ) {
 	if ( ! pcb_crm_is_request( $id ) || ( $GLOBALS['pcb_crm_deleting'] ?? 0 ) === (int) $id ) {
 		return;
 	}
-	global $wpdb;
 	$dir = pcb_rq_files_archive( $id );
 	pcb_crm_log( $id, 'deleted_archived', '', $dir );
-	$wpdb->update( pcb_crm_log_table(), array( 'new_value' => '(заметка удалена вместе с заявкой)' ), array( 'request_id' => (int) $id, 'action' => 'note' ) );
+	pcb_crm_scrub_log( $id );
 } );
+
+/** Стереть из журнала тексты, где могут быть персональные данные: заметки и письма удалённой заявки. */
+function pcb_crm_scrub_log( $id ) {
+	global $wpdb;
+	$t = pcb_crm_log_table();
+	$wpdb->update( $t, array( 'new_value' => '(заметка удалена вместе с заявкой)' ), array( 'request_id' => (int) $id, 'action' => 'note' ) );
+	$wpdb->update( $t, array( 'new_value' => '(письмо удалено вместе с заявкой)' ), array( 'request_id' => (int) $id, 'action' => 'email' ) );
+}
+
+/* =================================
+   Правка контактов (0.4.0). Исходные значения — в _pcb_original, не меняются.
+   В журнал пишется только какое поле изменено — без значений: журнал остаётся без контактов.
+   ================================= */
+
+function pcb_crm_contact_fields() {
+	return array( 'email' => 'Почта', 'phone' => 'Телефон', 'name' => 'Имя', 'company' => 'Компания' );
+}
+
+function pcb_crm_original( $id ) {
+	$orig = get_post_meta( $id, '_pcb_original', true );
+	return is_array( $orig ) ? $orig : array();
+}
+
+function pcb_crm_set_contacts( $id, array $values ) {
+	$fields  = pcb_crm_contact_fields();
+	$changed = array();
+	foreach ( $fields as $k => $label ) {
+		if ( ! array_key_exists( $k, $values ) ) {
+			continue;
+		}
+		$v = 'email' === $k ? sanitize_email( (string) $values[ $k ] ) : mb_substr( sanitize_text_field( (string) $values[ $k ] ), 0, 'company' === $k ? 200 : 120 );
+		if ( 'email' === $k && ! is_email( $v ) ) {
+			return new WP_Error( 'pcb_crm', 'Укажите почту в формате имя@компания.ru.', array( 'status' => 400 ) );
+		}
+		if ( (string) get_post_meta( $id, '_pcb_' . $k, true ) !== $v ) {
+			update_post_meta( $id, '_pcb_' . $k, $v );
+			$changed[] = $label;
+		}
+	}
+	if ( $changed ) {
+		pcb_crm_log( $id, 'contact', '', implode( ', ', $changed ) );
+	}
+	return true;
+}
+
+/* =================================
+   Файлы, добавленные менеджером: тот же приём и проверки, что у формы (pcb_rq_collect_files),
+   у записи — кто и когда добавил и откуда файл: manager (прислал клиент по почте) | sent (вложение письма).
+   ================================= */
+
+function pcb_crm_add_files( $id, array $file_params, $kind = 'manager' ) {
+	$files = pcb_rq_collect_files( $file_params );
+	if ( is_wp_error( $files ) ) {
+		return $files;
+	}
+	if ( ! $files ) {
+		return array();
+	}
+	$current = (array) get_post_meta( $id, '_pcb_files', true );
+	$total   = array_sum( array_map( function ( $f ) { return (int) ( $f['size'] ?? 0 ); }, $current ) );
+	$adding  = array_sum( array_map( function ( $f ) { return (int) $f['size']; }, $files ) );
+	if ( $total + $adding > 10 * PCB_RQ_MAX_TOTAL ) {
+		return new WP_Error( 'pcb_crm', 'В заявке уже слишком много файлов (больше 500 МБ).', array( 'status' => 413 ) );
+	}
+	$stored = pcb_rq_store_files( $files, (string) get_post_meta( $id, '_pcb_number', true ) );
+	foreach ( $stored as &$f ) {
+		$f['by']    = get_current_user_id();
+		$f['added'] = current_time( 'mysql' );
+		$f['kind']  = $kind;
+	}
+	unset( $f );
+	update_post_meta( $id, '_pcb_files', array_merge( $current, $stored ) );
+	if ( 'manager' === $kind ) {
+		pcb_crm_log( $id, 'file_added', '', implode( ', ', wp_list_pluck( $stored, 'name' ) ) );
+	}
+	return $stored;
+}
+
+/* =================================
+   Важные заметки (0.4.0): флаг хранится в old_value записи журнала с действием note:
+   '' — обычная, 'important' — важная, не решена, 'resolved' — была важной, отметку сняли.
+   ================================= */
+
+function pcb_crm_note_flag( $note_id, $request_id, $flag ) {
+	global $wpdb;
+	$t   = pcb_crm_log_table();
+	$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t} WHERE id = %d AND request_id = %d AND action = 'note'", $note_id, $request_id ), ARRAY_A );
+	if ( ! $row ) {
+		return new WP_Error( 'pcb_crm', 'Заметка не найдена.', array( 'status' => 404 ) );
+	}
+	$flag = 'important' === $flag ? 'important' : 'resolved';
+	if ( $row['old_value'] !== $flag ) {
+		$wpdb->update( $t, array( 'old_value' => $flag ), array( 'id' => (int) $note_id ) );
+		pcb_crm_log( $request_id, 'important' === $flag ? 'note_important' : 'note_resolved', '', mysql2date( 'd.m.Y H:i', $row['time'] ) );
+	}
+	return true;
+}
+
+/** Число открытых важных заметок: по заявке или array( id => n ) по списку заявок. */
+function pcb_crm_important_counts( array $ids ) {
+	global $wpdb;
+	$ids = array_filter( array_map( 'intval', $ids ) );
+	if ( ! $ids ) {
+		return array();
+	}
+	$t    = pcb_crm_log_table();
+	$rows = $wpdb->get_results( "SELECT request_id, COUNT(*) AS n FROM {$t} WHERE action = 'note' AND old_value = 'important' AND request_id IN (" . implode( ',', $ids ) . ') GROUP BY request_id', ARRAY_A );
+	return wp_list_pluck( (array) $rows, 'n', 'request_id' );
+}
+
+/* =================================
+   Письмо клиенту из панели (0.4.0)
+   From и Reply-To — общий ящик (PCB_MAIL_FROM), скрытая копия — туда же: SMTP-отправка не попадает
+   в «Отправленные», копия сохраняет переписку в ящике. Подпись — из профиля менеджера.
+   ================================= */
+
+function pcb_crm_signature( $user_id = 0 ) {
+	$user_id = $user_id ? (int) $user_id : get_current_user_id();
+	$sig     = (string) get_user_meta( $user_id, 'pcb_mail_signature', true );
+	if ( '' === $sig ) {
+		$u   = get_userdata( $user_id );
+		$sig = "С уважением,\n" . ( $u ? $u->display_name : '' ) . "\nPCB Восток\n" . home_url( '/' );
+	}
+	return $sig;
+}
+
+function pcb_crm_mailbox() {
+	return trim( (string) pcb_rq_mail_from() );
+}
+
+/**
+ * Отправка. $keys — ключи уже прикреплённых к заявке файлов, $uploads — новые файлы (сохраняются в заявке как sent).
+ */
+function pcb_crm_send_email( $id, $subject, $body, array $keys, array $uploads ) {
+	$to      = (string) get_post_meta( $id, '_pcb_email', true );
+	$subject = trim( mb_substr( sanitize_text_field( (string) $subject ), 0, 200 ) );
+	$body    = trim( mb_substr( sanitize_textarea_field( (string) $body ), 0, 20000 ) );
+	if ( ! is_email( $to ) ) {
+		return new WP_Error( 'pcb_crm', 'У заявки нет корректной почты клиента.', array( 'status' => 400 ) );
+	}
+	if ( '' === $subject || '' === $body ) {
+		return new WP_Error( 'pcb_crm', 'Заполните тему и текст письма.', array( 'status' => 400 ) );
+	}
+
+	// новые вложения — сначала в файлы заявки
+	$new = pcb_crm_add_files( $id, $uploads, 'sent' );
+	if ( is_wp_error( $new ) ) {
+		return $new;
+	}
+	$keys = array_merge( array_map( 'sanitize_key', $keys ), wp_list_pluck( $new, 'key' ) );
+
+	// вложения уходят под исходными именами: копии во временной папке, после отправки удаляются
+	$tmp    = trailingslashit( get_temp_dir() ) . 'pcb-mail-' . wp_generate_password( 12, false, false );
+	$attach = array();
+	$names  = array();
+	$size   = 0;
+	foreach ( (array) get_post_meta( $id, '_pcb_files', true ) as $f ) {
+		if ( ! in_array( strtolower( (string) $f['key'] ), $keys, true ) ) {
+			continue;
+		}
+		$path = pcb_rq_file_path( $f );
+		if ( '' === $path ) {
+			continue;
+		}
+		$size += filesize( $path );
+		if ( $size > 20 * MB_IN_BYTES ) {
+			pcb_rq_rmdir( $tmp );
+			return new WP_Error( 'pcb_crm', 'Вложения больше 20 МБ — почтовые серверы такое часто не принимают. Отправьте ссылкой.', array( 'status' => 413 ) );
+		}
+		wp_mkdir_p( $tmp . '/' . count( $attach ) );
+		$copy = $tmp . '/' . count( $attach ) . '/' . sanitize_file_name( $f['name'] );
+		if ( @copy( $path, $copy ) ) {
+			$attach[] = $copy;
+			$names[]  = $f['name'];
+		}
+	}
+
+	$box     = pcb_crm_mailbox();
+	$full    = $body . "\n\n-- \n" . pcb_crm_signature();
+	$headers = array(
+		'Content-Type: text/plain; charset=UTF-8',
+		'From: PCB Восток <' . $box . '>',
+		'Reply-To: ' . $box,
+		'Bcc: ' . $box,
+	);
+	$GLOBALS['pcb_rq_mail_error'] = '';
+	$ok = wp_mail( $to, $subject, $full, $headers, $attach );
+	pcb_rq_rmdir( $tmp );
+	if ( ! $ok ) {
+		return new WP_Error( 'pcb_crm', 'Письмо не отправлено: ' . ( '' !== $GLOBALS['pcb_rq_mail_error'] ? $GLOBALS['pcb_rq_mail_error'] : 'ошибка почты' ), array( 'status' => 502 ) );
+	}
+	pcb_crm_log( $id, 'email', '', wp_json_encode( array( 'subject' => $subject, 'body' => $full, 'files' => $names ), JSON_UNESCAPED_UNICODE ) );
+	return true;
+}

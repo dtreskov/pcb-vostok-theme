@@ -55,6 +55,11 @@ function pcb_crm_log_actions() {
 		'deleted'          => 'Удалена вместе с файлами',
 		'deleted_archived' => 'Удалена, файлы в архиве',
 		'migrated'         => 'Обновление данных',
+		'contact'          => 'Исправлены контакты',
+		'file_added'       => 'Добавлен файл',
+		'email'            => 'Письмо клиенту',
+		'note_important'   => 'Заметка отмечена как важная',
+		'note_resolved'    => 'Снята отметка «Важно»',
 	);
 }
 
@@ -108,8 +113,16 @@ function pcb_crm_log_text( array $row ) {
 			return $what . ': ' . ( PCB_RQ_LOST_REASONS[ $new ] ?? ( '' !== $new ? $new : 'не указана' ) );
 		case 'created':
 			return $what . ( '' !== $new ? ' · ' . $new : '' );
+		case 'email':
+			$mail = json_decode( $new, true );
+			return $what . ( is_array( $mail ) ? ': ' . ( $mail['subject'] ?? '' ) . ( ! empty( $mail['files'] ) ? ' · вложений: ' . count( $mail['files'] ) : '' ) : '' );
+		case 'note_important':
+		case 'note_resolved':
+			return $what . ( '' !== $new ? ' (заметка от ' . $new . ')' : '' );
 		case 'note':
 		case 'file_download':
+		case 'file_added':
+		case 'contact':
 		case 'migrated':
 		case 'export':
 			return $what . ( '' !== $new ? ': ' . $new : '' );

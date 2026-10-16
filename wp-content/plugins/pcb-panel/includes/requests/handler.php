@@ -301,6 +301,10 @@ function pcb_rq_submit( WP_REST_Request $req ) {
 		'_pcb_files'           => pcb_rq_store_files( $files, $number ),
 		'_pcb_calc'            => $calc,
 		'_pcb_captcha'         => $captcha,
+		// исходные контакты — не меняются; правки менеджера пишутся в поля выше (см. includes/crm/actions.php)
+		'_pcb_original'        => array( 'email' => $email, 'phone' => $phone, 'name' => $name, 'company' => $company ),
+		// ClientID Яндекс Метрики — только если посетитель согласился на аналитику
+		'_pcb_ym_client'       => mb_substr( preg_replace( '/\D/', '', isset( $p['ym_client_id'] ) ? (string) wp_unslash( $p['ym_client_id'] ) : '' ), 0, 30 ),
 		'_pcb_page'            => esc_url_raw( $page ),
 		'_pcb_referrer'        => esc_url_raw( isset( $p['referrer'] ) ? wp_unslash( $p['referrer'] ) : '' ),
 		'_pcb_utm'             => pcb_rq_utm( $page ),

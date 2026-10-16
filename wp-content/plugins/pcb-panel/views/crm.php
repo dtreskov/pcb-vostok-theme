@@ -37,7 +37,8 @@ if ( '' !== $q ) {
 		);
 	}
 }
-$query = new WP_Query( $args );
+$query     = new WP_Query( $args );
+$important = pcb_crm_important_counts( wp_list_pluck( $query->posts, 'ID' ) );
 
 $link = function ( $over = array() ) use ( $status, $q ) {
 	$params = array_filter( array_merge( array( 'status' => $status, 'q' => $q ), $over ), 'strlen' );
@@ -101,6 +102,7 @@ $link = function ( $over = array() ) use ( $status, $q ) {
 				<tr class="<?php echo $unseen ? 'is-unseen' : ''; ?>">
 					<td>
 						<a class="crm-num" href="<?php echo esc_url( pcb_rq_panel_url( $id ) ); ?>"><?php echo esc_html( $m( 'number' ) ); ?></a>
+						<?php if ( ! empty( $important[ $id ] ) ) : ?><span class="crm-flag" title="Важных заметок: <?php echo (int) $important[ $id ]; ?>">!</span><?php endif; ?>
 						<span class="crm-code"><?php echo esc_html( $m( 'code' ) ); ?></span>
 					</td>
 					<td class="crm-nowrap"><?php echo esc_html( get_the_date( 'd.m.Y H:i', $id ) ); ?></td>
