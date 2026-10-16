@@ -1,0 +1,1006 @@
+/**
+ * Docket Cache.
+ *
+ * @author  Nawawi Jamili
+ * @license MIT
+ *
+ * @see    https://github.com/nawawi/docket-cache
+ */
+body {
+    background-color: #f5f5f5;
+}
+
+#docket-cache {
+    margin-top: 10px;
+    max-width: 1440px;
+}
+
+#docket-cache .hide {
+    display: none !important;
+}
+
+#docket-cache .text-green {
+    color: green;
+}
+
+#docket-cache .text-red {
+    color: red;
+}
+
+#docket-cache .text-maroon {
+    color: maroon;
+}
+
+#docket-cache .text-capitalize {
+    text-transform: capitalize !important;
+}
+
+#docket-cache .dashicons {
+    font-weight: normal;
+    font-size: 20px;
+    margin-top: -2px;
+    margin-right: 4px;
+}
+
+#docket-cache a.btxo {
+    text-decoration: none;
+    color: #444444;
+}
+
+#docket-cache a.btxo:hover {
+    color: orangered;
+}
+
+#docket-cache table,
+#docket-cache tbody,
+#docket-cache td,
+#docket-cache th,
+#docket-cache tr {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+#docket-cache select {
+    max-width: none;
+}
+
+#docket-cache .form-table {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+}
+
+#docket-cache .form-table .btitle,
+#docket-cache .form-table .stitle {
+    border: none !important;
+    padding-top: 15px !important;
+    padding-bottom: 5px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif !important;
+    font-size: 14px !important;
+    text-transform: uppercase;
+}
+
+#docket-cache .form-table .btitle a {
+    text-decoration: none;
+}
+
+#docket-cache .form-table .btitle .dashicons {
+    margin-right: 0;
+}
+
+#docket-cache .form-table th {
+    font-weight: 600;
+}
+
+#docket-cache .form-table tr:not(:last-child) td {
+    border-bottom: 1px solid #ddd;
+}
+
+#docket-cache .overview .form-table td,
+#docket-cache .log .form-table td,
+#docket-cache .cronbot .form-table td {
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+    font-size: 13px;
+}
+
+#docket-cache .overview .form-table th,
+#docket-cache .log .form-table th,
+#docket-cache .cronbot .form-table th {
+    min-width: 250px;
+}
+
+#docket-cache .overview td a {
+    text-decoration: none;
+    color: #444444;
+}
+
+#docket-cache .overview td a:hover {
+    text-decoration: underline;
+    color: orangered;
+}
+
+#docket-cache .form-table th,
+#docket-cache .form-table td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    vertical-align: middle;
+}
+
+#docket-cache .button {
+    min-width: 150px;
+    text-align: center;
+    margin-left: 0 !important;
+}
+
+#docket-cache .bt-fx {
+    min-width: 100px;
+    margin-bottom: 4px;
+}
+
+#docket-cache .log {
+    width: 100%;
+}
+
+#docket-cache .log select {
+    display: inline-block;
+    margin-bottom: 10px;
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+    font-size: 12px;
+    min-width: 100px;
+}
+
+#docket-cache .log span.vcache {
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+#docket-cache .log textarea {
+    width: 100%;
+    font-size: 100%;
+    font: courier;
+    vertical-align: baseline;
+    margin-top: 4px;
+    margin-bottom: 0;
+    white-space: pre;
+    overflow: auto;
+    background-color: white;
+}
+
+#docket-cache span.wpdebuglog {
+    font-size: 12px;
+    display: block;
+}
+
+
+/* cronbot */
+#docket-cache .cronbot p.submit {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+#docket-cache .cronbot .config-select {
+    min-width: 300px;
+}
+
+#docket-cache .cronbot .button {
+    min-width: 180px;
+}
+
+/* actions */
+#docket-cache div.qact {
+    display: block;
+    width: 100%;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+
+#docket-cache div.qact div.cmd {
+    display: block;
+    padding: 20px;
+}
+
+#docket-cache div.qact .button {
+    width: 100%;
+}
+
+#docket-cache div.qact h4 {
+    margin: 0;
+    font-size: 14px;
+}
+
+#docket-cache div.qact p {
+    margin-top: 0;
+}
+
+#docket-cache div.qact hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background-color: #ddd;
+}
+
+#docket-cache div.qact select {
+    margin: 6px 0 6px 0;
+    padding: 2px 8px;
+    width: 180px;
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+    font-size: 12px;
+    width: 100%;
+}
+
+#docket-cache div.qact label {
+    font-size: 12px;
+}
+
+/* config */
+
+#docket-cache .form-table-selection td,
+#docket-cache .form-table-selection th {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    vertical-align: middle !important;
+}
+
+#docket-cache .form-table-selection th {
+    padding-top: 18px;
+    min-width: 350px;
+    vertical-align: top !important;
+}
+
+#docket-cache .form-table-selection select {
+    margin-top: 6px;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    width: 180px;
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+    font-size: 12px;
+}
+
+/* /config */
+
+#docket-cache h2.title {
+    padding: 0;
+    margin-top: 25px;
+    text-transform: uppercase;
+    font-weight: normal;
+    font-size: 16px;
+}
+
+#docket-cache h2.title-below {
+    margin-top: 30px;
+}
+
+#docket-cache h3.title {
+    margin-bottom: 0;
+}
+
+#docket-cache p.desc {
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+#docket-cache-overlay {
+    position: fixed;
+    display: none;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: transparent;
+    z-index: 999999;
+    cursor: default;
+    user-select: none;
+}
+
+#docket-cache-overlay div.text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 24px;
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+    font-weight: normal;
+    color: white;
+    background: #111111;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    padding: 26px;
+    border-radius: 6px;
+    opacity: .6;
+    min-width: 200px;
+    text-align: center;
+    display: none;
+    cursor: default;
+    user-select: none;
+}
+
+/* small */
+@media only screen and (max-width:782px) {
+    #docket-cache-overlay div.text {
+        font-size: 18px;
+    }
+}
+
+#docket-cache-overlay div.text img {
+    display: inline-block;
+    border: 0;
+    margin: 0;
+    width: 20px;
+    height: 20px;
+}
+
+#docket-cache .noborder {
+    border: none !important;
+}
+
+#docket-cache .noborder-b {
+    border-bottom: none !important;
+}
+
+#docket-cache .border-b {
+    border-bottom: 1px solid #ddd !important;
+}
+
+#docket-cache .border-t {
+    border-top: 1px solid #ddd !important;
+}
+
+#docket-cache .log p.submit {
+    margin-top: 0;
+}
+
+#docket-cache .log textarea {
+    cursor: pointer;
+}
+
+#docket-cache input:focus,
+#docket-cache textarea:focus,
+#docket-cache select:focus,
+#docket-cache a:focus {
+    outline: none;
+    box-shadow: none !important;
+}
+
+#docket-cache .nav-tab {
+    margin-left: 0;
+    margin-right: 4px;
+}
+
+/* flex */
+#docket-cache .flex-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+}
+
+#docket-cache .flex-container div.row {
+    width: 100%;
+    border: none;
+}
+
+#docket-cache .flex-container div.row-left {
+    width: 100%;
+    margin-right: 40px;
+}
+
+#docket-cache .flex-container div.row-right {
+    width: 350px;
+}
+
+#docket-cache .flex-container .postbox {
+    border-color: #ddd;
+}
+
+#docket-cache .flex-container .postbox .inside {
+    padding: 0 12px 0 12px;
+}
+
+#docket-cache .flex-container .postbox .inside .bt-cx {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+    display: table;
+}
+
+#docket-cache .flex-container .postbox .inside * {
+    font-size: 13px !important;
+}
+
+#docket-cache .flex-container .postbox .inside div {
+    padding: 0 6px 0 6px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#docket-cache .flex-container div.row-right a:not(.button) {
+    text-decoration: none;
+}
+
+#docket-cache .flex-container div.row-right a:hover:not(.button) {
+    text-decoration: underline;
+}
+
+#docket-cache .flex-container .postbox .inside p:last-of-type {
+    margin-bottom: 20px;
+}
+
+/* /flex */
+
+#docket-cache #dclogo {
+    width: 130px;
+    height: 31px;
+    float: left;
+    margin-top: 2px;
+}
+
+/* desktop */
+@media only screen and (min-width: 782px) {
+
+    /* nav fixed */
+    #docket-cache .nav-tab-wrapper {
+        position: fixed;
+        background: #f5f5f5;
+        width: 100%;
+        z-index: 99;
+        padding-top: 20px;
+        margin-top: -10px;
+    }
+
+    #docket-cache .section {
+        padding-top: 48px;
+    }
+
+    #docket-cache .tab-content {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    #docket-cache #dclogo {
+        margin-left: 5px;
+    }
+
+    /* /nav fixed */
+
+    #docket-cache .nav-tab {
+        min-width: 100px;
+        max-width: 150px;
+        text-align: center;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        padding: 6px 10px;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+
+    .nav-tab:hover,
+    .nav-tab:focus,
+    .nav-tab-active {
+        background-color: #f5f5f5;
+    }
+
+    #docket-cache .nav-select {
+        display: none;
+    }
+
+    #docket-cache p.submit .button,
+    #docket-cache .gridlist .box-left .button {
+        margin-right: 6px;
+    }
+}
+
+@media only screen and (min-width: 1440px) {
+    #docket-cache .nav-tab-wrapper {
+        width: 1440px;
+    }
+}
+
+/* desktop 1920px */
+@media screen and (max-width: 1024px) {
+    #docket-cache .nav-tab {
+        min-width: 10px;
+        max-width: 100px;
+    }
+}
+
+/* small */
+@media only screen and (max-width:782px) {
+    #docket-cache #dclogo {
+        margin-bottom: 18px;
+    }
+
+    #docket-cache .nav-tab {
+        display: none;
+    }
+
+    #docket-cache .nav-tab-wrapper {
+        margin: 0;
+        padding: 0;
+    }
+
+    #docket-cache .nav-select {
+        display: block !important;
+        width: 100%;
+        margin-right: 0;
+    }
+
+    #docket-cache .log p.submit {
+        white-space: nowrap;
+    }
+
+    #docket-cache .log span.vcache,
+    #docket-cache .log .bt-fx {
+        display: block;
+        width: 100%;
+        margin-top: 6px;
+        margin-bottom: 6px;
+    }
+
+    #docket-cache .log p.submit select {
+        width: 32%;
+    }
+
+    #docket-cache div.qact .button,
+    #docket-cache p.submit .button {
+        display: block;
+        width: 100% !important;
+        margin-bottom: 6px;
+    }
+
+    #docket-cache .form-table th {
+        padding-bottom: 0;
+    }
+
+    #docket-cache .form-table td {
+        padding-top: 6px;
+    }
+
+    #docket-cache .border-b {
+        border-bottom: none !important;
+    }
+
+    #docket-cache .form-table-selection th,
+    #docket-cache .form-table-selection td {
+        width: 100% !important;
+        display: block;
+        float: left;
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    #docket-cache .form-table-selection td:nth-of-type(1) {
+        border: none !important;
+    }
+
+    #docket-cache .form-table-selection select {
+        width: 100%;
+        max-width: none;
+    }
+
+    #docket-cache .flex-container {
+        flex-direction: column;
+    }
+
+    #docket-cache .flex-container div.row-left,
+    #docket-cache .flex-container div.row-right {
+        width: 100%;
+        margin: 0;
+    }
+
+    #docket-cache .flex-container .postbox .inside .bt-cx {
+        display: block;
+        width: 100%;
+    }
+
+    #docket-cache .cronbot a.button:not(:first-of-type) {
+        margin-top: 10px;
+    }
+}
+
+/* event list */
+#docket-cache .gridlist {
+    margin: 0;
+    padding: 0;
+    display: block;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+#docket-cache .gridlist .box-left,
+#docket-cache .gridlist .box-right {
+    min-width: 20%;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+#docket-cache .gridlist .box-left {
+    float: left;
+}
+
+#docket-cache .gridlist .box-right {
+    float: right;
+}
+
+#docket-cache .gridlist table.wp-list-table {
+    width: 100%;
+    max-width: 100%;
+    table-layout: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+    border: 1px solid #ddd;
+}
+
+
+#docket-cache .gridlist .wp-list-table tfoot {
+    display: none;
+}
+
+#docket-cache .gridlist .wp-list-table pre {
+    white-space: pre-wrap;
+    margin: 0;
+    font-size: 12px;
+}
+
+#docket-cache .gridlist .wp-list-table code {
+    background: transparent;
+    padding: 0;
+}
+
+#docket-cache .gridlist .wp-list-table th,
+#docket-cache .gridlist .wp-list-table td {
+    padding: 10px;
+    text-align: left;
+    border-top: 1px solid #ddd;
+}
+
+#docket-cache .gridlist .wp-list-table th {
+    font-weight: 600;
+}
+
+#docket-cache .gridlist .wp-list-table .sorted a,
+#docket-cache .gridlist .wp-list-table .sortable a {
+    padding: 0;
+}
+
+#docket-cache .gridlist .status-eventlist-warning {
+    color: #c60;
+}
+
+#docket-cache .gridlist .status-eventlist-error {
+    color: #a00;
+}
+
+#docket-cache .gridlist .column-eventlist_next {
+    white-space: nowrap;
+}
+
+#docket-cache .gridlist .tablenav .tablenav-pages .button,
+#docket-cache .gridlist .tablenav .tablenav-pages .tablenav-pages-navspan {
+    display: inline-block;
+    vertical-align: baseline;
+    min-width: 30px;
+    min-height: 30px;
+    margin: 0;
+    padding: 0 4px;
+    font-size: 16px;
+    line-height: 1.625;
+    text-align: center;
+}
+
+#docket-cache .gridlist .tablenav .tablenav-pages {
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+
+/* small */
+@media only screen and (max-width: 782px) {
+
+    #docket-cache .gridlist .box-left,
+    #docket-cache .gridlist .box-right {
+        width: 100%;
+        display: block;
+        margin: 0;
+        padding: 0;
+        float: none;
+    }
+
+    #docket-cache .gridlist .box-left .button,
+    #docket-cache .gridlist .box-right .button {
+        width: 100%;
+        display: block;
+    }
+
+    #docket-cache .gridlist .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.column-primary)::before {
+        position: relative;
+        top: -1px;
+        left: 0px;
+        display: block;
+        overflow: hidden;
+        width: 100%;
+        content: attr(data-colname);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        padding-bottom: 6px;
+        font-weight: 600;
+    }
+
+    #docket-cache .gridlist .tablenav .tablenav-pages {
+        margin-bottom: 20px;
+    }
+
+    #docket-cache .gridlist .tablenav .tablenav-pages .button,
+    #docket-cache .gridlist .tablenav .tablenav-pages .tablenav-pages-navspan {
+        min-width: 44px;
+        padding: 12px 8px;
+        font-size: 18px;
+        line-height: 1;
+    }
+}
+
+/* /gridlist */
+
+/* opcklist */
+#docket-cache select.config-filter {
+    min-width: 180px;
+}
+
+#docket-cache .grid-opclist {
+    padding-top: 16px;
+}
+
+#docket-cache .grid-opclist td {
+    word-wrap: break-word;
+}
+
+#docket-cache .opcconfig th,
+#docket-cache .opcconfig th a {
+    font-weight: normal;
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+}
+
+#docket-cache .opcconfig th a {
+    text-decoration: none;
+    color: #444444;
+}
+
+#docket-cache .opcconfig th a:hover {
+    text-decoration: underline;
+    color: orangered;
+}
+
+#docket-cache .rsep {
+    position: relative;
+    float: right;
+    text-align: center;
+    vertical-align: middle;
+    min-width: 2px;
+    margin-right: 6px;
+}
+
+#docket-cache .opcache td a {
+    text-decoration: none;
+    color: #444444;
+}
+
+#docket-cache .opcache td a:hover {
+    text-decoration: underline;
+    color: orangered;
+}
+
+/* desktop */
+@media only screen and (min-width: 782px) {
+    #docket-cache .opcache .form-table:not(.opcconfig) th {
+        min-width: 200px;
+    }
+
+    #docket-cache .td-second {
+        width: 200px;
+    }
+
+    #docket-cache .th-third {
+        padding-left: 50px;
+    }
+
+    #docket-cache .opcache .opcconfig th {
+        min-width: 350px;
+    }
+}
+
+@media only screen and (max-width:782px) {
+    #docket-cache .rsep {
+        display: none;
+    }
+
+    #docket-cache select.config-filter {
+        display: block !important;
+        width: 100%;
+    }
+
+    #docket-cache select.config-filter:not(:first-of-type) {
+        margin-top: 10px;
+    }
+}
+
+/* /opcklist */
+
+#docket-cache .gc ul,
+#docket-cache .gc li {
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+    font-weight: normal;
+    font-size: 11px;
+    margin: 0;
+    padding: 0;
+}
+
+/* gc */
+#docket-cache .gc ul {
+    margin-left: 15px;
+}
+
+#docket-cache .gc li span {
+    display: inline-block;
+    min-width: 200px;
+}
+
+#docket-cache .gc li span.single {
+    min-width: 0;
+}
+
+#docket-cache .gc li span.bulllist {
+    margin-top: 10px;
+    min-width: 0;
+}
+
+/* tooltip */
+#docket-cache [data-tooltip] {
+    position: relative;
+    cursor: pointer;
+    line-height: 18px;
+    outline-style: none;
+    box-shadow: none;
+    border-color: transparent;
+    float: right;
+    bottom: -1px;
+}
+
+#docket-cache [data-tooltip] span.dashicons {
+    color: #5e5e5e;
+    font-size: 18px;
+}
+
+#docket-cache [data-tooltip]:before,
+#docket-cache [data-tooltip]:after {
+    visibility: hidden;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+    filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=0);
+    opacity: 0;
+    pointer-events: none;
+}
+
+#docket-cache [data-tooltip]:before {
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    margin-bottom: 5px;
+    margin-left: -130px;
+    padding: 12px;
+    width: 250px;
+    z-index: 100;
+    border-radius: 3px;
+    background-color: #000;
+    background-color: hsla(0, 0%, 20%, 0.95);
+    color: #FFF;
+    content: attr(data-tooltip);
+    text-align: left;
+    font-size: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+#docket-cache [data-tooltip]:after {
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -5px;
+    width: 0;
+    border-top: 5px solid #000;
+    border-top: 5px solid hsla(0, 0%, 20%, 0.9);
+    border-right: 5px solid transparent;
+    border-left: 5px solid transparent;
+    content: " ";
+    font-size: 0;
+    line-height: 0;
+}
+
+#docket-cache [data-tooltip]:hover:before,
+#docket-cache [data-tooltip]:hover:after,
+#docket-cache [data-tooltip]:focus:before,
+#docket-cache [data-tooltip]:focus:after {
+    visibility: visible;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+    filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=100);
+    opacity: 1;
+}
+
+/* small */
+@media only screen and (max-width:782px) {
+    #docket-cache [data-tooltip] {
+        float: left;
+    }
+
+    #docket-cache [data-tooltip]:before {
+        margin-left: -10px;
+    }
+}
+
+/* notice */
+#docket-cache #innotice {
+    font-size: 13px !important;
+}
+
+#docket-cache div.notice:not(#docket-cache-notice):not(#setting-error-docket-cache) {
+    display: none;
+}
+
+#docket-cache #runtimenotice {
+    margin: 0;
+    padding: 0;
+}
+
+#docket-cache #runtimenotice textarea {
+    width: 100%;
+    font-family: monospace, Consolas, Monaco;
+    unicode-bidi: embed;
+    font-size: 11px;
+    margin: 0;
+}
+
+#docket-cache #runtimenotice a.button {
+    width: 150px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+#docket-cache #runtimenotice a.btx-btu {
+    margin-left: 6px;
+}
+
+@media only screen and (max-width:782px) {
+    #docket-cache #runtimenotice a.button {
+        display: block;
+        width: 100% !important;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+/* wp */
+#wpfooter {
+    max-width: 1440px;
+}
+
+#wpfooter #footer-left,
+#wpfooter #footer-upgrade {
+    font-size: 11px !important;
+}
+
+.update-nag {
+    display: none;
+}
