@@ -26,6 +26,10 @@ if ( 'crm-reply' === $view ) {
 	$title = 'Клиенты';
 } elseif ( 'crm-queue' === $view ) {
 	$title = 'Проверить совпадения';
+} elseif ( 'seo-page' === $view ) {
+	$title = 'SEO: ' . wp_strip_all_tags( get_the_title( $GLOBALS['pcb_panel_seo_page'] ) );
+} elseif ( in_array( $view, array( 'seo-site', 'seo-robots', 'seo-maintenance' ), true ) ) {
+	$title = array( 'seo-site' => 'Данные сайта', 'seo-robots' => 'robots.txt', 'seo-maintenance' => 'Техработы' )[ $view ];
 } elseif ( 'profile' === $view ) {
 	$title = 'Мой профиль';
 } elseif ( 'crm-card' === $view ) {
@@ -45,6 +49,7 @@ if ( 'crm-reply' === $view ) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<?php echo pcb_seo_icon_links(); // phpcs:ignore -- адреса экранированы ?>
 <title><?php echo esc_html( $title . ' — панель PCB Восток' ); ?></title>
 <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/globals.css' ) ); ?>">
 <link rel="stylesheet" href="<?php echo esc_url( PCB_PANEL_URL . 'assets/panel.css?ver=' . PCB_PANEL_VERSION ); ?>">

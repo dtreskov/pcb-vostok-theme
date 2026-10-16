@@ -26,3 +26,8 @@ foreach ( array( 'pcb_events_db_version', 'pcb_ya_cache_keys', 'pcb_ya_status', 
 delete_transient( 'pcb_ya_goal_map' );
 delete_transient( 'pcb_wm_host' );
 wp_clear_scheduled_hook( 'pcb_events_purge' );
+
+// Техработы: настройки заглушки. Данные SEO (pcb_seo, метаполя _pcb_seo_* страниц) оставляем —
+// это содержимое сайта, пригодится при повторной установке.
+delete_option( 'pcb_maintenance' );
+delete_option( 'pcb_maint_migrated' );

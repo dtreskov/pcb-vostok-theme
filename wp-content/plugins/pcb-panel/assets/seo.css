@@ -1,0 +1,67 @@
+/* =================================
+   Вкладка SEO. Переменные — из globals.css темы, формы и карточки — из crm.css.
+   ================================= */
+
+/* строка состояния сайта */
+.seo-state { display: grid; gap: var(--space-sm); margin: 0 0 var(--space-lg); }
+.seo-state__row { margin: 0; padding: 12px var(--space-md); border-radius: var(--radius-card); font-size: 14px; line-height: 1.45; }
+.seo-state__row--ok   { background: var(--color-primary-light); color: var(--color-text-primary-dark); }
+.seo-state__row--info { background: var(--color-section-alt); color: var(--color-text-black); box-shadow: inset 3px 0 0 var(--color-primary); }
+.seo-state__row--warn { background: var(--color-gold-light); color: #6B5418; box-shadow: inset 3px 0 0 var(--color-gold); }
+
+/* метки длины */
+.seo-chip { display: inline-block; padding: 1px 8px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.seo-chip--ok   { background: var(--color-primary-light); color: var(--color-text-primary); }
+.seo-chip--warn { background: var(--color-gold-light); color: #6B5418; }
+.seo-chip--bad  { background: var(--color-copper-light); color: var(--color-text-copper-dark); }
+.seo-count { justify-self: start; font-weight: 600; }
+.seo-table td { font-size: 14px; }
+.seo-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 380px; }
+
+/* картинка */
+.seo-img { display: grid; gap: 6px; }
+.seo-img.is-busy { opacity: .55; pointer-events: none; }
+.seo-img--row { grid-template-columns: 132px minmax(0, 1fr); gap: var(--space-md); align-items: start; padding: var(--space-sm) 0; }
+.seo-img__label { font-size: 13px; font-weight: 500; color: var(--color-text-grey); }
+.seo-img__acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); margin-top: 4px; }
+.seo-img__thumb { width: 132px; aspect-ratio: 1200 / 630; object-fit: cover; border: 1px solid var(--color-separator); border-radius: 6px; background: var(--color-section-alt); }
+.seo-img__thumb--logo { object-fit: contain; padding: 8px; box-sizing: border-box; background: var(--color-white); }
+.crm-form label.seo-upload { display: inline-flex; position: relative; overflow: hidden; color: var(--color-text-primary) !important; font-size: 13px; cursor: pointer; }
+.seo-upload input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* превью сниппета (по мотивам выдачи Яндекса) */
+.seo-snippet { padding: var(--space-md); border: 1px solid var(--color-separator); border-radius: var(--radius-card); font-family: Arial, Helvetica, sans-serif; }
+.seo-snippet__site { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; color: #333; }
+.seo-snippet__fav { flex: none; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; background: var(--color-primary); color: #fff; font-size: 11px; font-weight: 700; }
+img.seo-snippet__fav { background: none; border-radius: 4px; }
+.seo-snippet__url { display: block; color: #007733; font-size: 12.5px; }
+.seo-snippet__title { margin-bottom: 4px; font-size: 18px; line-height: 1.3; color: #0000cc; overflow-wrap: anywhere; }
+.seo-snippet__desc { font-size: 14px; line-height: 1.45; color: #333; overflow-wrap: anywhere; }
+
+/* превью ссылки в мессенджере */
+.seo-share { display: grid; border-left: 3px solid var(--color-primary); border-radius: 4px; background: var(--color-section-alt); overflow: hidden; }
+.seo-share__img { width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; display: block; }
+.seo-share__body { display: grid; gap: 2px; padding: 10px 12px; font-size: 13.5px; line-height: 1.4; }
+.seo-share__site { color: var(--color-text-primary); font-weight: 600; font-size: 13px; }
+.seo-share__body span:last-child { color: var(--color-text-grey); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* значок сайта из темы */
+.seo-fav { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-md); padding: var(--space-sm) 0; }
+.seo-fav img { display: block; }
+.seo-fav__tab { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px 8px 0 0; background: #fff; border: 1px solid var(--color-separator); border-bottom: 0; font: 13px/1 Arial, sans-serif; color: #1f1f1f; }
+.seo-fav__tab--dark { background: #35363A; border-color: #35363A; color: #e8eaed; }
+
+/* код и моноширинные поля */
+.seo-code { margin: 0; max-height: 420px; overflow: auto; padding: var(--space-md); background: var(--color-section-alt); border-radius: 6px; font: 12.5px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.seo-mono, .crm-form textarea.seo-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+code.seo-mono { display: block; padding: 8px 10px; background: var(--color-section-alt); border-radius: 6px; overflow-wrap: anywhere; cursor: copy; }
+
+/* техработы */
+.seo-switch { display: grid; gap: 2px; padding: var(--space-md); border-radius: var(--radius-card); background: var(--color-section-alt); }
+.seo-switch.is-on { background: var(--color-gold-light); box-shadow: inset 3px 0 0 var(--color-copper); }
+.seo-frame { width: 200%; height: 880px; zoom: .5; border: 1px solid var(--color-separator); border-radius: 6px; background: var(--color-page-background); }
+
+@media (max-width: 767px) {
+    .seo-img--row { grid-template-columns: 1fr; }
+    .seo-clamp { max-width: none; }
+}

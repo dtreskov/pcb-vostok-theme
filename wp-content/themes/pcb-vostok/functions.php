@@ -18,6 +18,10 @@ require_once get_theme_file_path(
     'inc/cookie-consent.php'
 );
 
+require_once get_theme_file_path(
+    'inc/favicon.php'
+);
+
 /**
  * Отключаем автогенерируемые WordPress классы и inline-CSS
  * для layout-атрибутов блоков (is-layout-*, wp-container-core-*,

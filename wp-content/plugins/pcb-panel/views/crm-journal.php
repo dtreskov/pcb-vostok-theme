@@ -16,7 +16,7 @@ $rows = array_slice( $rows, 0, $per );
 <div class="pp-page-head">
 	<div>
 		<h1>Журнал действий</h1>
-		<p>Кто и что менял в заявках. Наведите на имя — увидите логин. У удалённых заявок тексты заметок, писем и значения контактов стёрты.</p>
+		<p>Кто и что менял: заявки, клиенты, SEO и техработы. Наведите на имя — увидите логин. У удалённых заявок тексты заметок, писем и значения контактов стёрты.</p>
 	</div>
 </div>
 
@@ -25,7 +25,7 @@ $rows = array_slice( $rows, 0, $per );
 <?php else : ?>
 	<div class="pp-table-wrap">
 		<table class="pp-table">
-			<thead><tr><th>Когда</th><th>Кто</th><th>Заявка</th><th>Действие</th></tr></thead>
+			<thead><tr><th>Когда</th><th>Кто</th><th>Объект</th><th>Действие</th></tr></thead>
 			<tbody>
 			<?php foreach ( $rows as $r ) :
 				$alive = $r['request_id'] && pcb_crm_is_request( $r['request_id'] );
@@ -35,7 +35,12 @@ $rows = array_slice( $rows, 0, $per );
 					<td class="crm-nowrap"><?php echo esc_html( mysql2date( 'd.m.Y H:i', $r['time'] ) ); ?></td>
 					<td><?php echo pcb_crm_user_html( $r['user_id'] ); // phpcs:ignore -- экранировано ?></td>
 					<td class="crm-nowrap">
-						<?php if ( ! $r['request_id'] && '' !== $r['entity'] ) :
+						<?php if ( 0 === strpos( (string) $r['entity'], 'seo:' ) ) :
+							$sk = substr( $r['entity'], 4 );
+							$sl = ctype_digit( $sk ) ? 'SEO: ' . ( get_the_title( (int) $sk ) ?: '#' . $sk ) : 'SEO: ' . ( array( 'site' => 'данные сайта', 'robots' => 'robots.txt', 'maint' => 'техработы' )[ $sk ] ?? $sk );
+							$su = pcb_panel_url( 'seo' ) . ( ctype_digit( $sk ) ? $sk : ( 'maint' === $sk ? 'maintenance' : $sk ) ) . '/'; ?>
+							<a href="<?php echo esc_url( $su ); ?>"><?php echo esc_html( $sl ); ?></a>
+						<?php elseif ( ! $r['request_id'] && '' !== $r['entity'] ) :
 							list( $et, $eid ) = array_pad( explode( ':', $r['entity'] ), 2, 0 );
 							$er = pcb_cl_get( $et, (int) $eid ); ?>
 							<a href="<?php echo esc_url( pcb_cl_url( $et, $eid ) ); ?>"><?php echo esc_html( ( 'company' === $et ? 'Компания ' : 'Контакт ' ) . ( $er ? ( $er['name'] ?: '#' . $eid ) : '#' . $eid ) ); ?></a>
