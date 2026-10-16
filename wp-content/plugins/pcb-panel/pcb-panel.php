@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PCB Восток — панель управления
  * Description: Закрытый раздел сайта /panel: CRM, аналитика, SEO. Вход — через учётные записи WordPress.
- * Version:     0.2.0
+ * Version:     0.2.1
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Text Domain: pcb-panel
@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PCB_PANEL_VERSION', '0.2.0' );
+define( 'PCB_PANEL_VERSION', '0.2.1' );
 define( 'PCB_PANEL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PCB_PANEL_URL', plugin_dir_url( __FILE__ ) );
 define( 'PCB_PANEL_SLUG', 'panel' ); // адрес раздела: /panel
