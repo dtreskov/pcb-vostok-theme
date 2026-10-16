@@ -35,27 +35,43 @@ foreach ( array( $service, $client ) as $v ) {
 	}
 }
 
-$related_q = array( 'relation' => 'OR', array( 'key' => '_pcb_email', 'value' => (string) $m( 'email' ) ) );
-if ( '' !== (string) $m( 'company' ) ) {
-	$related_q[] = array( 'key' => '_pcb_company', 'value' => (string) $m( 'company' ) );
+// клиент заявки (база клиентов, 0.6.0)
+$cl_contact = (int) $m( 'contact_id' ) ? pcb_cl_contact( (int) $m( 'contact_id' ) ) : null;
+$cl_company = (int) $m( 'company_id' ) ? pcb_cl_company( (int) $m( 'company_id' ) ) : null;
+// связанные: заявки того же контакта и компании, затем совпадения по полям (ещё не разобранные клиенты)
+$related = array();
+if ( $cl_contact ) {
+	foreach ( pcb_cl_requests( 'contact', $cl_contact['id'] ) as $rid ) {
+		$related[ $rid ][] = 'тот же контакт';
+	}
 }
-$related = get_posts( array(
-	'post_type'      => 'pcb_request',
-	'post_status'    => 'any',
-	'posts_per_page' => 10,
-	'post__not_in'   => array( $id ),
-	'meta_query'     => $related_q,
-) );
+if ( $cl_company ) {
+	foreach ( pcb_cl_requests( 'company', $cl_company['id'] ) as $rid ) {
+		if ( ! isset( $related[ $rid ] ) ) {
+			$related[ $rid ][] = 'та же компания';
+		}
+	}
+}
+foreach ( pcb_crm_related( $id ) as $rid => $why ) {
+	if ( ! isset( $related[ $rid ] ) ) {
+		$related[ $rid ] = $why;
+	}
+}
+unset( $related[ $id ] );
+krsort( $related );
+$open_important = count( array_filter( $notes, function ( $r ) { return 'important' === $r['old_value']; } ) );
 
 $calc_rows = pcb_crm_calc_rows( (array) $m( 'calc' ) );
 $desc      = (string) $post->post_content;
 $reply_url = pcb_rq_panel_url( $id ) . 'reply/';
 $ym_id     = (string) $m( 'ym_client' );
 $counter   = function_exists( 'pcb_ya_counter' ) ? (int) pcb_ya_counter() : ( defined( 'PCB_METRIKA_ID' ) ? (int) PCB_METRIKA_ID : 0 );
-$who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · ' . mysql2date( 'd.m.Y H:i', $time ); };
+// «кто · когда» — уже экранированный HTML: имя с логином в подсказке
+$who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · ' . esc_html( mysql2date( 'd.m.Y H:i', $time ) ); };
 ?>
 <link rel="stylesheet" href="<?php echo esc_url( PCB_PANEL_URL . 'assets/crm.css?ver=' . PCB_PANEL_VERSION ); ?>">
 
+<?php $crm_nav = 'requests'; include __DIR__ . '/_crm-nav.php'; ?>
 <a class="crm-back" href="<?php echo esc_url( pcb_panel_url( 'crm' ) ); ?>">← Все заявки</a>
 
 <div class="pp-page-head crm-card-head">
@@ -81,8 +97,36 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 		<section class="crm-box">
 			<div class="crm-box__head">
 				<h2>Клиент</h2>
-				<?php if ( $can_edit ) : ?><button class="crm-link" type="button" data-crm-toggle="crm-contacts-form">Изменить</button><?php endif; ?>
+				<?php if ( $can_edit ) : ?><button class="crm-link" type="button" data-crm-toggle="crm-contacts-form">Исправить контакты</button><?php endif; ?>
 			</div>
+			<p class="crm-clientline">
+				<?php if ( $cl_contact ) : ?>Контакт <a href="<?php echo esc_url( pcb_cl_url( 'contact', $cl_contact['id'] ) ); ?>"><?php echo esc_html( $cl_contact['name'] ?: 'без имени' ); ?></a><?php else : ?><span class="pp-muted">Контакт не определён</span><?php endif; ?>
+				·
+				<?php if ( $cl_company ) : ?>компания <a href="<?php echo esc_url( pcb_cl_url( 'company', $cl_company['id'] ) ); ?>"><?php echo esc_html( $cl_company['name'] ); ?></a><?php if ( $cl_company['verified'] ) : ?> <span class="crm-tag crm-tag--sent">проверено</span><?php endif; ?><?php else : ?><span class="pp-muted">без компании</span><?php endif; ?>
+				<?php if ( $can_edit ) : ?> <button class="crm-link" type="button" data-crm-toggle="crm-client-form">изменить привязку</button><?php endif; ?>
+			</p>
+			<?php if ( $can_edit ) : ?>
+				<form class="crm-form crm-form--inline" id="crm-client-form" data-api="requests/<?php echo (int) $id; ?>/client" hidden>
+					<label>Контакт
+						<div class="crm-pick" data-pick="contact">
+							<input type="search" value="<?php echo esc_attr( $cl_contact ? $cl_contact['name'] : '' ); ?>" placeholder="ФИО, почта или телефон" autocomplete="off">
+							<input type="hidden" name="contact_id" value="<?php echo (int) ( $cl_contact['id'] ?? 0 ); ?>">
+							<ul class="crm-pick__list" hidden></ul>
+						</div>
+					</label>
+					<label>Компания <span class="crm-sub">пусто — компания контакта</span>
+						<div class="crm-pick" data-pick="company">
+							<input type="search" value="<?php echo esc_attr( $cl_company ? $cl_company['name'] : '' ); ?>" placeholder="Название или ИНН" autocomplete="off">
+							<input type="hidden" name="company_id" value="<?php echo (int) ( $cl_company['id'] ?? 0 ); ?>">
+							<ul class="crm-pick__list" hidden></ul>
+						</div>
+					</label>
+					<div class="crm-form__acts">
+						<button class="pp-btn pp-btn--sm" type="submit">Сохранить привязку</button>
+						<button class="pp-btn pp-btn--sm pp-btn--ghost" type="button" data-crm-toggle="crm-client-form">Отмена</button>
+					</div>
+				</form>
+			<?php endif; ?>
 			<dl class="crm-dl">
 				<?php foreach ( pcb_crm_contact_fields() as $k => $label ) :
 					$cur     = (string) $m( $k );
@@ -110,10 +154,13 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 				<form class="crm-form crm-form--inline" id="crm-contacts-form" data-crm="contacts" data-id="<?php echo (int) $id; ?>" hidden>
 					<?php foreach ( pcb_crm_contact_fields() as $k => $label ) : ?>
 						<label><?php echo esc_html( $label ); ?>
-							<input type="<?php echo 'email' === $k ? 'email' : ( 'phone' === $k ? 'tel' : 'text' ); ?>" name="<?php echo esc_attr( $k ); ?>" value="<?php echo esc_attr( $m( $k ) ); ?>">
+							<input type="<?php echo 'email' === $k ? 'email' : ( 'phone' === $k ? 'tel' : 'text' ); ?>" name="<?php echo esc_attr( $k ); ?>" value="<?php echo esc_attr( $m( $k ) ); ?>"<?php
+								if ( 'email' === $k ) { echo ' required'; }
+								if ( 'phone' === $k ) { echo ' pattern="[+0-9\s\(\)\-\.]{5,25}" title="Цифры, пробелы, скобки, дефисы и «+»; например +7 912 345-67-89"'; }
+							?>>
 						</label>
 					<?php endforeach; ?>
-					<p class="crm-sub">Исходные значения из заявки сохраняются — исправленное поле будет видно рядом с ними.</p>
+					<p class="crm-sub">Телефон приводится к виду +7 912 345-67-89, почта — к нижнему регистру. Исходные значения из заявки сохраняются и видны рядом с исправленными.</p>
 					<div class="crm-form__acts">
 						<button class="pp-btn pp-btn--sm" type="submit">Сохранить</button>
 						<button class="pp-btn pp-btn--sm pp-btn--ghost" type="button" data-crm-toggle="crm-contacts-form">Отмена</button>
@@ -162,9 +209,9 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 							<?php endif; ?>
 							<span class="crm-sub"><?php echo esc_html( size_format( $f['size'] ) ); ?></span>
 							<?php if ( 'manager' === $kind ) : ?>
-								<span class="crm-tag">добавил <?php echo esc_html( $who( $f['by'] ?? 0, $f['added'] ?? '' ) ); ?></span>
+								<span class="crm-tag">добавил <?php echo $who( $f['by'] ?? 0, $f['added'] ?? '' ); // phpcs:ignore -- экранировано в $who ?></span>
 							<?php elseif ( 'sent' === $kind ) : ?>
-								<span class="crm-tag crm-tag--sent">отправлено клиенту · <?php echo esc_html( $who( $f['by'] ?? 0, $f['added'] ?? '' ) ); ?></span>
+								<span class="crm-tag crm-tag--sent">отправлено клиенту · <?php echo $who( $f['by'] ?? 0, $f['added'] ?? '' ); // phpcs:ignore -- экранировано в $who ?></span>
 							<?php endif; ?>
 						</li>
 					<?php endforeach; ?>
@@ -197,7 +244,7 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 							<details>
 								<summary>
 									<b><?php echo esc_html( is_array( $e ) ? $e['subject'] : 'Письмо' ); ?></b>
-									<span class="crm-sub"><?php echo esc_html( $who( $r['user_id'], $r['time'] ) . ( ! empty( $e['files'] ) ? ' · вложения: ' . implode( ', ', $e['files'] ) : '' ) ); ?></span>
+									<span class="crm-sub"><?php echo $who( $r['user_id'], $r['time'] ) . esc_html( ! empty( $e['files'] ) ? ' · вложения: ' . implode( ', ', $e['files'] ) : '' ); // phpcs:ignore ?></span>
 								</summary>
 								<div class="crm-text"><?php echo esc_html( is_array( $e ) ? $e['body'] : $r['new_value'] ); ?></div>
 							</details>
@@ -207,6 +254,44 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 				<p class="crm-sub">Ответы клиента приходят в почтовый ящик <?php echo esc_html( pcb_crm_mailbox() ); ?> — в CRM они не попадают.</p>
 			</section>
 		<?php endif; ?>
+
+		<section class="crm-box">
+			<h2>Связанные заявки</h2>
+			<?php if ( ! $related ) : ?>
+				<p class="pp-muted">Связанных заявок нет — с такой почтой, телефоном или компанией других заявок не было.</p>
+			<?php else : ?>
+				<ul class="crm-related">
+					<?php foreach ( $related as $rid => $why ) : ?>
+						<li>
+							<a href="<?php echo esc_url( pcb_rq_panel_url( $rid ) ); ?>"><?php echo esc_html( pcb_rq_label( $rid ) ); ?></a>
+							<span class="crm-sub"><?php echo esc_html( get_the_date( 'd.m.Y', $rid ) . ' · ' . pcb_rq_status_label( get_post_meta( $rid, '_pcb_status', true ) ) ); ?></span>
+							<span class="crm-tag">совпадает: <?php echo esc_html( implode( ', ', $why ) ); ?></span>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+		</section>
+
+		<section class="crm-box">
+			<h2>Яндекс Метрика</h2>
+			<?php if ( '' !== $ym_id ) : ?>
+				<p class="crm-sub">Посетитель согласился на аналитику — заявку можно связать с его визитами.</p>
+				<dl class="crm-dl">
+					<dt>ClientID</dt><dd><code class="crm-copy" title="Скопировать"><?php echo esc_html( $ym_id ); ?></code></dd>
+					<dt>Код в Метрике</dt><dd>параметр посетителя <code>pcb_request</code> = <code class="crm-copy"><?php echo esc_html( $m( 'code' ) ); ?></code></dd>
+				</dl>
+				<?php if ( $counter ) : ?>
+					<p class="crm-metrika-links">
+						<a href="<?php echo esc_url( 'https://metrika.yandex.ru/stat/visitors?id=' . $counter ); ?>" target="_blank" rel="noopener">Посетители</a>
+						<a href="<?php echo esc_url( 'https://metrika.yandex.ru/stat/visor?id=' . $counter ); ?>" target="_blank" rel="noopener">Вебвизор</a>
+						<a href="<?php echo esc_url( 'https://metrika.yandex.ru/stat/user_vars?id=' . $counter ); ?>" target="_blank" rel="noopener">Параметры посетителей</a>
+					</p>
+					<p class="crm-sub">В отчёте добавьте сегмент «ClientID» или найдите код заявки в параметре pcb_request.</p>
+				<?php endif; ?>
+			<?php else : ?>
+				<p class="pp-muted">Связи нет: посетитель не давал согласия на аналитические cookie или заявка отправлена до подключения связи.</p>
+			<?php endif; ?>
+		</section>
 
 		<details class="crm-box crm-box--muted crm-fold">
 			<summary><h2>Служебное</h2></summary>
@@ -230,37 +315,37 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 		<section class="crm-box">
 			<h2>Работа с заявкой</h2>
 			<?php if ( $can_edit ) : ?>
-				<form class="crm-form" data-crm="status" data-id="<?php echo (int) $id; ?>">
-					<label>Статус
-						<select name="status">
-							<?php foreach ( PCB_RQ_STATUSES as $k => $label ) : ?>
-								<option value="<?php echo esc_attr( $k ); ?>"<?php selected( $status, $k ); ?>><?php echo esc_html( $label ); ?></option>
-							<?php endforeach; ?>
-						</select>
-					</label>
-					<label class="crm-reason"<?php echo 'lost' === $status ? '' : ' hidden'; ?>>Причина отказа <span class="crm-sub">необязательно</span>
-						<select name="reason">
-							<option value="">Не указана</option>
-							<?php foreach ( PCB_RQ_LOST_REASONS as $k => $label ) : ?>
-								<option value="<?php echo esc_attr( $k ); ?>"<?php selected( (string) $m( 'lost_reason' ), $k ); ?>><?php echo esc_html( $label ); ?></option>
-							<?php endforeach; ?>
-						</select>
-					</label>
-					<button class="pp-btn pp-btn--sm" type="submit">Сохранить статус</button>
-				</form>
-
-				<form class="crm-form" data-crm="service" data-id="<?php echo (int) $id; ?>">
-					<label>Услуга
-						<select name="service">
-							<?php foreach ( $services as $k => $label ) : ?>
-								<option value="<?php echo esc_attr( $k ); ?>"<?php selected( $service, (string) $k ); ?>><?php echo esc_html( $label ); ?></option>
-							<?php endforeach; ?>
-						</select>
-					</label>
-					<?php if ( '' !== $client && $client !== $service ) : ?>
-						<p class="crm-sub">Клиент выбрал: <?php echo esc_html( pcb_rq_service_label( $client ) ); ?></p>
-					<?php endif; ?>
-					<button class="pp-btn pp-btn--sm" type="submit">Сохранить услугу</button>
+				<form class="crm-form crm-work" data-crm="work" data-id="<?php echo (int) $id; ?>">
+					<div class="crm-work__row">
+						<label>Статус
+							<select name="status">
+								<?php foreach ( PCB_RQ_STATUSES as $k => $label ) : ?>
+									<option value="<?php echo esc_attr( $k ); ?>"<?php selected( $status, $k ); ?>><?php echo esc_html( $label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+						<label>Услуга
+							<select name="service">
+								<?php foreach ( $services as $k => $label ) : ?>
+									<option value="<?php echo esc_attr( $k ); ?>"<?php selected( $service, (string) $k ); ?>><?php echo esc_html( $label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					</div>
+					<div class="crm-work__row">
+						<label class="crm-reason"<?php echo 'lost' === $status ? '' : ' hidden'; ?>><span class="pp-sr">Причина отказа</span>
+							<select name="reason">
+								<option value="">Причина отказа — не указана</option>
+								<?php foreach ( PCB_RQ_LOST_REASONS as $k => $label ) : ?>
+									<option value="<?php echo esc_attr( $k ); ?>"<?php selected( (string) $m( 'lost_reason' ), $k ); ?>><?php echo esc_html( $label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+						<?php if ( '' !== $client && $client !== $service ) : ?>
+							<span class="crm-sub crm-work__note">Клиент выбрал: <?php echo esc_html( pcb_rq_service_label( $client ) ); ?></span>
+						<?php endif; ?>
+						<button class="pp-btn pp-btn--sm" type="submit">Сохранить</button>
+					</div>
 				</form>
 			<?php else : ?>
 				<dl class="crm-dl">
@@ -270,12 +355,15 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 			<?php endif; ?>
 		</section>
 
-		<section class="crm-box">
-			<h2>Заметки</h2>
+		<details class="crm-box crm-fold crm-notes-box<?php echo $open_important ? ' is-alert' : ''; ?>" open>
+			<summary>
+				<h2>Заметки</h2>
+				<span class="crm-sub"><?php echo (int) count( $notes ); ?><?php echo $open_important ? ' · важных: ' . (int) $open_important : ''; ?></span>
+			</summary>
 			<?php if ( $can_edit ) : ?>
 				<form class="crm-form" data-crm="note" data-id="<?php echo (int) $id; ?>">
 					<label><span class="pp-sr">Новая заметка</span>
-						<textarea name="text" rows="3" placeholder="Например: запросили stackup, ждём ответа"></textarea>
+						<textarea name="text" rows="2" placeholder="Например: запросили stackup, ждём ответа"></textarea>
 					</label>
 					<div class="crm-form__acts">
 						<label class="crm-check"><input type="checkbox" name="important" value="1"> Важно</label>
@@ -285,75 +373,41 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 			<?php endif; ?>
 			<?php if ( ! $notes ) : ?>
 				<p class="pp-muted">Заметок нет.</p>
-			<?php else : ?>
-				<ul class="crm-notes">
-					<?php foreach ( $notes as $r ) :
-						$flag = (string) $r['old_value'];
-						?>
-						<li class="<?php echo 'important' === $flag ? 'is-important' : ''; ?>">
-							<?php if ( 'important' === $flag ) : ?><span class="crm-tag crm-tag--important">Важно</span><?php endif; ?>
-							<div class="crm-text"><?php echo esc_html( $r['new_value'] ); ?></div>
-							<span class="crm-sub">
-								<?php echo esc_html( $who( $r['user_id'], $r['time'] ) ); ?>
-								<?php if ( 'resolved' === $flag ) : ?> · было важно<?php endif; ?>
-							</span>
+			<?php else :
+				$note_li = function ( $r ) use ( $who, $can_edit, $id ) {
+					$flag = (string) $r['old_value'];
+					?>
+					<li class="<?php echo 'important' === $flag ? 'is-important' : ''; ?>">
+						<?php if ( 'important' === $flag ) : ?><span class="crm-tag crm-tag--important">Важно</span><?php endif; ?>
+						<div class="crm-text"><?php echo esc_html( $r['new_value'] ); ?></div>
+						<span class="crm-sub crm-meta">
+							<?php echo $who( $r['user_id'], $r['time'] ); // phpcs:ignore ?><?php echo 'resolved' === $flag ? ' · было важно' : ''; ?>
 							<?php if ( $can_edit ) : ?>
-								<button class="crm-link" type="button" data-crm-flag="<?php echo 'important' === $flag ? 'resolved' : 'important'; ?>" data-note="<?php echo (int) $r['id']; ?>" data-id="<?php echo (int) $id; ?>">
-									<?php echo 'important' === $flag ? 'Снять «Важно»' : 'Отметить как важное'; ?>
-								</button>
+								<button class="crm-link" type="button" data-crm-flag="<?php echo 'important' === $flag ? 'resolved' : 'important'; ?>" data-note="<?php echo (int) $r['id']; ?>" data-id="<?php echo (int) $id; ?>"><?php echo 'important' === $flag ? 'Снять «Важно»' : 'Важно'; ?></button>
 							<?php endif; ?>
-						</li>
-					<?php endforeach; ?>
-				</ul>
+						</span>
+					</li>
+					<?php
+				};
+				$pinned = array_filter( $notes, function ( $r ) { return 'important' === $r['old_value']; } );
+				$rest   = array_filter( $notes, function ( $r ) { return 'important' !== $r['old_value']; } );
+				?>
+				<?php if ( $pinned ) : ?><ul class="crm-notes crm-notes--pinned"><?php array_map( $note_li, $pinned ); ?></ul><?php endif; ?>
+				<?php if ( $rest ) : ?><ul class="crm-notes crm-scroll"><?php array_map( $note_li, $rest ); ?></ul><?php endif; ?>
 			<?php endif; ?>
-		</section>
+		</details>
 
-		<details class="crm-box crm-fold"<?php echo count( $history ) <= 8 ? ' open' : ''; ?>>
-			<summary><h2>История</h2></summary>
-			<ul class="crm-history">
+		<details class="crm-box crm-fold" open>
+			<summary><h2>История</h2><span class="crm-sub"><?php echo (int) count( array_filter( $history, function ( $r ) { return ! in_array( $r['action'], array( 'note', 'email' ), true ); } ) ); ?></span></summary>
+			<ul class="crm-history crm-scroll">
 				<?php foreach ( $history as $r ) : if ( in_array( $r['action'], array( 'note', 'email' ), true ) ) { continue; } ?>
 					<li>
 						<span><?php echo esc_html( pcb_crm_log_text( $r ) ); ?></span>
-						<span class="crm-sub"><?php echo esc_html( $who( $r['user_id'], $r['time'] ) ); ?></span>
+						<span class="crm-sub"><?php echo $who( $r['user_id'], $r['time'] ); // phpcs:ignore ?></span>
 					</li>
 				<?php endforeach; ?>
 			</ul>
 		</details>
-
-		<section class="crm-box">
-			<h2>Яндекс Метрика</h2>
-			<?php if ( '' !== $ym_id ) : ?>
-				<p class="crm-sub">Посетитель согласился на аналитику — заявку можно связать с его визитами.</p>
-				<dl class="crm-dl">
-					<dt>ClientID</dt><dd><code class="crm-copy" title="Скопировать"><?php echo esc_html( $ym_id ); ?></code></dd>
-					<dt>Код в Метрике</dt><dd>параметр посетителя <code>pcb_request</code> = <code class="crm-copy"><?php echo esc_html( $m( 'code' ) ); ?></code></dd>
-				</dl>
-				<?php if ( $counter ) : ?>
-					<p class="crm-metrika-links">
-						<a href="<?php echo esc_url( 'https://metrika.yandex.ru/stat/visitors?id=' . $counter ); ?>" target="_blank" rel="noopener">Посетители</a>
-						<a href="<?php echo esc_url( 'https://metrika.yandex.ru/stat/visor?id=' . $counter ); ?>" target="_blank" rel="noopener">Вебвизор</a>
-						<a href="<?php echo esc_url( 'https://metrika.yandex.ru/stat/user_vars?id=' . $counter ); ?>" target="_blank" rel="noopener">Параметры посетителей</a>
-					</p>
-					<p class="crm-sub">В отчёте добавьте сегмент «ClientID» или найдите код заявки в параметре pcb_request.</p>
-				<?php endif; ?>
-			<?php else : ?>
-				<p class="pp-muted">Связи нет: посетитель не давал согласия на аналитические cookie или заявка отправлена до подключения связи.</p>
-			<?php endif; ?>
-		</section>
-
-		<?php if ( $related ) : ?>
-			<section class="crm-box">
-				<h2>Другие заявки клиента</h2>
-				<ul class="crm-related">
-					<?php foreach ( $related as $rp ) : ?>
-						<li>
-							<a href="<?php echo esc_url( pcb_rq_panel_url( $rp->ID ) ); ?>"><?php echo esc_html( pcb_rq_label( $rp->ID ) ); ?></a>
-							<span class="crm-sub"><?php echo esc_html( get_the_date( 'd.m.Y', $rp ) . ' · ' . pcb_rq_status_label( get_post_meta( $rp->ID, '_pcb_status', true ) ) ); ?></span>
-						</li>
-					<?php endforeach; ?>
-				</ul>
-			</section>
-		<?php endif; ?>
 
 		<?php if ( $can_del ) : ?>
 			<button class="crm-delete" type="button" data-crm-delete>Удалить заявку…</button>
@@ -378,5 +432,5 @@ $who       = function ( $uid, $time ) { return pcb_crm_log_user( $uid ) . ' · '
 
 <p class="crm-msg" role="status" hidden></p>
 
-<script>window.PCBCrm = <?php echo wp_json_encode( array( 'rest' => esc_url_raw( rest_url( 'pcb-panel/v1/requests/' ) ), 'nonce' => wp_create_nonce( 'wp_rest' ) ) ); ?>;</script>
+<script>window.PCBCrm = <?php echo wp_json_encode( array( 'rest' => esc_url_raw( rest_url( 'pcb-panel/v1/requests/' ) ), 'api' => esc_url_raw( rest_url( 'pcb-panel/v1/' ) ), 'nonce' => wp_create_nonce( 'wp_rest' ) ) ); ?>;</script>
 <script src="<?php echo esc_url( PCB_PANEL_URL . 'assets/crm.js?ver=' . PCB_PANEL_VERSION ); ?>"></script>

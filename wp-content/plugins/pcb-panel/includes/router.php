@@ -28,7 +28,7 @@ function pcb_panel_register_rewrites() {
 	// вложенный адрес вкладки: /panel/crm/2026-0012/, /panel/crm/journal/
 	add_rewrite_rule( '^' . PCB_PANEL_SLUG . '/([a-z0-9-]+)/([A-Za-z0-9-]+)/?$', 'index.php?pcb_panel=1&pcb_panel_tab=$matches[1]&pcb_panel_item=$matches[2]', 'top' );
 	// действие над элементом: /panel/crm/2026-0012/reply/
-	add_rewrite_rule( '^' . PCB_PANEL_SLUG . '/([a-z0-9-]+)/([A-Za-z0-9-]+)/([a-z-]+)/?$', 'index.php?pcb_panel=1&pcb_panel_tab=$matches[1]&pcb_panel_item=$matches[2]&pcb_panel_sub=$matches[3]', 'top' );
+	add_rewrite_rule( '^' . PCB_PANEL_SLUG . '/([a-z0-9-]+)/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/?$', 'index.php?pcb_panel=1&pcb_panel_tab=$matches[1]&pcb_panel_item=$matches[2]&pcb_panel_sub=$matches[3]', 'top' );
 }
 add_action( 'init', 'pcb_panel_register_rewrites' );
 

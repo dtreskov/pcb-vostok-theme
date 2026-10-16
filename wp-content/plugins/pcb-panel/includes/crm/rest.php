@@ -48,6 +48,16 @@ add_action( 'rest_api_init', function () {
 		},
 	) );
 
+	// «Работа с заявкой» одной формой: { status, reason, service }
+	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\\d+)/work', array(
+		'methods'             => 'POST',
+		'permission_callback' => $can( 'pcb_crm_edit' ),
+		'args'                => $id_arg,
+		'callback'            => function ( WP_REST_Request $r ) {
+			return pcb_crm_rest_result( pcb_crm_set_work( (int) $r['id'], sanitize_key( (string) $r['status'] ), (string) $r['reason'], (string) $r['service'] ) );
+		},
+	) );
+
 	// снять / поставить «Важно» у заметки: { note: <id записи журнала>, flag: important | resolved }
 	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\d+)/note-flag', array(
 		'methods'             => 'POST',
@@ -113,6 +123,30 @@ add_action( 'rest_api_init', function () {
 		'callback'            => function ( WP_REST_Request $r ) {
 			$sig = trim( mb_substr( sanitize_textarea_field( (string) $r['signature'] ), 0, 1000 ) );
 			update_user_meta( get_current_user_id(), 'pcb_mail_signature', $sig );
+			return array( 'ok' => true );
+		},
+	) );
+
+	// отображаемое имя — меняется только display_name, логин остаётся; смена пишется в журнал
+	register_rest_route( 'pcb-panel/v1', '/me/name', array(
+		'methods'             => 'POST',
+		'permission_callback' => function () {
+			return current_user_can( 'pcb_panel_access' );
+		},
+		'callback'            => function ( WP_REST_Request $r ) {
+			$name = trim( preg_replace( '/\s+/u', ' ', mb_substr( sanitize_text_field( (string) $r['display_name'] ), 0, 60 ) ) );
+			if ( mb_strlen( $name ) < 2 ) {
+				return new WP_Error( 'pcb_crm', 'Имя — не короче двух символов.', array( 'status' => 400 ) );
+			}
+			$u   = wp_get_current_user();
+			$old = $u->display_name;
+			if ( $old !== $name ) {
+				$res = wp_update_user( array( 'ID' => $u->ID, 'display_name' => $name ) );
+				if ( is_wp_error( $res ) ) {
+					return $res;
+				}
+				pcb_crm_log( 0, 'user_name', $old, $name );
+			}
 			return array( 'ok' => true );
 		},
 	) );

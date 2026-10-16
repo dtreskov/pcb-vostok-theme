@@ -117,6 +117,10 @@ function pcb_crm_scrub_log( $id ) {
 	$t = pcb_crm_log_table();
 	$wpdb->update( $t, array( 'new_value' => '(заметка удалена вместе с заявкой)' ), array( 'request_id' => (int) $id, 'action' => 'note' ) );
 	$wpdb->update( $t, array( 'new_value' => '(письмо удалено вместе с заявкой)' ), array( 'request_id' => (int) $id, 'action' => 'email' ) );
+	// правки контактов: оставляем только какое поле менялось
+	foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, old_value FROM {$t} WHERE request_id = %d AND action = 'contact'", $id ), ARRAY_A ) as $r ) {
+		$wpdb->update( $t, array( 'new_value' => wp_json_encode( array( 'field' => $r['old_value'], 'scrubbed' => true ) ) ), array( 'id' => (int) $r['id'] ) );
+	}
 }
 
 /* =================================
@@ -134,25 +138,56 @@ function pcb_crm_original( $id ) {
 }
 
 function pcb_crm_set_contacts( $id, array $values ) {
-	$fields  = pcb_crm_contact_fields();
-	$changed = array();
+	$fields = pcb_crm_contact_fields();
+	$clean  = array();
 	foreach ( $fields as $k => $label ) {
 		if ( ! array_key_exists( $k, $values ) ) {
 			continue;
 		}
-		$v = 'email' === $k ? sanitize_email( (string) $values[ $k ] ) : mb_substr( sanitize_text_field( (string) $values[ $k ] ), 0, 'company' === $k ? 200 : 120 );
-		if ( 'email' === $k && ! is_email( $v ) ) {
-			return new WP_Error( 'pcb_crm', 'Укажите почту в формате имя@компания.ru.', array( 'status' => 400 ) );
+		$raw = (string) $values[ $k ];
+		if ( 'email' === $k ) {
+			$v = pcb_crm_norm_email( $raw );
+			if ( '' === $v && ! is_wp_error( $v ) ) {
+				$v = new WP_Error( 'pcb_crm', 'Почта обязательна — по ней мы отвечаем клиенту.', array( 'status' => 400 ) );
+			}
+		} elseif ( 'phone' === $k ) {
+			$v = pcb_crm_norm_phone( $raw );
+		} else {
+			$v = trim( preg_replace( '/\s+/u', ' ', mb_substr( sanitize_text_field( $raw ), 0, 'company' === $k ? 200 : 120 ) ) );
 		}
-		if ( (string) get_post_meta( $id, '_pcb_' . $k, true ) !== $v ) {
+		if ( is_wp_error( $v ) ) {
+			return $v; // ничего не сохраняем, пока все поля не корректны
+		}
+		$clean[ $k ] = $v;
+	}
+	foreach ( $clean as $k => $v ) {
+		$old = (string) get_post_meta( $id, '_pcb_' . $k, true );
+		if ( $old !== $v ) {
 			update_post_meta( $id, '_pcb_' . $k, $v );
-			$changed[] = $label;
+			// было → стало; при удалении заявки значения стираются (pcb_crm_scrub_log)
+			pcb_crm_log( $id, 'contact', $k, wp_json_encode( array( 'field' => $k, 'old' => $old, 'new' => $v ), JSON_UNESCAPED_UNICODE ) );
 		}
 	}
-	if ( $changed ) {
-		pcb_crm_log( $id, 'contact', '', implode( ', ', $changed ) );
+	pcb_crm_reindex( $id );
+	// новая почта или телефон в заявке — ещё один канал связи её контакта (если не принадлежит другому)
+	$contact = (int) get_post_meta( $id, '_pcb_contact_id', true );
+	if ( $contact && function_exists( 'pcb_cl_contact_add_channels' ) ) {
+		$e = strtolower( (string) get_post_meta( $id, '_pcb_email', true ) );
+		$p = pcb_crm_phone_digits( get_post_meta( $id, '_pcb_phone', true ) );
+		$owner_e = pcb_cl_find( 'email', $e );
+		$owner_p = pcb_cl_is_mobile( $p ) ? pcb_cl_find( 'phone', $p ) : 0; // городской может быть общим
+		pcb_cl_contact_add_channels( $contact, ( ! $owner_e || $owner_e === $contact ) ? $e : '', ( ! $owner_p || $owner_p === $contact ) ? $p : '' );
 	}
 	return true;
+}
+
+/** Статус, причина отказа и услуга одной формой («Работа с заявкой»). */
+function pcb_crm_set_work( $id, $status, $reason, $service ) {
+	$res = pcb_crm_set_status( $id, $status, $reason );
+	if ( is_wp_error( $res ) ) {
+		return $res;
+	}
+	return '' !== (string) $service ? pcb_crm_set_service( $id, $service ) : true;
 }
 
 /* =================================

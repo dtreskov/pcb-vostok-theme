@@ -120,7 +120,7 @@ function pcb_rq_metabox_history( $post ) {
 	echo '<table class="widefat striped"><tbody>';
 	foreach ( $rows as $r ) {
 		printf( '<tr><td style="width:130px">%s</td><td style="width:160px">%s</td><td>%s</td></tr>',
-			esc_html( mysql2date( 'd.m.Y H:i', $r['time'] ) ), esc_html( pcb_crm_log_user( $r['user_id'] ) ), esc_html( pcb_crm_log_text( $r ) ) );
+			esc_html( mysql2date( 'd.m.Y H:i', $r['time'] ) ), pcb_crm_user_html( $r['user_id'] ), esc_html( pcb_crm_log_text( $r ) ) );
 	}
 	echo '</tbody></table>';
 }

@@ -49,7 +49,7 @@
   });
 
   // статус «Отказ» показывает поле причины
-  $$('form[data-crm="status"]').forEach(function (f) {
+  $$('form[data-crm="status"], form[data-crm="work"]').forEach(function (f) {
     var sel = f.querySelector('select[name="status"]'), reason = f.querySelector('.crm-reason');
     if (sel && reason) sel.addEventListener('change', function () { reason.hidden = sel.value !== 'lost'; });
   });
@@ -58,6 +58,7 @@
   $$('form[data-crm]').forEach(function (f) {
     f.addEventListener('submit', function (e) {
       e.preventDefault();
+      if (!f.checkValidity()) { f.reportValidity(); return; } // формат почты и телефона — до отправки
       var data = {};
       [].forEach.call(f.elements, function (el) {
         if (!el.name) return;
@@ -126,8 +127,11 @@
     f.addEventListener('submit', function (e) {
       e.preventDefault();
       busy(f, true);
-      request(CFG.me + f.getAttribute('data-crm-me'), { signature: f.elements.signature.value })
-        .then(function () { busy(f, false); say('Подпись сохранена'); })
+      if (!f.checkValidity()) { f.reportValidity(); return; }
+      var data = {};
+      [].forEach.call(f.elements, function (el) { if (el.name) data[el.name] = el.value; });
+      request(CFG.me + f.getAttribute('data-crm-me'), data)
+        .then(function () { busy(f, false); say('Сохранено'); if (f.getAttribute('data-crm-me') === 'name') location.reload(); })
         .catch(function (err) { busy(f, false); say(err.message, true); });
     });
   });
@@ -150,6 +154,111 @@
   $$('.crm-copy').forEach(function (c) {
     c.addEventListener('click', function () {
       if (navigator.clipboard) navigator.clipboard.writeText(c.textContent.trim()).then(function () { say('Скопировано'); });
+    });
+  });
+
+  /* ---------- база клиентов (0.6.0) ---------- */
+
+  function api(path, data, method) {
+    var opts = { method: method || 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': CFG.nonce } };
+    if (data && opts.method === 'POST') { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(data); }
+    return fetch(CFG.api + path, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.message || 'Не удалось выполнить (' + r.status + ')'); e.data = j.data || {}; throw e; }
+        return j;
+      });
+    });
+  }
+  function fieldErrors(f, errs) {
+    $$('.crm-err', f).forEach(function (s) { s.hidden = true; s.textContent = ''; });
+    $$('[data-field].is-bad', f).forEach(function (l) { l.classList.remove('is-bad'); });
+    Object.keys(errs || {}).forEach(function (k) {
+      var l = f.querySelector('[data-field="' + k + '"]'); if (!l) return;
+      l.classList.add('is-bad'); var s = l.querySelector('.crm-err'); if (s) { s.textContent = errs[k]; s.hidden = false; }
+    });
+    var first = f.querySelector('[data-field].is-bad input, [data-field].is-bad textarea'); if (first) first.focus();
+  }
+
+  // формы клиентов: JSON в /pcb-panel/v1/<data-api>
+  $$('form[data-api]').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!f.checkValidity()) { f.reportValidity(); return; }
+      var miss = f.querySelector('input[type=hidden][required]');
+      if (miss && !miss.value) { say('Выберите из списка', true); return; }
+      if (f.dataset.confirm && !confirm(f.dataset.confirm)) return;
+      var data = {};
+      [].forEach.call(f.elements, function (el) {
+        if (!el.name) return;
+        if (el.type === 'checkbox') { if (el.checked) data[el.name] = el.value; return; }
+        data[el.name] = el.value;
+      });
+      busy(f, true);
+      api(f.dataset.api, data)
+        .then(function (res) { say('Сохранено'); if (res.redirect) location.href = res.redirect; else location.reload(); })
+        .catch(function (err) { busy(f, false); fieldErrors(f, err.data.fields); say(err.message, true); if (err.data.redirect && confirm(err.message + ' Открыть?')) location.href = err.data.redirect; });
+    });
+  });
+
+  // кнопки-действия: очередь «Проверить», убрать почту/телефон
+  $$('[data-api-click]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.dataset.confirm && !confirm(b.dataset.confirm)) return;
+      b.disabled = true;
+      api(b.dataset.apiClick, JSON.parse(b.dataset.body || '{}'))
+        .then(function (res) { if (res.redirect) location.href = res.redirect; else location.reload(); })
+        .catch(function (err) { b.disabled = false; say(err.message, true); });
+    });
+  });
+
+  // выбор компании / контакта с поиском
+  $$('.crm-pick').forEach(function (box) {
+    var input = box.querySelector('input[type=search]'), hidden = box.querySelector('input[type=hidden]'), list = box.querySelector('.crm-pick__list'), t;
+    function close() { list.hidden = true; list.innerHTML = ''; }
+    input.addEventListener('input', function () {
+      clearTimeout(t);
+      if (!input.value.trim()) { hidden.value = hidden.required ? '' : '0'; close(); return; }
+      t = setTimeout(function () {
+        api('clients/search?type=' + box.dataset.pick + '&q=' + encodeURIComponent(input.value.trim()), null, 'GET').then(function (rows) {
+          list.innerHTML = '';
+          rows.filter(function (r) { return String(r.id) !== box.dataset.exclude; }).forEach(function (r) {
+            var li = document.createElement('li'), btn = document.createElement('button');
+            btn.type = 'button'; btn.textContent = r.label;
+            btn.addEventListener('click', function () { hidden.value = r.id; input.value = r.label.split(' · ')[0]; close(); });
+            li.appendChild(btn); list.appendChild(li);
+          });
+          if (!list.children.length) { var li = document.createElement('li'); li.className = 'crm-pick__none'; li.textContent = 'Не найдено'; list.appendChild(li); }
+          list.hidden = false;
+        }).catch(function () { close(); });
+      }, 250);
+    });
+    document.addEventListener('click', function (e) { if (!box.contains(e.target)) close(); });
+  });
+
+  // автозаполнение по ИНН (DaData, только организации): заполняет пустые поля, занятые — по подтверждению
+  $$('[data-dadata]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.closest('form'), inn = f.elements.inn.value.replace(/\D/g, '');
+      if (inn.length !== 10) { say('Автозаполнение — только для организаций: ИНН из 10 цифр. Реквизиты ИП введите вручную.', true); return; }
+      b.disabled = true;
+      api('clients/dadata?inn=' + inn, null, 'GET').then(function (d) {
+        b.disabled = false;
+        var busyFields = Object.keys(d).filter(function (k) { return k[0] !== '_' && f.elements[k] && f.elements[k].value && f.elements[k].value !== d[k] && d[k]; });
+        var overwrite = !busyFields.length || confirm('Заменить уже заполненные поля данными ЕГРЮЛ? (' + busyFields.length + ')');
+        Object.keys(d).forEach(function (k) {
+          if (k[0] === '_' || !f.elements[k] || !d[k]) return;
+          if (!f.elements[k].value || overwrite) f.elements[k].value = d[k];
+        });
+        var st = { LIQUIDATED: 'ликвидирована', LIQUIDATING: 'ликвидируется', BANKRUPT: 'банкрот', REORGANIZING: 'реорганизуется' }[d._status];
+        say(st ? 'Внимание: по данным ЕГРЮЛ компания ' + st + '. Поля заполнены — проверьте и сохраните.' : 'Поля заполнены по ЕГРЮЛ — проверьте и сохраните.', !!st);
+      }).catch(function (err) { b.disabled = false; say(err.message, true); });
+    });
+  });
+  $$('[data-copy-addr]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.closest('form'), v = f.elements.addr_legal.value;
+      if (!v) { say('Сначала заполните юридический адрес', true); return; }
+      f.elements.addr_actual.value = v; f.elements.addr_postal.value = v;
     });
   });
 

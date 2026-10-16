@@ -11,14 +11,12 @@ $rows = pcb_crm_log_get( 0, $per + 1, ( $pg - 1 ) * $per );
 $more = count( $rows ) > $per;
 $rows = array_slice( $rows, 0, $per );
 ?>
-<link rel="stylesheet" href="<?php echo esc_url( PCB_PANEL_URL . 'assets/crm.css?ver=' . PCB_PANEL_VERSION ); ?>">
-
-<a class="crm-back" href="<?php echo esc_url( pcb_panel_url( 'crm' ) ); ?>">← Все заявки</a>
+<?php $crm_nav = 'journal'; include __DIR__ . '/_crm-nav.php'; ?>
 
 <div class="pp-page-head">
 	<div>
 		<h1>Журнал действий</h1>
-		<p>Кто и что менял в заявках. Контактов клиентов здесь нет, заметки удалённых заявок стёрты.</p>
+		<p>Кто и что менял в заявках. Наведите на имя — увидите логин. У удалённых заявок тексты заметок, писем и значения контактов стёрты.</p>
 	</div>
 </div>
 
@@ -35,9 +33,13 @@ $rows = array_slice( $rows, 0, $per );
 				?>
 				<tr>
 					<td class="crm-nowrap"><?php echo esc_html( mysql2date( 'd.m.Y H:i', $r['time'] ) ); ?></td>
-					<td><?php echo esc_html( pcb_crm_log_user( $r['user_id'] ) ); ?></td>
+					<td><?php echo pcb_crm_user_html( $r['user_id'] ); // phpcs:ignore -- экранировано ?></td>
 					<td class="crm-nowrap">
-						<?php if ( $alive ) : ?>
+						<?php if ( ! $r['request_id'] && '' !== $r['entity'] ) :
+							list( $et, $eid ) = array_pad( explode( ':', $r['entity'] ), 2, 0 );
+							$er = pcb_cl_get( $et, (int) $eid ); ?>
+							<a href="<?php echo esc_url( pcb_cl_url( $et, $eid ) ); ?>"><?php echo esc_html( ( 'company' === $et ? 'Компания ' : 'Контакт ' ) . ( $er ? ( $er['name'] ?: '#' . $eid ) : '#' . $eid ) ); ?></a>
+						<?php elseif ( $alive ) : ?>
 							<a href="<?php echo esc_url( pcb_rq_panel_url( (int) $r['request_id'] ) ); ?>"><?php echo esc_html( $label ); ?></a>
 						<?php else : ?>
 							<?php echo esc_html( '' !== $label ? $label : '—' ); ?>

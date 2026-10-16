@@ -62,6 +62,30 @@ function pcb_panel_render_item( $slug, $item ) {
 	if ( 'crm' !== $slug ) {
 		pcb_panel_render( 'notfound', 404 );
 	}
+	// база клиентов: /panel/crm/clients/[queue/], /panel/crm/company/<id>/, /panel/crm/contact/<id>/
+	if ( in_array( $item, array( 'clients', 'company', 'contact' ), true ) ) {
+		$sub = (string) get_query_var( 'pcb_panel_sub' );
+		if ( 'clients' === $item ) {
+			pcb_panel_render( 'queue' === $sub ? 'crm-queue' : ( '' === $sub ? 'crm-clients' : 'notfound' ), '' === $sub || 'queue' === $sub ? 200 : 404, 'crm' );
+		}
+		if ( 'new' === $sub ) {
+			if ( ! current_user_can( 'pcb_crm_edit' ) ) {
+				pcb_panel_render( 'forbidden', 403 );
+			}
+			$GLOBALS['pcb_panel_client'] = null;
+			pcb_panel_render( 'company' === $item ? 'crm-company' : 'crm-contact-new', 200, 'crm' );
+		}
+		$row = ctype_digit( $sub ) ? pcb_cl_get( $item, (int) $sub ) : null;
+		if ( ! $row ) {
+			pcb_panel_render( 'notfound', 404, 'crm' );
+		}
+		if ( (int) $row['id'] !== (int) $sub ) { // запись влита в другую
+			wp_safe_redirect( pcb_cl_url( $item, $row['id'] ), 302 );
+			exit;
+		}
+		$GLOBALS['pcb_panel_client'] = $row;
+		pcb_panel_render( 'crm-' . $item, 200, 'crm' );
+	}
 	if ( 'journal' === $item ) {
 		if ( ! current_user_can( 'pcb_panel_log_view' ) ) {
 			pcb_panel_render( 'forbidden', 403 );

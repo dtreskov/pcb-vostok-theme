@@ -320,7 +320,9 @@ function pcb_rq_submit( WP_REST_Request $req ) {
 	foreach ( $meta as $k => $v ) {
 		update_post_meta( $post_id, $k, $v );
 	}
+	pcb_crm_reindex( $post_id ); // ключи для связанных заявок
 	pcb_crm_log( $post_id, 'created', '', pcb_rq_service_label( $service ), 0 );
+	pcb_cl_match_request( $post_id ); // контакт и компания — точные совпадения сразу, вероятные — в очередь
 
 	// результат отправки писем хранится в заявке — видно в карточке, если почта не настроена
 	update_post_meta( $post_id, '_pcb_mail', array(

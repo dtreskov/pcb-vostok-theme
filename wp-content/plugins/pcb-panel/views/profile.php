@@ -17,6 +17,17 @@ $user = wp_get_current_user();
 
 <div class="crm-profile">
 	<section class="crm-box">
+		<h2>Отображаемое имя</h2>
+		<form class="crm-form" data-crm-me="name">
+			<label><span class="pp-sr">Отображаемое имя</span>
+				<input type="text" name="display_name" value="<?php echo esc_attr( $user->display_name ); ?>" maxlength="60" required>
+			</label>
+			<p class="crm-sub">Так вас видят в панели: в истории, заметках, журнале. Логин <b><?php echo esc_html( $user->user_login ); ?></b> не меняется — он показывается при наведении на имя, по нему всегда видно, кто что сделал.</p>
+			<button class="pp-btn pp-btn--sm" type="submit">Сохранить имя</button>
+		</form>
+	</section>
+
+	<section class="crm-box">
 		<h2>Подпись в письмах клиентам</h2>
 		<form class="crm-form" data-crm-me="signature">
 			<label><span class="pp-sr">Подпись</span>

@@ -8,11 +8,15 @@
  *   — файлы из uploads/pcb-requests/<номер>/ переносятся в <корень хранения>/active/<номер>/.
  * v2 (плагин 0.4.0):
  *   — заявкам без снимка исходных контактов (_pcb_original) он делается из текущих значений.
+ * v3 (плагин 0.5.0):
+ *   — ключи сравнения для связанных заявок (_pcb_k_email, _pcb_k_phone, _pcb_k_company).
+ * v4 (плагин 0.6.0):
+ *   — старые заявки разбираются по клиентам от ранних к поздним (точные совпадения — сразу, вероятные — в очередь).
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PCB_RQ_DATA_VERSION', '2' );
+define( 'PCB_RQ_DATA_VERSION', '4' );
 
 add_action( 'init', function () {
 	if ( get_option( 'pcb_rq_data_version' ) === PCB_RQ_DATA_VERSION ) {
@@ -27,6 +31,8 @@ add_action( 'init', function () {
 		pcb_rq_migrate_v1();
 	}
 	pcb_rq_migrate_v2();
+	pcb_rq_migrate_v3();
+	pcb_rq_migrate_v4();
 	update_option( 'pcb_rq_data_version', PCB_RQ_DATA_VERSION, false );
 	delete_transient( 'pcb_rq_migrating' );
 }, 30 );
@@ -105,5 +111,19 @@ function pcb_rq_migrate_v2() {
 			}
 			update_post_meta( $id, '_pcb_original', $orig );
 		}
+	}
+}
+
+function pcb_rq_migrate_v3() {
+	foreach ( get_posts( array( 'post_type' => 'pcb_request', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true ) ) as $id ) {
+		pcb_crm_reindex( $id );
+	}
+}
+
+function pcb_rq_migrate_v4() {
+	pcb_cl_install();
+	$ids = get_posts( array( 'post_type' => 'pcb_request', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true, 'orderby' => 'date', 'order' => 'ASC' ) );
+	foreach ( $ids as $id ) {
+		pcb_cl_match_request( $id );
 	}
 }

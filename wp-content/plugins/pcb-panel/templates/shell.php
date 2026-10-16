@@ -17,6 +17,15 @@ $user    = wp_get_current_user();
 $bare = ! empty( $GLOBALS['pcb_panel_bare'] );
 if ( 'crm-reply' === $view ) {
 	$title = 'Письмо по заявке ' . pcb_rq_label( $GLOBALS['pcb_panel_request_id'] );
+} elseif ( in_array( $view, array( 'crm-company', 'crm-contact' ), true ) ) {
+	$cl    = $GLOBALS['pcb_panel_client'] ?? null;
+	$title = $cl ? ( $cl['name'] ?: ( 'crm-company' === $view ? 'Компания' : 'Контакт' ) ) : 'Новая компания';
+} elseif ( 'crm-contact-new' === $view ) {
+	$title = 'Новый контакт';
+} elseif ( 'crm-clients' === $view ) {
+	$title = 'Клиенты';
+} elseif ( 'crm-queue' === $view ) {
+	$title = 'Проверить совпадения';
 } elseif ( 'profile' === $view ) {
 	$title = 'Мой профиль';
 } elseif ( 'crm-card' === $view ) {
@@ -39,7 +48,7 @@ if ( 'crm-reply' === $view ) {
 <title><?php echo esc_html( $title . ' — панель PCB Восток' ); ?></title>
 <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/globals.css' ) ); ?>">
 <link rel="stylesheet" href="<?php echo esc_url( PCB_PANEL_URL . 'assets/panel.css?ver=' . PCB_PANEL_VERSION ); ?>">
-<style>.pp-user__name{color:inherit!important;text-decoration:none}.pp-user__name:hover{color:var(--color-text-primary)!important;text-decoration:underline}.pp-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--color-copper-dark);color:#fff;font-size:12px;font-weight:600;line-height:1}</style>
+<style>.pp-menu{position:relative}.pp-menu__btn{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;cursor:pointer;list-style:none;font-weight:600}.pp-menu__btn::-webkit-details-marker{display:none}.pp-menu__btn:hover,.pp-menu[open] .pp-menu__btn{background:var(--color-section-alt)}.pp-ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--color-text-primary)}.pp-ico--chev{width:14px;height:14px;transition:transform .2s}.pp-menu[open] .pp-ico--chev{transform:rotate(180deg)}.pp-menu__list{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:260px;display:grid;padding:6px;background:#fff;border:1px solid var(--color-separator);border-radius:8px;box-shadow:0 12px 32px rgba(11,44,34,.14)}.pp-menu__list a{padding:9px 12px;border-radius:6px;color:var(--color-text-black)!important;text-decoration:none;font-size:14px}.pp-menu__list a:hover{background:var(--color-section-alt)}.pp-menu__meta{padding:6px 12px 8px;font-size:12.5px;color:var(--color-text-grey);border-bottom:1px solid var(--color-separator);margin-bottom:4px}.crm-user[title]{cursor:help;border-bottom:1px dotted currentColor}.pp-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--color-copper-dark);color:#fff;font-size:12px;font-weight:600;line-height:1}</style>
 </head>
 <body class="pp">
 
@@ -62,9 +71,20 @@ if ( 'crm-reply' === $view ) {
 
 		<div class="pp-user">
 			<?php if ( $user->exists() ) : ?>
-				<a class="pp-user__name" href="<?php echo esc_url( pcb_panel_url( 'profile' ) ); ?>" title="Мой профиль: подпись в письмах"><?php echo esc_html( $user->display_name ); ?></a>
 				<span class="pp-role<?php echo current_user_can( 'manage_options' ) ? '' : ' pp-role--ro'; ?>"><?php echo esc_html( pcb_panel_role_label() ); ?></span>
-				<a class="pp-logout" href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>">Выйти</a>
+				<details class="pp-menu">
+					<summary class="pp-menu__btn" title="<?php echo esc_attr( 'Логин: ' . $user->user_login ); ?>">
+						<svg class="pp-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+						<span class="pp-user__name"><?php echo esc_html( $user->display_name ); ?></span>
+						<svg class="pp-ico pp-ico--chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+					</summary>
+					<div class="pp-menu__list">
+						<span class="pp-menu__meta">Логин: <?php echo esc_html( $user->user_login ); ?></span>
+						<a href="<?php echo esc_url( pcb_panel_url( 'profile' ) ); ?>">Мой профиль — имя и подпись</a>
+						<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>">Пароль и двухфакторный вход</a>
+						<a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>">Выйти</a>
+					</div>
+				</details>
 			<?php endif; ?>
 		</div>
 	</div>

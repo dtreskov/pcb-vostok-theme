@@ -45,7 +45,7 @@ $link = function ( $over = array() ) use ( $status, $q ) {
 	return add_query_arg( $params, pcb_panel_url( 'crm' ) );
 };
 ?>
-<link rel="stylesheet" href="<?php echo esc_url( PCB_PANEL_URL . 'assets/crm.css?ver=' . PCB_PANEL_VERSION ); ?>">
+<?php $crm_nav = 'requests'; include __DIR__ . '/_crm-nav.php'; ?>
 
 <div class="pp-page-head">
 	<div>
@@ -53,9 +53,6 @@ $link = function ( $over = array() ) use ( $status, $q ) {
 		<p>Заявки с формы на сайте и из калькулятора. Клиент знает только код заявки, внутренний номер — для вас.</p>
 	</div>
 	<div class="crm-head-actions">
-		<?php if ( current_user_can( 'pcb_panel_log_view' ) ) : ?>
-			<a class="pp-btn pp-btn--ghost" href="<?php echo esc_url( pcb_panel_url( 'crm' ) . 'journal/' ); ?>">Журнал действий</a>
-		<?php endif; ?>
 		<?php if ( current_user_can( 'pcb_crm_delete' ) ) : ?>
 			<a class="pp-btn pp-btn--ghost" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=pcb_crm_export' ), 'pcb_crm_export' ) ); ?>">Выгрузить в CSV</a>
 		<?php endif; ?>
@@ -107,7 +104,8 @@ $link = function ( $over = array() ) use ( $status, $q ) {
 					</td>
 					<td class="crm-nowrap"><?php echo esc_html( get_the_date( 'd.m.Y H:i', $id ) ); ?></td>
 					<td>
-						<?php echo esc_html( '' !== $company ? $company : ( $m( 'name' ) ?: '—' ) ); ?>
+						<?php $cl_co = (int) $m( 'company_id' ) ? pcb_cl_company( (int) $m( 'company_id' ) ) : null; ?>
+						<?php if ( $cl_co ) : ?><a href="<?php echo esc_url( pcb_cl_url( 'company', $cl_co['id'] ) ); ?>"><?php echo esc_html( $cl_co['name'] ); ?></a><?php else : ?><?php echo esc_html( '' !== $company ? $company : ( $m( 'name' ) ?: '—' ) ); ?><?php endif; ?>
 						<span class="crm-sub"><?php echo esc_html( $m( 'email' ) ); ?></span>
 					</td>
 					<td><?php echo esc_html( pcb_rq_service_label( $m( 'service' ) ) ); ?></td>
