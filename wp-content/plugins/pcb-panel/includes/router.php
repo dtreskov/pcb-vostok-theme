@@ -25,12 +25,15 @@ function pcb_panel_allowed_tabs() {
 function pcb_panel_register_rewrites() {
 	add_rewrite_rule( '^' . PCB_PANEL_SLUG . '/?$', 'index.php?pcb_panel=1', 'top' );
 	add_rewrite_rule( '^' . PCB_PANEL_SLUG . '/([a-z0-9-]+)/?$', 'index.php?pcb_panel=1&pcb_panel_tab=$matches[1]', 'top' );
+	// вложенный адрес вкладки: /panel/crm/2026-0012/, /panel/crm/journal/
+	add_rewrite_rule( '^' . PCB_PANEL_SLUG . '/([a-z0-9-]+)/([A-Za-z0-9-]+)/?$', 'index.php?pcb_panel=1&pcb_panel_tab=$matches[1]&pcb_panel_item=$matches[2]', 'top' );
 }
 add_action( 'init', 'pcb_panel_register_rewrites' );
 
 add_filter( 'query_vars', function ( $vars ) {
 	$vars[] = 'pcb_panel';
 	$vars[] = 'pcb_panel_tab';
+	$vars[] = 'pcb_panel_item';
 	return $vars;
 } );
 
@@ -41,3 +44,11 @@ function pcb_panel_url( $tab = '' ) {
 function pcb_panel_is_request() {
 	return (bool) get_query_var( 'pcb_panel' );
 }
+
+// Новая версия плагина могла добавить адреса — правила пересобираются один раз после обновления.
+add_action( 'init', function () {
+	if ( get_option( 'pcb_panel_rewrite_version' ) !== PCB_PANEL_VERSION ) {
+		flush_rewrite_rules( false );
+		update_option( 'pcb_panel_rewrite_version', PCB_PANEL_VERSION, false );
+	}
+}, 99 );

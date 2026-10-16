@@ -6,7 +6,7 @@
  * Сама форма собрана из блоков Gutenberg прямо в страницах (секция #request главной
  * и этап 4 страницы калькулятора) — её тексты, порядок и оформление правятся в редакторе.
  * Стили: assets/css/components/request-form.css, логика: assets/js/request-form.js,
- * приём заявок: inc/request-handler.php (POST /wp-json/pcb/v1/request).
+ * приём и хранение заявок: плагин pcb-panel, includes/requests/ (POST /wp-json/pcb/v1/request).
  *
  * Здесь — настройки для скрипта формы и виджет Yandex SmartCaptcha.
  */

@@ -12,9 +12,7 @@ require_once get_theme_file_path(
     'inc/request-form.php'
 );
 
-require_once get_theme_file_path(
-    'inc/request-handler.php'
-);
+/* Приём и хранение заявок — в плагине pcb-panel (includes/requests/), см. его README.md */
 
 require_once get_theme_file_path(
     'inc/cookie-consent.php'

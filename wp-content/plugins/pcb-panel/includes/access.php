@@ -44,7 +44,38 @@ function pcb_panel_handle_request() {
 		pcb_panel_render( 'forbidden', 403 );
 	}
 
+	$item = (string) get_query_var( 'pcb_panel_item' );
+	if ( '' !== $item ) {
+		pcb_panel_render_item( $slug, $item );
+	}
+
 	pcb_panel_render( $slug, 200 );
+}
+
+/** Вложенные адреса вкладок. Сейчас — только у CRM: карточка заявки и общий журнал. */
+function pcb_panel_render_item( $slug, $item ) {
+	if ( 'crm' !== $slug ) {
+		pcb_panel_render( 'notfound', 404 );
+	}
+	if ( 'journal' === $item ) {
+		if ( ! current_user_can( 'pcb_panel_log_view' ) ) {
+			pcb_panel_render( 'forbidden', 403 );
+		}
+		pcb_panel_render( 'crm-journal', 200, 'crm' );
+	}
+	$id = pcb_rq_find( $item );
+	if ( ! $id ) {
+		pcb_panel_render( 'notfound', 404, 'crm' );
+	}
+	// по коду клиента открываем канонический адрес — с внутренним номером
+	$number = (string) get_post_meta( $id, '_pcb_number', true );
+	if ( strtoupper( $item ) !== $number ) {
+		wp_safe_redirect( pcb_rq_panel_url( $id ), 302 );
+		exit;
+	}
+	$GLOBALS['pcb_panel_request_id'] = $id;
+	pcb_crm_mark_seen( $id );
+	pcb_panel_render( 'crm-card', 200, 'crm' );
 }
 
 /** Запрет кэширования и индексации — панель не должна попасть в кэш или поиск. */
@@ -58,9 +89,11 @@ function pcb_panel_private_headers() {
 	header( 'X-Frame-Options: SAMEORIGIN', true );
 }
 
-function pcb_panel_render( $view, $status = 200 ) {
+/** $tab — какая вкладка подсвечена в шапке, если вид не совпадает с вкладкой (карточка заявки → crm). */
+function pcb_panel_render( $view, $status = 200, $tab = '' ) {
 	status_header( $status );
 	$GLOBALS['pcb_panel_view'] = $view;
+	$GLOBALS['pcb_panel_tab']  = '' !== $tab ? $tab : $view;
 	include PCB_PANEL_DIR . 'templates/shell.php';
 	exit;
 }
