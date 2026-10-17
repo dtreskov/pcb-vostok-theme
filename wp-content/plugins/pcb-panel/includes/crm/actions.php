@@ -243,6 +243,30 @@ function pcb_crm_note_flag( $note_id, $request_id, $flag ) {
 	return true;
 }
 
+/** Может ли текущий пользователь удалить заметку: автор или тот, у кого есть право удалять заявки. */
+function pcb_crm_can_delete_note( array $row ) {
+	return current_user_can( 'pcb_crm_delete' ) || ( current_user_can( 'pcb_crm_edit' ) && (int) $row['user_id'] === get_current_user_id() );
+}
+
+/**
+ * Удалить заметку: строка журнала с текстом удаляется целиком, в истории остаётся
+ * «Удалена заметка от <дата>» — без текста.
+ */
+function pcb_crm_note_delete( $note_id, $request_id ) {
+	global $wpdb;
+	$t   = pcb_crm_log_table();
+	$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t} WHERE id = %d AND request_id = %d AND action = 'note'", $note_id, $request_id ), ARRAY_A );
+	if ( ! $row ) {
+		return new WP_Error( 'pcb_crm', 'Заметка не найдена.', array( 'status' => 404 ) );
+	}
+	if ( ! pcb_crm_can_delete_note( $row ) ) {
+		return new WP_Error( 'pcb_crm', 'Удалить заметку может её автор или администратор.', array( 'status' => 403 ) );
+	}
+	$wpdb->delete( $t, array( 'id' => (int) $note_id ) );
+	pcb_crm_log( $request_id, 'note_deleted', '', mysql2date( 'd.m.Y H:i', $row['time'] ) . ', автор — ' . pcb_crm_log_user( (int) $row['user_id'] ) );
+	return true;
+}
+
 /** Число открытых важных заметок: по заявке или array( id => n ) по списку заявок. */
 function pcb_crm_important_counts( array $ids ) {
 	global $wpdb;

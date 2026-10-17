@@ -7,6 +7,8 @@
  * — Слияние источников: IPC-2581 → .gbrjob → Gerber, расхождения помечаются.
  * — Оценка монтажа: быстрая и подробная, автоподстановка из IPC-2581.
  * — Итоговая панель и текстовая сводка для формы заявки (window.PCBCalc → assets/js/request-form.js).
+ * — Восстановление расчёта из заявки: кнопка «Показать в калькуляторе» в /panel (плагин pcb-panel)
+ *   кладёт данные в localStorage и открывает страницу с #pcb-restore — см. restoreFromPanel().
  *
  * ВНИМАНИЕ: ставки в объекте R — демонстрационные, формула цены ещё не утверждена.
  */
@@ -69,7 +71,7 @@
 
   /* ================= Загрузка нескольких файлов ================= */
   var drop = $('#calc-drop'), fileIn = $('#calc-file');
-  var store = [], seq = 0, busyCount = 0;
+  var store = [], seq = 0, busyCount = 0, restoreApply = null;
   function kb(n) { return n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' КБ' : (n / 1048576).toFixed(1).replace('.', ',') + ' МБ'; }
   function plural(n, a, b, c) { var m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : (m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c); }
   function readText(f) { return f.text ? f.text() : new Response(f).text(); }
@@ -96,7 +98,7 @@
       busyCount++;
       readItem(f, it).then(function () {
         if (it.status === 'err') track({ ev: [['calc_err', errCode(it)]] });
-        busyCount--; renderFiles(); if (!busyCount) setTimeout(safeAnalyse, 350);
+        busyCount--; renderFiles(); if (!busyCount) setTimeout(function () { safeAnalyse(); if (restoreApply) { var f = restoreApply; restoreApply = null; f(); } }, 350);
       });
     });
     renderFiles();
@@ -915,6 +917,63 @@
     getFiles: function () { return store.filter(function (it) { return it.status === 'ok' && it.file; }).map(function (it) { return it.file; }); }
   };
 
+  /* ================= Восстановление расчёта из заявки (/panel) =================
+     Панель кладёт в localStorage 'pcb_calc_restore' { n: номер заявки, data: PCBCalc.getData() из заявки,
+     files: [{ name, url }] } и открывает страницу с #pcb-restore. Файлы скачиваются по ссылкам панели —
+     это работает только у вошедшего сотрудника. Пакет живёт 5 минут и удаляется сразу после чтения. */
+  var DATA_KEYS = ['qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel'];
+  function restoreNote(p, missed) {
+    var d = p.data || {}, box = document.createElement('div');
+    box.className = 'cx-restore';
+    box.setAttribute('role', 'status');
+    box.style.cssText = 'box-sizing:border-box;max-width:min(1290px,90vw);margin:16px auto 0;padding:12px 16px;border-radius:8px;background:var(--color-gold-light,#FBF3DF);color:#6B5418;font-size:14px;line-height:1.5;box-shadow:inset 3px 0 0 var(--color-copper,#C0703A)';
+    var est = d.estimate && d.estimate.lo ? ' В заявке оценка была ' + fmt(d.estimate.lo) + '–' + fmtR(d.estimate.hi) + '.' : (d.estimate === 'engineer' ? ' В заявке был расчёт инженером.' : '');
+    box.textContent = 'Расчёт из заявки ' + (p.n || '') + ' — открыт из панели.' + est + (missed ? ' Файлы скачать не удалось — показаны только параметры.' : '') + ' Изменения здесь в заявку не сохраняются.';
+    var head = $('#calc-head'); // под полосой «Онлайн-калькулятор», в потоке страницы — не липнет к шапке
+    root.insertBefore(box, head ? head.nextSibling : root.firstChild);
+  }
+  function restoreValues(d) {
+    DATA_KEYS.forEach(function (k) {
+      var e = el(k); if (!e || d[k] === undefined || d[k] === null) return;
+      if (String(e.value) !== String(d[k])) {
+        e.value = d[k];
+        if (badgeMap[k] || k === 'len' || k === 'wid') setBadge(k === 'len' || k === 'wid' ? 'size' : k, 'ok', 'заявки');
+      }
+    });
+    if (Array.isArray(d.special)) $$('.cx-checks input').forEach(function (i) { i.checked = d.special.indexOf(i.dataset.key) >= 0; });
+    if (d.asm) { var r = $('input[name="asm"][value="' + d.asm + '"]'); if (r) r.checked = true; }
+    var av = d.asm_values || {};
+    $$('[data-key^="q_"], [data-key^="d_"], [data-key^="p_"]').forEach(function (i) {
+      var v = av[i.dataset.key] || 0;
+      if (+i.value === v) return;
+      i.value = v; i.classList.remove('is-need');
+      if (asmKeys.indexOf(i.dataset.key) >= 0) setBadge(i.dataset.key, 'ok', 'заявки');
+    });
+    if (d.finish_pending === false) { finishPending = false; $('#calc-finish-confirm').hidden = true; }
+    syncInner(); syncAsm(); recalc();
+  }
+  function restoreFromPanel() {
+    if (location.hash !== '#pcb-restore') return;
+    var raw = null, p = null;
+    try { raw = localStorage.getItem('pcb_calc_restore'); localStorage.removeItem('pcb_calc_restore'); } catch (e) { /* хранилище закрыто */ }
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* без очистки адреса */ }
+    try { p = JSON.parse(raw); } catch (e) { p = null; }
+    if (!p || !p.data || Date.now() - (p.t || 0) > 5 * 60 * 1000) return;
+    var files = Array.isArray(p.files) ? p.files : [];
+    if (!files.length) { restoreValues(p.data); restoreNote(p, false); return; }
+    setHead('busy', 'Загружаем файлы из заявки…', '');
+    Promise.all(files.map(function (f) {
+      return fetch(f.url, { credentials: 'same-origin' }).then(function (r) {
+        if (!r.ok || r.redirected) throw new Error('file'); // не вошёл — WordPress уводит на форму входа
+        return r.blob();
+      }).then(function (b) { return new File([b], f.name, { type: b.type }); });
+    })).then(function (list) {
+      restoreApply = function () { restoreValues(p.data); };
+      handleFiles(list);
+      restoreNote(p, false);
+    }).catch(function () { restoreValues(p.data); restoreNote(p, true); });
+  }
+
   /* поля формы заявки (этап 4, #request) на расчёт не влияют */
   function isCalcField(t) { return t.matches('input,select') && !t.closest('#request'); }
   root.addEventListener('input', function (e) { if (isCalcField(e.target)) recalc(); });
@@ -930,6 +989,7 @@
   });
 
   asmInit(); syncInner(); syncAsm(); recalc();
+  restoreFromPanel();
 
 })();
 

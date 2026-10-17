@@ -40,7 +40,11 @@ include __DIR__ . '/_seo-nav.php';
 				<textarea name="text" rows="4"><?php echo esc_textarea( $m['text'] ); ?></textarea>
 				<span class="crm-err" hidden></span>
 			</label>
-			<p class="crm-sub">Под текстом — почта, телефон и адрес из «Данных сайта».</p>
+			<label data-field="sign">Подпись под текстом — каждая строка отдельно
+				<textarea name="sign" rows="3" placeholder="info@pcb-vostok.ru&#10;+7 917 510-09-68"><?php echo esc_textarea( pcb_maint_sign() ); ?></textarea>
+				<span class="crm-err" hidden></span>
+			</label>
+			<p class="crm-sub">Почта и телефон становятся ссылками, остальные строки — обычный текст. Пусто — подписи не будет.</p>
 			<?php if ( $can_edit ) : ?><button class="pp-btn" type="submit">Сохранить</button><?php endif; ?>
 		</form>
 
@@ -49,15 +53,11 @@ include __DIR__ . '/_seo-nav.php';
 				<h2>Ссылка предпросмотра</h2>
 				<p class="crm-sub">Для тех, у кого нет входа в панель: по ссылке сайт откроется как обычно на 7 дней в этом браузере. Новая ссылка отключает все старые.</p>
 				<p><code class="crm-copy seo-mono" title="Нажмите, чтобы скопировать"><?php echo esc_html( pcb_maint_preview_url() ); ?></code></p>
-				<button class="pp-btn pp-btn--sm pp-btn--ghost" type="button" data-api-click="seo/maintenance/key" data-confirm="Выпустить новую ссылку? Старые перестанут открывать сайт.">Выпустить новую ссылку</button>
+				<div class="crm-form__acts"><button class="pp-btn pp-btn--sm pp-btn--ghost" type="button" data-api-click="seo/maintenance/key" data-confirm="Выпустить новую ссылку? Старые перестанут открывать сайт.">Выпустить новую ссылку</button></div>
 			</section>
 		<?php endif; ?>
 	</div>
 	<div class="crm-col crm-col--side">
-		<section class="crm-box">
-			<h2>Как выглядит заглушка</h2>
-			<iframe class="seo-frame" src="<?php echo esc_url( add_query_arg( 'pcb_maint_view', '1', pcb_panel_url( 'seo' ) . 'maintenance/' ) ); ?>" title="Заглушка" loading="lazy"></iframe>
-		</section>
 		<details class="crm-box crm-fold"<?php echo $history ? ' open' : ''; ?>>
 			<summary><h2>История</h2><span class="crm-sub"><?php echo (int) count( $history ); ?></span></summary>
 			<ul class="crm-history crm-scroll">
@@ -70,5 +70,11 @@ include __DIR__ . '/_seo-nav.php';
 		</details>
 	</div>
 </div>
+
+<section class="crm-box seo-preview">
+	<div class="crm-box__head"><h2>Как выглядит заглушка</h2><a class="crm-link" href="<?php echo esc_url( add_query_arg( 'pcb_maint_view', '1', pcb_panel_url( 'seo' ) . 'maintenance/' ) ); ?>" target="_blank" rel="noopener">Открыть отдельно</a></div>
+	<iframe class="seo-frame" src="<?php echo esc_url( add_query_arg( 'pcb_maint_view', '1', pcb_panel_url( 'seo' ) . 'maintenance/' ) ); ?>" title="Заглушка" loading="lazy"></iframe>
+	<p class="crm-sub">Показывает сохранённый вариант — после «Сохранить» обновится.</p>
+</section>
 
 <?php include __DIR__ . '/_seo-scripts.php'; ?>

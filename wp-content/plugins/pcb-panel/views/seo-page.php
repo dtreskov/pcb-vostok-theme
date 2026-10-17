@@ -34,6 +34,12 @@ include __DIR__ . '/_seo-nav.php';
 <div class="crm-card">
 	<div class="crm-col">
 		<form class="crm-box crm-form seo-form" data-api="seo/page/<?php echo (int) $id; ?>"<?php echo $can_edit ? '' : ' inert'; ?>>
+			<label data-field="page_title">Название страницы
+				<input type="text" name="page_title" maxlength="120" value="<?php echo esc_attr( get_post_field( 'post_title', $id ) ); ?>" required>
+				<span class="crm-err" hidden></span>
+			</label>
+			<p class="crm-sub">Как страница называется в панели, в списке страниц WordPress и в title по шаблону. Адрес страницы (<?php echo esc_html( wp_make_link_relative( $url ) ); ?>) не меняется — латиница в адресе нормальна и правильна.</p>
+
 			<label data-field="title">Title — заголовок в поиске и во вкладке браузера
 				<input type="text" name="title" maxlength="120" value="<?php echo esc_attr( $m['title'] ); ?>" placeholder="<?php echo esc_attr( $default ); ?>" data-seo-src="title" data-default="<?php echo esc_attr( $default ); ?>">
 				<span class="seo-count" data-seo-count="title" data-min="<?php echo (int) $L['title'][0]; ?>" data-max="<?php echo (int) $L['title'][1]; ?>" data-limit="<?php echo (int) $L['title'][2]; ?>"></span>

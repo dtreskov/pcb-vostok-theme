@@ -1,6 +1,6 @@
 <?php
 /**
- * Данные страницы «Аналитика»: REST /wp-json/pcb-panel/v1/analytics?days=7|30|90.
+ * Данные страницы «Аналитика»: REST /wp-json/pcb-panel/v1/analytics?days=7|30|90|180|365.
  *
  * Источники и полнота:
  *   заявки (CPT pcb_request из темы)     — все обращения;
@@ -19,7 +19,7 @@ add_action( 'rest_api_init', function () {
 		'permission_callback' => function () { return current_user_can( 'pcb_analytics_view' ); },
 		'args'                => array( 'days' => array( 'default' => 30, 'sanitize_callback' => 'absint' ) ),
 		'callback'            => function ( WP_REST_Request $r ) {
-			$n = in_array( (int) $r['days'], array( 7, 30, 90 ), true ) ? (int) $r['days'] : 30;
+			$n = in_array( (int) $r['days'], array( 7, 30, 90, 180, 365 ), true ) ? (int) $r['days'] : 30;
 			return pcb_analytics_payload( $n );
 		},
 	) );

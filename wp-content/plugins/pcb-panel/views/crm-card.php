@@ -180,7 +180,13 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 
 		<?php if ( $calc_rows ) : ?>
 			<details class="crm-box crm-fold"<?php echo count( $calc_rows ) <= 8 ? ' open' : ''; ?>>
-				<summary><h2>Данные калькулятора</h2><span class="crm-sub"><?php echo (int) count( $calc_rows ); ?> параметров</span></summary>
+				<?php $restore = pcb_crm_calc_restore( $id ); ?>
+				<summary><h2>Данные калькулятора</h2><span class="crm-sub"><?php echo (int) count( $calc_rows ); ?> параметров</span>
+					<?php if ( $restore ) : ?>
+						<button class="pp-btn pp-btn--sm pp-btn--ghost crm-calc-open" type="button" data-calc-open="<?php echo esc_url( pcb_crm_calc_page_url() ); ?>" data-payload="<?php echo esc_attr( wp_json_encode( $restore, JSON_UNESCAPED_UNICODE ) ); ?>"
+							title="<?php echo esc_attr( 'Откроется в новой вкладке с параметрами' . ( $restore['files'] ? ' и файлами (' . count( $restore['files'] ) . ')' : '' ) . ' из заявки. Правки там в заявку не сохраняются.' ); ?>">Показать в калькуляторе</button>
+					<?php endif; ?>
+				</summary>
 				<dl class="crm-dl crm-dl--wide">
 					<?php foreach ( $calc_rows as $row ) : ?>
 						<dt<?php echo 0 === strpos( $row[0], '· ' ) ? ' class="crm-dl__sub"' : ''; ?>><?php echo esc_html( ltrim( $row[0], '· ' ) ); ?></dt><dd><?php echo esc_html( $row[1] ); ?></dd>
@@ -384,6 +390,9 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 							<?php echo $who( $r['user_id'], $r['time'] ); // phpcs:ignore ?><?php echo 'resolved' === $flag ? ' · было важно' : ''; ?>
 							<?php if ( $can_edit ) : ?>
 								<button class="crm-link" type="button" data-crm-flag="<?php echo 'important' === $flag ? 'resolved' : 'important'; ?>" data-note="<?php echo (int) $r['id']; ?>" data-id="<?php echo (int) $id; ?>"><?php echo 'important' === $flag ? 'Снять «Важно»' : 'Важно'; ?></button>
+							<?php endif; ?>
+							<?php if ( pcb_crm_can_delete_note( $r ) ) : ?>
+								<button class="crm-link crm-link--danger" type="button" data-crm-note-del data-note="<?php echo (int) $r['id']; ?>" data-id="<?php echo (int) $id; ?>">Удалить</button>
 							<?php endif; ?>
 						</span>
 					</li>

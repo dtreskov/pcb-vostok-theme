@@ -23,7 +23,7 @@ $items   = array(
 
 <div class="seo-state">
 	<?php if ( ! $st['prod'] ) : ?>
-		<p class="seo-state__row seo-state__row--info"><b>Тестовый домен <?php echo esc_html( $st['host'] ); ?></b> — сайт закрыт от поиска (robots.txt, noindex, заголовок X-Robots-Tag). На боевом <?php echo esc_html( $st['prodhost'] ); ?> индексация откроется сама.</p>
+		<p class="seo-state__row seo-state__row--info">Тестовый домен — закрыт от поиска; на <?php echo esc_html( $st['prodhost'] ); ?> откроется сам.</p>
 	<?php elseif ( $st['maint'] ) : ?>
 		<p class="seo-state__row seo-state__row--warn"><b>Включены техработы</b> — посетители и поисковики видят заглушку с кодом 503. <a href="<?php echo esc_url( $base . 'maintenance/' ); ?>">Настроить</a></p>
 	<?php elseif ( ! $st['public'] ) : ?>

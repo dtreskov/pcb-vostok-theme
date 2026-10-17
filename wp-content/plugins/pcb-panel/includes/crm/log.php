@@ -62,6 +62,7 @@ function pcb_crm_log_actions() {
 		'email'            => 'Письмо клиенту',
 		'note_important'   => 'Заметка отмечена как важная',
 		'note_resolved'    => 'Снята отметка «Важно»',
+		'note_deleted'     => 'Удалена заметка',
 		'user_name'        => 'Сменено отображаемое имя',
 		'client_link'      => 'Привязана к клиенту',
 		'cl_created'       => 'Создан',
@@ -158,6 +159,8 @@ function pcb_crm_log_text( array $row ) {
 		case 'note_important':
 		case 'note_resolved':
 			return $what . ( '' !== $new ? ' (заметка от ' . $new . ')' : '' );
+		case 'note_deleted':
+			return $what . ( '' !== $new ? ' от ' . $new : '' );
 		case 'note':
 		case 'file_download':
 		case 'file_added':

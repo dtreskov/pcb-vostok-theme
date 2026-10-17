@@ -59,6 +59,21 @@ add_action( 'rest_api_init', function () {
 			if ( (int) get_option( 'page_on_front' ) === $id && $new['noindex'] ) {
 				return pcb_seo_err( 'Главную нельзя закрыть от индексации — для этого есть режим техработ.', array( 'noindex' => 'Главная всегда в индексе.' ) );
 			}
+			// название страницы (post_title): адрес страницы (slug) не меняется
+			if ( array_key_exists( 'page_title', $p ) ) {
+				$pt = pcb_seo_text( $p['page_title'], 120 );
+				if ( '' === $pt ) {
+					return pcb_seo_err( 'Название страницы не может быть пустым.', array( 'page_title' => 'Заполните название.' ) );
+				}
+				$was = get_post_field( 'post_title', $id );
+				if ( $pt !== $was ) {
+					$res = wp_update_post( array( 'ID' => $id, 'post_title' => $pt ), true );
+					if ( is_wp_error( $res ) ) {
+						return pcb_seo_err( $res->get_error_message() );
+					}
+					pcb_crm_log_seo( $id, 'Название страницы', $was, $pt );
+				}
+			}
 			$old    = pcb_seo_meta( $id );
 			$labels = array( 'title' => 'Title', 'description' => 'Description', 'og' => 'Картинка для мессенджеров', 'noindex' => 'Индексация' );
 			foreach ( $new as $k => $v ) {
@@ -188,7 +203,15 @@ add_action( 'rest_api_init', function () {
 			if ( $text !== $old['text'] ) {
 				pcb_crm_log_seo( 'maint', 'Текст заглушки', pcb_seo_log_val( $old['text'] ), pcb_seo_log_val( $text ) );
 			}
-			pcb_maint_update( array( 'title' => $title, 'text' => $text ) );
+			$upd = array( 'title' => $title, 'text' => $text );
+			if ( array_key_exists( 'sign', $p ) ) {
+				$sign = trim( mb_substr( sanitize_textarea_field( (string) $p['sign'] ), 0, 500 ) );
+				if ( $sign !== pcb_maint_sign() ) {
+					pcb_crm_log_seo( 'maint', 'Подпись под текстом', pcb_seo_log_val( str_replace( "\n", ' · ', pcb_maint_sign() ) ), pcb_seo_log_val( str_replace( "\n", ' · ', $sign ) ) );
+					$upd['sign'] = $sign;
+				}
+			}
+			pcb_maint_update( $upd );
 			if ( ! empty( $p['on_present'] ) ) {
 				pcb_maint_set( ! empty( $p['on'] ) );
 			}
