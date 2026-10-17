@@ -68,6 +68,16 @@ add_action( 'rest_api_init', function () {
 		},
 	) );
 
+	// удалить заметку: { note } — автор или администратор (проверка внутри)
+	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\d+)/note-delete', array(
+		'methods'             => 'POST',
+		'permission_callback' => $can( 'pcb_crm_edit' ),
+		'args'                => $id_arg,
+		'callback'            => function ( WP_REST_Request $r ) {
+			return pcb_crm_rest_result( pcb_crm_note_delete( (int) $r['note'], (int) $r['id'] ) );
+		},
+	) );
+
 	// правка контактов: { email, phone, name, company } — любые из полей
 	register_rest_route( 'pcb-panel/v1', '/requests/(?P<id>\d+)/contacts', array(
 		'methods'             => 'POST',

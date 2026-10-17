@@ -6,6 +6,8 @@
  *   form[data-crm-upload="files|email"]            multipart-запрос (файлы)
  *   form[data-crm-me="signature"]                  /me/signature
  *   [data-crm-flag][data-note]                     «Важно» у заметки
+ *   [data-crm-note-del][data-note]                 удалить заметку
+ *   .crm-scroll                                    тень снизу, только пока есть что прокрутить
  *   [data-crm-toggle="<id>"]                       показать/скрыть форму
  *   [data-crm-window]                              ссылка в отдельном окне (письмо)
  *   [data-crm-delete]                              окно удаления
@@ -72,6 +74,25 @@
         .catch(function (err) { busy(f, false); say(err.message, true); });
     });
   });
+
+  // удалить заметку (автор или администратор)
+  $$('[data-crm-note-del]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!confirm('Удалить заметку? Текст удалится насовсем, в истории останется отметка об удалении.')) return;
+      b.disabled = true;
+      call(b.getAttribute('data-id'), 'note-delete', { note: b.getAttribute('data-note') })
+        .then(function () { location.reload(); })
+        .catch(function (err) { b.disabled = false; say(err.message, true); });
+    });
+  });
+
+  // тень внизу прокручиваемых списков — только если не всё помещается и прокрутили не до конца
+  function shade(el) { el.classList.toggle('is-more', el.scrollHeight - el.clientHeight - el.scrollTop > 4); }
+  function shadeAll() { $$('.crm-scroll').forEach(shade); }
+  $$('.crm-scroll').forEach(function (el) { el.addEventListener('scroll', function () { shade(el); }, { passive: true }); });
+  $$('details').forEach(function (d) { d.addEventListener('toggle', shadeAll); });
+  addEventListener('resize', shadeAll);
+  shadeAll();
 
   // «Важно» у заметки
   $$('[data-crm-flag]').forEach(function (b) {
@@ -154,6 +175,18 @@
   $$('.crm-copy').forEach(function (c) {
     c.addEventListener('click', function () {
       if (navigator.clipboard) navigator.clipboard.writeText(c.textContent.trim()).then(function () { say('Скопировано'); });
+    });
+  });
+
+  /* «Показать в калькуляторе»: пакет — в localStorage (тот же сайт), калькулятор забирает его по #pcb-restore */
+  $$('[data-calc-open]').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation(); // кнопка в <summary> — не сворачивать блок
+      try {
+        var p = JSON.parse(b.dataset.payload); p.t = Date.now();
+        localStorage.setItem('pcb_calc_restore', JSON.stringify(p));
+      } catch (e) { say('Браузер не дал сохранить данные для калькулятора (закрыто хранилище сайта).', true); return; }
+      window.open(b.dataset.calcOpen + '#pcb-restore', '_blank');
     });
   });
 

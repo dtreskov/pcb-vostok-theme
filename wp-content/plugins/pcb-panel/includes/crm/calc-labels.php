@@ -152,6 +152,38 @@ function pcb_crm_calc_parse( $html ) {
  * Строки для карточки: array( array( название, значение ), … ) в порядке калькулятора.
  * Пустые и нулевые значения пропускаются.
  */
+/** Адрес страницы калькулятора (страница со слагом calculator). */
+function pcb_crm_calc_page_url() {
+	$page = get_page_by_path( 'calculator' );
+	return $page ? get_permalink( $page ) : home_url( '/calculator/' );
+}
+
+/**
+ * Пакет для кнопки «Показать в калькуляторе»: данные расчёта из заявки и файлы, которые клиент
+ * загружал в калькулятор (совпадают по имени со списком calc.files). Файлы калькулятор скачивает
+ * сам по ссылкам панели (нужен вход с правом pcb_crm_view), данные — через localStorage браузера.
+ * Пусто — кнопки нет.
+ */
+function pcb_crm_calc_restore( $id ) {
+	$calc = (array) get_post_meta( $id, '_pcb_calc', true );
+	if ( ! $calc ) {
+		return array();
+	}
+	$names = array_map( 'strval', (array) ( $calc['files'] ?? array() ) );
+	$files = array();
+	foreach ( (array) get_post_meta( $id, '_pcb_files', true ) as $f ) {
+		if ( empty( $f['kind'] ) && isset( $f['key'], $f['name'] ) && in_array( $f['name'], $names, true ) ) {
+			$files[] = array( 'name' => $f['name'], 'url' => pcb_rq_file_url( $id, $f['key'] ) );
+		}
+	}
+	return array(
+		'n'     => pcb_rq_label( $id ),
+		'data'  => $calc,
+		'files' => $files,
+		'miss'  => max( 0, count( $names ) - count( $files ) ),
+	);
+}
+
 function pcb_crm_calc_rows( array $calc ) {
 	$d    = pcb_crm_calc_dict();
 	$rows = array();

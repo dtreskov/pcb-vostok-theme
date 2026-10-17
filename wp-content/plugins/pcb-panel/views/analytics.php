@@ -52,10 +52,18 @@ $two_legend = '<span class="pa-legend"><span><i style="background:var(--pa-s1)">
 <div class="pa" id="pa" aria-busy="true">
 
 	<div class="pa-bar">
-		<div class="pa-seg" role="group" aria-label="Период">
-			<button type="button" data-period="7" aria-pressed="false">7 дней</button>
-			<button type="button" data-period="30" aria-pressed="true">30 дней</button>
-			<button type="button" data-period="90" aria-pressed="false">90 дней</button>
+		<div class="pa-bar__row">
+			<div class="pa-seg" role="group" aria-label="Период">
+				<button type="button" data-period="7" aria-pressed="false">7 дней</button>
+				<button type="button" data-period="30" aria-pressed="true">30 дней</button>
+				<button type="button" data-period="90" aria-pressed="false">90 дней</button>
+				<button type="button" data-period="180" aria-pressed="false">180 дней</button>
+				<button type="button" data-period="365" aria-pressed="false">Год</button>
+			</div>
+			<span class="pa-fresh"><span class="pa-spin" aria-hidden="true"></span><span id="pa-fresh">Загружаем данные…</span></span>
+			<?php if ( $pa_cfg['canAdmin'] ) : ?>
+				<button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="pa-refresh">Обновить</button>
+			<?php endif; ?>
 		</div>
 		<nav class="pa-nav" aria-label="Разделы аналитики">
 			<a href="#pa-summary">Сводка</a>
@@ -66,10 +74,6 @@ $two_legend = '<span class="pa-legend"><span><i style="background:var(--pa-s1)">
 			<a href="#pa-consent">Согласия</a>
 			<a href="#pa-tech">Техническое</a>
 		</nav>
-		<span class="pa-fresh" id="pa-fresh">Загружаем данные…</span>
-		<?php if ( $pa_cfg['canAdmin'] ) : ?>
-			<button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="pa-refresh">Обновить</button>
-		<?php endif; ?>
 	</div>
 
 	<div id="pa-status" class="pa-status-list"></div>

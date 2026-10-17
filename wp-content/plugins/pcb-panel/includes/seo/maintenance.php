@@ -18,6 +18,7 @@ function pcb_maint_defaults() {
 		'on'    => false,
 		'title' => 'Сайт обновляется',
 		'text'  => "Готовим новую версию сайта PCB Восток.\nПока идут работы, присылайте задачи на почту или звоните — рассчитаем проект и ответим на вопросы.",
+		'sign'  => null, // подпись под текстом; null — почта и телефон из «Данных сайта»
 		'key'   => '',
 		'since' => '',
 		'by'    => 0,
@@ -27,6 +28,37 @@ function pcb_maint_defaults() {
 function pcb_maint_get( $key = null ) {
 	$all = array_merge( pcb_maint_defaults(), (array) get_option( 'pcb_maintenance', array() ) );
 	return null === $key ? $all : ( $all[ $key ] ?? '' );
+}
+
+/** Подпись под текстом заглушки: свои строки или (по умолчанию) почта и телефон из «Данных сайта». */
+function pcb_maint_sign() {
+	$sign = pcb_maint_get( 'sign' );
+	if ( null === $sign ) {
+		$sign = implode( "\n", array_filter( array( pcb_seo_get( 'email' ), pcb_seo_get( 'phone' ) ) ) );
+	}
+	return (string) $sign;
+}
+
+/**
+ * Строки подписи для вывода: почта → mailto, телефон → tel, остальное — текст.
+ * Возвращает [ [ 'text' => …, 'href' => … ], … ].
+ */
+function pcb_maint_sign_lines() {
+	$out = array();
+	foreach ( preg_split( '/\R/', pcb_maint_sign() ) as $line ) {
+		$line = trim( $line );
+		if ( '' === $line ) {
+			continue;
+		}
+		$href = '';
+		if ( is_email( $line ) ) {
+			$href = 'mailto:' . $line;
+		} elseif ( preg_match( '/^\+?[\d\s()\-]{7,}$/', $line ) && strlen( preg_replace( '/\D/', '', $line ) ) >= 7 ) {
+			$href = 'tel:+' . pcb_crm_phone_digits( $line );
+		}
+		$out[] = array( 'text' => $line, 'href' => $href );
+	}
+	return $out;
 }
 
 function pcb_maint_on() {

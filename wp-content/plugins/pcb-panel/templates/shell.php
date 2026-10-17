@@ -53,7 +53,7 @@ if ( 'crm-reply' === $view ) {
 <title><?php echo esc_html( $title . ' — панель PCB Восток' ); ?></title>
 <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/globals.css' ) ); ?>">
 <link rel="stylesheet" href="<?php echo esc_url( PCB_PANEL_URL . 'assets/panel.css?ver=' . PCB_PANEL_VERSION ); ?>">
-<style>.pp-menu{position:relative}.pp-menu__btn{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;cursor:pointer;list-style:none;font-weight:600}.pp-menu__btn::-webkit-details-marker{display:none}.pp-menu__btn:hover,.pp-menu[open] .pp-menu__btn{background:var(--color-section-alt)}.pp-ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--color-text-primary)}.pp-ico--chev{width:14px;height:14px;transition:transform .2s}.pp-menu[open] .pp-ico--chev{transform:rotate(180deg)}.pp-menu__list{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:260px;display:grid;padding:6px;background:#fff;border:1px solid var(--color-separator);border-radius:8px;box-shadow:0 12px 32px rgba(11,44,34,.14)}.pp-menu__list a{padding:9px 12px;border-radius:6px;color:var(--color-text-black)!important;text-decoration:none;font-size:14px}.pp-menu__list a:hover{background:var(--color-section-alt)}.pp-menu__meta{padding:6px 12px 8px;font-size:12.5px;color:var(--color-text-grey);border-bottom:1px solid var(--color-separator);margin-bottom:4px}.crm-user[title]{cursor:help;border-bottom:1px dotted currentColor}.pp-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--color-copper-dark);color:#fff;font-size:12px;font-weight:600;line-height:1}</style>
+<style>.pp-menu{position:relative}.pp-menu__btn{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;cursor:pointer;list-style:none;font-weight:600}.pp-menu__btn::-webkit-details-marker{display:none}.pp-menu__btn:hover,.pp-menu[open] .pp-menu__btn{background:var(--color-section-alt)}.pp-ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--color-text-primary)}.pp-ico--chev{width:14px;height:14px;transition:transform .2s}.pp-menu[open] .pp-ico--chev{transform:rotate(180deg)}.pp-menu__list{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:260px;display:grid;padding:6px;background:#fff;border:1px solid var(--color-separator);border-radius:8px;box-shadow:0 12px 32px rgba(11,44,34,.14)}.pp-menu__list a{padding:9px 12px;border-radius:6px;color:var(--color-text-black)!important;text-decoration:none;font-size:14px}.pp-menu__list a:hover{background:var(--color-section-alt)}.pp-menu__meta{padding:6px 12px 8px;font-size:12.5px;color:var(--color-text-grey);border-bottom:1px solid var(--color-separator);margin-bottom:4px}.crm-user[title]{cursor:help;border-bottom:1px dotted currentColor}.pp-site{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--color-separator);border-radius:999px;color:var(--color-text-primary)!important;font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}.pp-site:hover{border-color:var(--color-primary);background:var(--color-primary-light)}.pp-site .pp-ico{width:16px;height:16px}@media (max-width:767px){.pp-site span{display:none}.pp-site{padding:0 9px}}.pp-tzwarn{width:var(--content-size);margin:16px auto 0;box-sizing:border-box;padding:10px 14px;border-radius:8px;background:var(--color-gold-light);color:#6B5418;font-size:13.5px;line-height:1.5}.pp-tzwarn a{color:inherit;font-weight:600}.pp-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--color-copper-dark);color:#fff;font-size:12px;font-weight:600;line-height:1}</style>
 </head>
 <body class="pp">
 
@@ -75,6 +75,10 @@ if ( 'crm-reply' === $view ) {
 		<?php endif; ?>
 
 		<div class="pp-user">
+			<a class="pp-site" href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" rel="noopener" title="Открыть сайт в новой вкладке">
+				<svg class="pp-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+				<span>Сайт</span>
+			</a>
 			<?php if ( $user->exists() ) : ?>
 				<span class="pp-role<?php echo current_user_can( 'manage_options' ) ? '' : ' pp-role--ro'; ?>"><?php echo esc_html( pcb_panel_role_label() ); ?></span>
 				<details class="pp-menu">
@@ -94,6 +98,11 @@ if ( 'crm-reply' === $view ) {
 		</div>
 	</div>
 </header>
+
+<?php if ( current_user_can( 'manage_options' ) && 0 === (int) wp_timezone()->getOffset( new DateTime( 'now' ) ) ) : ?>
+	<div class="pp-tzwarn">В настройках WordPress часовой пояс — UTC, поэтому время в панели (заявки, журнал, обновление Метрики) отстаёт от московского на 3 часа.
+		<a href="<?php echo esc_url( admin_url( 'options-general.php' ) ); ?>">Настройки → Общие → Часовой пояс: «Москва»</a>. Уже записанные события останутся со старым временем.</div>
+<?php endif; ?>
 
 <main class="pp-main">
 	<?php include PCB_PANEL_DIR . 'views/' . $view . '.php'; ?>

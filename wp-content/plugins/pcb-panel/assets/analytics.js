@@ -1,6 +1,6 @@
 /**
  * Панель /panel/analytics — загрузка данных и отрисовка.
- * Данные: GET window.PCBAnalytics.api?days=7|30|90 (includes/analytics/data.php).
+ * Данные: GET window.PCBAnalytics.api?days=7|30|90|180|365 (includes/analytics/data.php).
  * Для превью без сервера можно подложить window.PCBAnalyticsDemo(days) — функцию, возвращающую тот же объект.
  */
 (function () {
@@ -18,7 +18,7 @@
   function $(s) { return root.querySelector(s); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function nice(max) { if (max <= 0) return 1; var e = Math.pow(10, Math.floor(Math.log10(max))), m = max / e; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * e; }
-  function periodWord(n) { return n === 7 ? '7 дней' : n === 30 ? '30 дней' : '90 дней'; }
+  function periodWord(n) { return n === 365 ? 'год' : n + ' дней'; }
   function parseDay(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function dshort(d) { return d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0'); }
   var WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
@@ -49,7 +49,7 @@
   function delta(cur, prev, n) {
     if (cur == null || !prev) return '';
     var r = (cur - prev) / prev, up = r >= 0;
-    return '<p class="pa-tile__delta ' + (up ? 'is-up' : 'is-down') + '">' + (up ? '▲ ' : '▼ ') + pct(Math.abs(r)) + ' <span>к прошлым ' + periodWord(n) + '</span></p>';
+    return '<p class="pa-tile__delta ' + (up ? 'is-up' : 'is-down') + '">' + (up ? '▲ ' : '▼ ') + pct(Math.abs(r)) + ' <span>' + (n === 365 ? 'к прошлому году' : 'к прошлым ' + periodWord(n)) + '</span></p>';
   }
   function src(kind) {
     var s = {
@@ -82,7 +82,7 @@
     var hasV = days.some(function (d) { return d.visits != null; });
     var W = Math.max(boxV.clientWidth, 280), padL = 34, padR = 8, iw = W - padL - padR, step = iw / n;
     function x(i) { return padL + iw * (i + 0.5) / n; }
-    var labEvery = n <= 7 ? 1 : n <= 30 ? 5 : 14;
+    var labEvery = n <= 7 ? 1 : n <= 30 ? 5 : n <= 90 ? 14 : n <= 180 ? 30 : 61;
 
     /* визиты */
     var H1 = 170, top1 = 8, b1 = H1 - 22;
@@ -281,6 +281,7 @@
 
   function load() {
     root.classList.add('is-loading'); root.setAttribute('aria-busy', 'true');
+    $('#pa-fresh').textContent = 'Загружаем данные…';
     root.querySelectorAll('[data-period]').forEach(function (b) { b.setAttribute('aria-pressed', +b.dataset.period === curN ? 'true' : 'false'); });
     var p = typeof window.PCBAnalyticsDemo === 'function' ? Promise.resolve(window.PCBAnalyticsDemo(curN)) : api('?days=' + curN);
     return p.then(function (D) { render(D); }).catch(function (e) {

@@ -32,13 +32,14 @@
     z-index: 5;
     margin: calc(-1 * var(--space-md)) 0 0;
     padding: var(--space-sm) 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-sm) var(--space-md);
+    display: grid;
+    gap: var(--space-sm);
     background: var(--color-page-background);
     border-bottom: 1px solid var(--color-separator);
 }
+
+.pa-bar__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); }
+.pa-bar .pa-nav { margin: 0 0 -2px; }
 
 .pa-seg {
     display: inline-flex;
@@ -56,6 +57,7 @@
     background: transparent;
     color: var(--color-text-grey);
     font: 500 13.5px/1 var(--font-family);
+    white-space: nowrap;
     cursor: pointer;
 }
 
@@ -72,7 +74,19 @@
 }
 .pa-nav a:hover { background: var(--color-section-alt); color: var(--color-text-black) !important; }
 
-.pa-fresh { margin-left: auto; font-size: 12.5px; color: var(--color-text-grey); }
+.pa-fresh { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--color-text-grey); }
+
+/* троббер: виден, пока идёт загрузка (первая и при смене периода / «Обновить») */
+.pa-spin {
+    display: none; flex: none; width: 14px; height: 14px; box-sizing: border-box;
+    border: 2px solid var(--color-separator); border-top-color: var(--color-copper);
+    border-radius: 50%; animation: pa-spin .8s linear infinite;
+}
+.pa.is-loading .pa-spin, .pa[aria-busy="true"] .pa-spin { display: inline-block; }
+.pa.is-loading .pa-fresh { color: var(--color-text-copper-dark); }
+.pa.is-loading .pa-seg button { cursor: progress; }
+@keyframes pa-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pa-spin { animation-duration: 2.4s; } }
 
 .pa-demo {
     padding: 3px 10px;
@@ -341,4 +355,9 @@
     .pa-heat { grid-template-columns: 22px repeat(24, minmax(0, 1fr)); gap: 1px; }
     .pa-heat__h:nth-child(odd) { visibility: hidden; }
     .pa-seo a { margin-left: 0; }
+}
+
+@media (max-width: 767px) {
+    .pa-seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+    .pa-seg button { padding: 0 11px; }
 }

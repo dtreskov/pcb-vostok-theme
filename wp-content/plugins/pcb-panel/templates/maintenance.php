@@ -1,7 +1,7 @@
 <?php
 /**
  * Заглушка режима техработ (код 503). Стили и шрифт — из темы, тексты — из настроек панели (SEO → Техработы),
- * контакты — из данных сайта (SEO → Данные сайта).
+ * подпись под текстом — тоже оттуда (по умолчанию почта и телефон из SEO → Данные сайта).
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -9,7 +9,6 @@ $m     = pcb_maint_get();
 $s     = pcb_seo_get();
 $logo  = pcb_seo_image( 'logo' );
 $svg   = pcb_seo_logo_svg_url();
-$tel   = pcb_crm_phone_digits( $s['phone'] );
 $paras = array_filter( array_map( 'trim', preg_split( '/\R{1,}/', (string) $m['text'] ) ) );
 ?><!doctype html>
 <html lang="ru">
@@ -57,11 +56,14 @@ body.pcb-maint{min-height:100vh;display:flex;flex-direction:column;background:va
 		<?php foreach ( $paras as $p ) : ?>
 			<p><?php echo esc_html( $p ); ?></p>
 		<?php endforeach; ?>
-		<div class="pcb-maint__contacts">
-			<?php if ( '' !== $s['email'] ) : ?><a href="mailto:<?php echo esc_attr( $s['email'] ); ?>"><?php echo esc_html( $s['email'] ); ?></a><?php endif; ?>
-			<?php if ( '' !== $tel ) : ?><a href="tel:+<?php echo esc_attr( $tel ); ?>"><?php echo esc_html( $s['phone'] ); ?></a><?php endif; ?>
-			<?php if ( '' !== $s['street'] ) : ?><span class="pcb-maint__addr"><?php echo esc_html( trim( $s['locality'] . ', ' . $s['street'], ', ' ) ); ?></span><?php endif; ?>
-		</div>
+		<?php $sign = pcb_maint_sign_lines(); if ( $sign ) : ?>
+			<div class="pcb-maint__contacts">
+				<?php foreach ( $sign as $l ) : ?>
+					<?php if ( $l['href'] ) : ?><a href="<?php echo esc_attr( $l['href'] ); ?>"><?php echo esc_html( $l['text'] ); ?></a>
+					<?php else : ?><span class="pcb-maint__addr"><?php echo esc_html( $l['text'] ); ?></span><?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
 	</div>
 </main>
 <footer class="pcb-maint__foot">© <?php echo esc_html( gmdate( 'Y' ) . ' ' . $s['brand'] ); ?></footer>
