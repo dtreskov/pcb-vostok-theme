@@ -53,9 +53,15 @@
             dots.appendChild(b);
         });
 
+        /* фантомы: копия последнего слайда перед первым и первого после последнего;
+           data-of — номер настоящего слайда, чтобы прогревать копию вместе с оригиналом */
+        var clones = [];
         if (loop) {
-            track.insertBefore(phantom(slides[N - 1]), slides[0]);
-            track.appendChild(phantom(slides[0]));
+            var cLast = phantom(slides[N - 1]), cFirst = phantom(slides[0]);
+            cLast.dataset.of = N - 1; cFirst.dataset.of = 0;
+            track.insertBefore(cLast, slides[0]);
+            track.appendChild(cFirst);
+            clones = [cLast, cFirst];
         }
 
         function width() { return slides[0].offsetWidth || track.clientWidth || 1; }
@@ -92,10 +98,14 @@
             var s = slides[n];
             if (!s || s.dataset.warm) return;
             s.dataset.warm = '1';
+            /* вместе с оригиналом — его копия-фантом по краю ленты */
+            var group = [s].concat(clones.filter(function (c) { return +c.dataset.of === n; }));
             idleCb(function () {
-                [].forEach.call(s.querySelectorAll('img'), function (img) {
-                    img.loading = 'eager';
-                    if (img.decode) img.decode().catch(function () {});
+                group.forEach(function (el) {
+                    [].forEach.call(el.querySelectorAll('img'), function (img) {
+                        img.loading = 'eager';
+                        if (img.decode) img.decode().catch(function () {});
+                    });
                 });
             });
         }
