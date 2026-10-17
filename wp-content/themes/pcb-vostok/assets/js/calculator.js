@@ -715,13 +715,24 @@
   function feeders(n) { return n ? Math.min(n, Math.round(6 + n * 0.2)) : 0; } // оценка числа уникальных позиций
   function volumeK(area) { if (area < 2) return 1.6; if (area < 10) return 1.25; if (area < 50) return 1; if (area < 200) return 0.85; return 0.72; }
 
-  function compute() {
+  /* Проверка заполненности — до любого расчёта (и локального, и на сервере). */
+  function precheck() {
     var qty = num('qty'), L = num('len'), W = num('wid');
     var res = { ok: false, lines: [], warn: [], engineer: false };
     if (!(qty > 0) || !(L > 0) || !(W > 0)) { res.reason = 'Укажите тираж и габариты платы, чтобы увидеть оценку.'; return res; }
     var empty = ['thick', 'cuout', 'mat', 'finish', 'mask', 'silk'].filter(function (k) { return !val(k); });
     if (parseInt(val('layers'), 10) >= 4 && !val('cuin')) empty.push('cuin');
     if (empty.length) { res.reason = 'Заполните отмеченные поля — после этого покажем оценку.'; return res; }
+    res.ok = true;
+    return res;
+  }
+
+  /* Старая формула (демо-ставки) — пока в панели не опубликована первая версия формулы. */
+  function compute() {
+    var qty = num('qty'), L = num('len'), W = num('wid');
+    var res = precheck();
+    if (!res.ok) return res;
+    res.ok = false;
     var layers = parseInt(val('layers'), 10);
     var area = L * W / 10000 * qty; // дм² на партию
     var mat = val('mat');
@@ -797,8 +808,29 @@
   /* ================= Итог ================= */
   var S = { total: $('#calc-total'), mini: $('#calc-total-mini'), per: $('#calc-per'), state: $('#calc-state'), br: $('#calc-break'), warn: $('#calc-warn'), term: $('#calc-term') };
   var lastRes = null;
+  /* Расчёт на сервере (плагин панели, pcb-panel/v1/calc/quote): уходят только значения полей калькулятора —
+     файлы проекта остаются в браузере. Включается, когда в панели опубликована формула (window.PCBCalcServer). */
+  var SRV = window.PCBCalcServer || null, srvTimer = 0, srvSeq = 0;
   function recalc() {
-    var r = compute(); lastRes = r;
+    if (!SRV) { renderResult(compute()); return; }
+    var pre = precheck();
+    if (!pre.ok) { srvSeq++; renderResult(pre); return; }
+    S.state.textContent = 'Пересчитываем…';
+    clearTimeout(srvTimer);
+    srvTimer = setTimeout(function () {
+      var seq = ++srvSeq;
+      fetch(SRV.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fieldData()) })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function (r) { if (seq === srvSeq) renderResult(r); })
+        .catch(function () {
+          if (seq !== srvSeq) return;
+          renderResult({ ok: false, lines: [], warn: [], reason: 'Не удалось получить оценку — проверьте соединение и измените любое поле, чтобы повторить.' });
+        });
+    }, 250);
+  }
+  function currentRes() { return lastRes || (SRV ? { ok: false, lines: [], warn: [], reason: 'Оценка ещё считается' } : compute()); }
+  function renderResult(r) {
+    lastRes = r;
     if (r.ok) track({ goal: 'calc_result' });
     S.br.innerHTML = ''; S.warn.hidden = true; S.per.textContent = ''; S.state.textContent = ''; S.term.innerHTML = '';
     S.total.classList.remove('is-muted');
@@ -812,7 +844,7 @@
     } else {
       S.total.textContent = fmt(r.lo) + ' – ' + fmtR(r.hi);
       S.mini.textContent = 'от ' + fmtR(r.lo);
-      S.per.textContent = '≈ ' + fmtR(r.per) + ' за плату · ' + fmt(r.qty) + ' шт';
+      S.per.textContent = '≈ ' + fmtR(r.per) + ' за плату · ' + fmt(r.qty) + ' шт' + (r.vat && r.vat.show ? ' · в т. ч. НДС ' + String(r.vat.pct).replace('.', ',') + ' %' : '');
     }
     r.lines.forEach(function (l) {
       var li = document.createElement('li');
@@ -882,7 +914,7 @@
     if (m !== 'none') L.push('Проверка по ПМИ: входит в заказ');
     // оценка
     if (r && r.ok) {
-      L.push('Оценка калькулятора: ' + (r.engineer ? 'расчёт инженером' : fmt(r.lo) + ' – ' + fmtR(r.hi) + ' (≈ ' + fmtR(r.per) + ' за плату)'));
+      L.push('Оценка калькулятора: ' + (r.engineer ? 'расчёт инженером' : fmt(r.lo) + ' – ' + fmtR(r.hi) + ' (≈ ' + fmtR(r.per) + ' за плату' + (r.vat && r.vat.show ? ', в т. ч. НДС ' + String(r.vat.pct).replace('.', ',') + ' %' : '') + ')'));
       if (!r.engineer && r.lines && r.lines.length) L.push('Из чего складывается: ' + r.lines.map(function (l) { return l.name + ' ' + (l.text || '≈ ' + fmtR(l.v)); }).join('; '));
       if (r.warn && r.warn.length) L.push('Требует расчёта инженером: ' + r.warn.join(', '));
       if (r.term) L.push('Срок: ' + r.term);
@@ -897,19 +929,26 @@
   }
   var summaryText = '';
 
+  /* Значения полей калькулятора — для расчёта на сервере и для заявки. Без файлов и их содержимого. */
+  function fieldData() {
+    var d = {};
+    ['qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel'].forEach(function (k) { d[k] = val(k); });
+    if (el('cuin').disabled) delete d.cuin;
+    d.special = $$('.cx-checks input:checked').map(function (i) { return i.dataset.key; });
+    d.asm = asmMode();
+    d.asm_values = {};
+    $$('[data-key^="q_"], [data-key^="d_"], [data-key^="p_"]').forEach(function (i) { if (+i.value) d.asm_values[i.dataset.key] = +i.value; });
+    d.finish_pending = finishPending;
+    return d;
+  }
+
   /* Для формы заявки (assets/js/request-form.js): сводка и загруженные файлы. */
   window.PCBCalc = {
-    getSummary: function () { return buildSummary(lastRes || compute()); },
+    getSummary: function () { return buildSummary(currentRes()); },
     /* структурированные данные расчёта — для аналитики заявок (/panel) */
     getData: function () {
-      var r = lastRes || compute(), d = {};
-      ['qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel'].forEach(function (k) { d[k] = val(k); });
-      if (el('cuin').disabled) delete d.cuin;
-      d.special = $$('.cx-checks input:checked').map(function (i) { return i.dataset.key; });
-      d.asm = asmMode();
-      d.asm_values = {};
-      $$('[data-key^="q_"], [data-key^="d_"], [data-key^="p_"]').forEach(function (i) { if (+i.value) d.asm_values[i.dataset.key] = +i.value; });
-      d.finish_pending = finishPending;
+      var r = currentRes(), d = fieldData();
+      if (r && r.version) d.calc_version = r.version; // версия формулы панели, по которой клиент увидел оценку
       if (r && r.ok) { d.estimate = r.engineer ? 'engineer' : { lo: Math.round(r.lo), hi: Math.round(r.hi), per: Math.round(r.per) }; d.term = r.term; d.warn = r.warn; }
       d.files = store.filter(function (it) { return it.status === 'ok'; }).map(function (it) { return it.name; });
       return d;

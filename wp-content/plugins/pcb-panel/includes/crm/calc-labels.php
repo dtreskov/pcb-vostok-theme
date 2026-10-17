@@ -262,7 +262,10 @@ function pcb_crm_calc_rows( array $calc ) {
 	if ( ! empty( $calc['files'] ) ) {
 		$rows[] = array( 'Файлы в калькуляторе', implode( ', ', (array) $calc['files'] ) );
 	}
-	$done['estimate'] = $done['warn'] = $done['term'] = $done['files'] = true;
+	if ( ! empty( $calc['calc_version'] ) ) {
+		$rows[] = array( 'Версия формулы', 'v' . (int) $calc['calc_version'] . ' — по ней клиент увидел оценку (Калькулятор → Версии)' );
+	}
+	$done['estimate'] = $done['warn'] = $done['term'] = $done['files'] = $done['calc_version'] = true;
 
 	// всё, что калькулятор начнёт передавать позже, — как есть, чтобы ничего не потерялось
 	foreach ( $calc as $k => $v ) {

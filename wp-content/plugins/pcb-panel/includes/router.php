@@ -12,6 +12,7 @@ function pcb_panel_tabs() {
 		'crm'       => array( 'label' => 'CRM',       'title' => 'Заявки',    'cap' => 'pcb_crm_view' ),
 		'analytics' => array( 'label' => 'Аналитика', 'title' => 'Аналитика', 'cap' => 'pcb_analytics_view' ),
 		'seo'       => array( 'label' => 'SEO',       'title' => 'SEO',       'cap' => 'pcb_seo_view' ),
+		'calc'      => array( 'label' => 'Калькулятор', 'title' => 'Калькулятор', 'cap' => 'pcb_calc_view' ),
 	);
 }
 

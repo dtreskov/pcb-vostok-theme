@@ -58,6 +58,8 @@ function pcb_crm_log_actions() {
 		'deleted_archived' => 'Удалена, файлы в архиве',
 		'migrated'         => 'Обновление данных',
 		'contact'          => 'Исправлены контакты',
+		'calc_publish'     => 'Калькулятор: опубликована версия',
+		'calc_restore'     => 'Калькулятор: старая версия взята в черновик',
 		'file_added'       => 'Добавлен файл',
 		'email'            => 'Письмо клиенту',
 		'note_important'   => 'Заметка отмечена как важная',
@@ -134,6 +136,11 @@ function pcb_crm_log_text( array $row ) {
 			}
 			$v = function ( $x ) { return '' !== (string) $x ? '«' . $x . '»' : 'пусто'; };
 			return $label . ': ' . $v( $c['old'] ?? '' ) . ' → ' . $v( $c['new'] ?? '' );
+		case 'calc_publish':
+			$c = json_decode( $new, true );
+			return 'Калькулятор: опубликована версия ' . (int) ( $c['v'] ?? 0 ) . ( ! empty( $c['note'] ) ? ' — ' . $c['note'] : '' );
+		case 'calc_restore':
+			return 'Калькулятор: версия ' . $new . ' взята в черновик';
 		case 'created':
 			return $what . ( '' !== $new ? ' · ' . $new : '' );
 		case 'email':

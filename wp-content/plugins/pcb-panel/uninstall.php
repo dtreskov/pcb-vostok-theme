@@ -31,3 +31,8 @@ wp_clear_scheduled_hook( 'pcb_events_purge' );
 // это содержимое сайта, пригодится при повторной установке.
 delete_option( 'pcb_maintenance' );
 delete_option( 'pcb_maint_migrated' );
+
+// Калькулятор: загрузка курсов ЦБ. Формулу, версии и эталоны оставляем — это настройки цен, пригодятся
+// при повторной установке (без плагина сайт и так вернётся к формуле темы).
+wp_clear_scheduled_hook( 'pcb_calc_rates' );
+delete_option( 'pcb_calc_rates' );

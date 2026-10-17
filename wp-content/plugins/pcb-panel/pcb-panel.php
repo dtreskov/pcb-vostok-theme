@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: PCB Восток — панель управления
- * Description: Закрытый раздел сайта /panel: CRM, аналитика, SEO. Вход — через учётные записи WordPress.
- * Version:     0.7.1
+ * Description: Закрытый раздел сайта /panel: CRM, аналитика, SEO, калькулятор. Вход — через учётные записи WordPress.
+ * Version:     0.8.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Text Domain: pcb-panel
@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PCB_PANEL_VERSION', '0.7.1' );
+define( 'PCB_PANEL_VERSION', '0.8.0' );
 define( 'PCB_PANEL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PCB_PANEL_URL', plugin_dir_url( __FILE__ ) );
 define( 'PCB_PANEL_SLUG', 'panel' ); // адрес раздела: /panel
@@ -44,6 +44,11 @@ require_once PCB_PANEL_DIR . 'includes/seo/settings.php';
 require_once PCB_PANEL_DIR . 'includes/seo/head.php';
 require_once PCB_PANEL_DIR . 'includes/seo/maintenance.php';
 require_once PCB_PANEL_DIR . 'includes/seo/rest.php';
+// калькулятор (0.8.0): формула цены, версии, расчёт для сайта — см. README.md, §9
+require_once PCB_PANEL_DIR . 'includes/calc/model.php';
+require_once PCB_PANEL_DIR . 'includes/calc/engine.php';
+require_once PCB_PANEL_DIR . 'includes/calc/store.php';
+require_once PCB_PANEL_DIR . 'includes/calc/rest.php';
 
 register_activation_hook( __FILE__, 'pcb_panel_activate' );
 register_deactivation_hook( __FILE__, 'pcb_panel_deactivate' );
@@ -62,4 +67,5 @@ function pcb_panel_deactivate() {
 	// Правила пересоберутся при следующем запросе уже без /panel.
 	delete_option( 'rewrite_rules' );
 	wp_clear_scheduled_hook( 'pcb_events_purge' );
+	wp_clear_scheduled_hook( 'pcb_calc_rates' );
 }

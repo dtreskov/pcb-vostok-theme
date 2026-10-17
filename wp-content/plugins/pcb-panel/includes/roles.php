@@ -6,7 +6,8 @@
  * Роли — это наборы прав:
  *   administrator — все права панели + все права WordPress;
  *   pcb_manager   — работа с заявками (статус, услуга, заметки) и просмотр
- *                   остальных вкладок; без удаления, выгрузки и журнала.
+ *                   остальных вкладок, правка и публикация формулы калькулятора;
+ *                   без удаления, выгрузки и журнала.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -21,13 +22,15 @@ function pcb_panel_caps() {
 		'pcb_analytics_view' => 'Аналитика: просмотр',
 		'pcb_seo_view'       => 'SEO: просмотр',
 		'pcb_seo_edit'       => 'SEO: редактирование',
+		'pcb_calc_view'      => 'Калькулятор: просмотр формулы',
+		'pcb_calc_edit'      => 'Калькулятор: правка и публикация формулы',
 		'pcb_panel_log_view' => 'Журнал действий',
 	);
 }
 
 /** Права роли «Менеджер». */
 function pcb_panel_manager_caps() {
-	return array( 'read', 'pcb_panel_access', 'pcb_crm_view', 'pcb_crm_edit', 'pcb_analytics_view', 'pcb_seo_view' );
+	return array( 'read', 'pcb_panel_access', 'pcb_crm_view', 'pcb_crm_edit', 'pcb_analytics_view', 'pcb_seo_view', 'pcb_calc_view', 'pcb_calc_edit' );
 }
 
 function pcb_panel_install_roles() {
