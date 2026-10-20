@@ -301,6 +301,12 @@
 /* кнопка «Показать в калькуляторе» — в заголовке блока, видна и когда блок свёрнут */
 .crm-fold > summary .crm-calc-open { margin-left: auto; margin-right: var(--space-sm); }
 
+/* старые заявки: текст расчёта, который форма до 0.8.1 дописывала в описание */
+.crm-legacy-calc { margin-top: var(--space-md); border-top: 1px dashed var(--color-separator); padding-top: var(--space-sm); }
+.crm-legacy-calc > summary { cursor: pointer; color: var(--color-text-grey); font-size: 13.5px; }
+.crm-legacy-calc[open] > summary { margin-bottom: var(--space-sm); }
+.crm-legacy-calc .crm-text { color: var(--color-text-grey); }
+
 /* узкий экран: группы кнопок — столбиком на всю ширину */
 @media (max-width: 767px) {
     :is(.crm-form__acts, .crm-dialog__actions, .crm-head-actions):has(> .pp-btn + .pp-btn):not(:has(> :not(.pp-btn):not([type=hidden]))) { grid-auto-flow: row; width: 100%; }

@@ -245,13 +245,8 @@ function pcb_rq_submit( WP_REST_Request $req ) {
 	}
 	$source  = ( isset( $p['source'] ) && 'calc' === $p['source'] ) ? 'calc' : 'home';
 	$message = isset( $p['message'] ) ? mb_substr( sanitize_textarea_field( wp_unslash( $p['message'] ) ), 0, 20000 ) : '';
-	$calc    = array();
-	if ( ! empty( $p['calc_data'] ) ) {
-		$decoded = json_decode( wp_unslash( $p['calc_data'] ), true );
-		if ( is_array( $decoded ) ) {
-			$calc = $decoded;
-		}
-	}
+	// данные калькулятора — единственный источник расчёта в заявке (панель, письмо); только известные поля
+	$calc = pcb_rq_clean_calc( isset( $p['calc_data'] ) ? (string) wp_unslash( $p['calc_data'] ) : '' );
 
 	$captcha = pcb_rq_check_captcha( isset( $p['smart-token'] ) ? (string) wp_unslash( $p['smart-token'] ) : '', $ip );
 	if ( 'failed' === $captcha ) {
@@ -265,9 +260,12 @@ function pcb_rq_submit( WP_REST_Request $req ) {
 		return $files;
 	}
 
-	if ( '' === trim( $message ) && ! $files ) {
+	// пустая заявка не нужна: описание, хотя бы один файл или прикреплённый расчёт калькулятора
+	if ( '' === trim( $message ) && ! $files && ! pcb_rq_calc_filled( $calc ) ) {
 		do_action( 'pcb_event', 'form_err', 'empty' );
-		return pcb_rq_error( 'Приложите файлы или опишите задачу — хотя бы одно из двух.' );
+		return pcb_rq_error( 'calc' === $source
+			? 'Приложите файлы, опишите задачу или прикрепите данные калькулятора.'
+			: 'Приложите файлы или опишите задачу — хотя бы одно из двух.' );
 	}
 
 	set_transient( $rk, $count + 1, PCB_RQ_RATE_TTL );
@@ -464,6 +462,83 @@ function pcb_rq_headers( $reply_to ) {
 	);
 }
 
+/**
+ * Данные калькулятора из формы (PCBCalc.getData() темы) → безопасный массив для _pcb_calc.
+ * Пропускаются только известные поля, строки и списки укорачиваются; не JSON или больше 20 КБ — пусто.
+ */
+function pcb_rq_clean_calc( $raw ) {
+	if ( '' === $raw || strlen( $raw ) > 20480 ) {
+		return array();
+	}
+	$in = json_decode( $raw, true );
+	if ( ! is_array( $in ) ) {
+		return array();
+	}
+	$str  = function ( $v, $max ) { return is_scalar( $v ) ? mb_substr( sanitize_text_field( (string) $v ), 0, $max ) : ''; };
+	$list = function ( $v, $n, $max ) use ( $str ) {
+		return is_array( $v ) ? array_values( array_filter( array_map( function ( $x ) use ( $str, $max ) { return $str( $x, $max ); }, array_slice( $v, 0, $n ) ), 'strlen' ) ) : array();
+	};
+	$out = array();
+	foreach ( array( 'qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel' ) as $k ) {
+		if ( isset( $in[ $k ] ) ) {
+			$out[ $k ] = $str( $in[ $k ], 40 );
+		}
+	}
+	if ( isset( $in['special'] ) ) {
+		$out['special'] = array_values( array_filter( $list( $in['special'], 20, 40 ), function ( $k ) { return (bool) preg_match( '/^[a-z0-9_-]+$/i', $k ); } ) );
+	}
+	if ( isset( $in['asm'] ) && in_array( $in['asm'], array( 'none', 'quick', 'detail' ), true ) ) {
+		$out['asm'] = $in['asm'];
+	}
+	if ( isset( $in['asm_values'] ) && is_array( $in['asm_values'] ) ) {
+		$out['asm_values'] = array();
+		foreach ( array_slice( $in['asm_values'], 0, 60, true ) as $k => $v ) {
+			if ( preg_match( '/^[qdp]_[a-z0-9_]{1,24}$/i', (string) $k ) && is_numeric( $v ) ) {
+				$out['asm_values'][ $k ] = max( 0, min( 1000000, (int) $v ) );
+			}
+		}
+	}
+	if ( isset( $in['finish_pending'] ) ) {
+		$out['finish_pending'] = (bool) $in['finish_pending'];
+	}
+	if ( isset( $in['calc_version'] ) && is_numeric( $in['calc_version'] ) ) {
+		$out['calc_version'] = (int) $in['calc_version'];
+	}
+	if ( isset( $in['estimate'] ) ) {
+		if ( 'engineer' === $in['estimate'] ) {
+			$out['estimate'] = 'engineer';
+		} elseif ( is_array( $in['estimate'] ) ) {
+			$e = array();
+			foreach ( array( 'lo', 'hi', 'per' ) as $k ) {
+				$e[ $k ] = isset( $in['estimate'][ $k ] ) && is_numeric( $in['estimate'][ $k ] ) ? max( 0, (int) round( $in['estimate'][ $k ] ) ) : 0;
+			}
+			if ( isset( $in['estimate']['vat'] ) && is_numeric( $in['estimate']['vat'] ) ) {
+				$e['vat'] = max( 0, min( 50, (float) $in['estimate']['vat'] ) );
+			}
+			$out['estimate'] = $e;
+		}
+	}
+	if ( isset( $in['term'] ) ) {
+		$out['term'] = $str( $in['term'], 120 );
+	}
+	foreach ( array( 'warn' => array( 10, 200 ), 'files' => array( 20, 200 ) ) as $k => $lim ) {
+		if ( isset( $in[ $k ] ) ) {
+			$out[ $k ] = $list( $in[ $k ], $lim[0], $lim[1] );
+		}
+	}
+	return array_filter( $out, function ( $v ) { return '' !== $v && array() !== $v; } );
+}
+
+/** В расчёте есть что-то по делу: размеры, тираж, слои или оценка. */
+function pcb_rq_calc_filled( array $calc ) {
+	foreach ( array( 'qty', 'len', 'wid', 'layers', 'estimate' ) as $k ) {
+		if ( ! empty( $calc[ $k ] ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
 function pcb_rq_notify( $id ) {
 	$m       = function ( $k ) use ( $id ) { return get_post_meta( $id, '_pcb_' . $k, true ); };
 	$service = pcb_rq_service_label( $m( 'service' ) );
@@ -480,6 +555,16 @@ function pcb_rq_notify( $id ) {
 		get_post_field( 'post_content', $id ) ?: '—',
 		'',
 	);
+	// расчёт — из _pcb_calc, с теми же подписями, что в карточке панели (calc-labels.php)
+	$calc = (array) $m( 'calc' );
+	if ( $calc && function_exists( 'pcb_crm_calc_rows' ) ) {
+		$lines[] = 'Данные калькулятора:';
+		foreach ( pcb_crm_calc_rows( $calc ) as $row ) {
+			$sub     = 0 === strpos( $row[0], '· ' );
+			$lines[] = ( $sub ? '    ' . ltrim( $row[0], '· ' ) : '  ' . $row[0] ) . ': ' . $row[1];
+		}
+		$lines[] = '';
+	}
 	$files = (array) $m( 'files' );
 	if ( $files ) {
 		$lines[] = 'Файлы (скачиваются после входа на сайт):';

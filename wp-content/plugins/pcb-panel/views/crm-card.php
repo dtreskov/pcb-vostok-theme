@@ -63,6 +63,13 @@ $open_important = count( array_filter( $notes, function ( $r ) { return 'importa
 
 $calc_rows = pcb_crm_calc_rows( (array) $m( 'calc' ) );
 $desc      = (string) $post->post_content;
+// до 0.8.1 форма дописывала расчёт калькулятора текстом в описание — показываем его отдельно, свёрнутым
+$desc_calc = '';
+$mark_pos  = mb_strpos( $desc, '— Данные из онлайн-калькулятора —' );
+if ( false !== $mark_pos ) {
+	$desc_calc = trim( mb_substr( $desc, $mark_pos ) );
+	$desc      = rtrim( mb_substr( $desc, 0, $mark_pos ) );
+}
 $reply_url = pcb_rq_panel_url( $id ) . 'reply/';
 $ym_id     = (string) $m( 'ym_client' );
 $counter   = function_exists( 'pcb_ya_counter' ) ? (int) pcb_ya_counter() : ( defined( 'PCB_METRIKA_ID' ) ? (int) PCB_METRIKA_ID : 0 );
@@ -175,6 +182,12 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 				<div class="crm-text"><?php echo esc_html( $desc ); ?></div>
 			<?php else : ?>
 				<p class="pp-muted">Клиент не написал описание.</p>
+			<?php endif; ?>
+			<?php if ( '' !== $desc_calc ) : ?>
+				<details class="crm-legacy-calc">
+					<summary>Текст расчёта, приложенный клиентом</summary>
+					<div class="crm-text"><?php echo esc_html( $desc_calc ); ?></div>
+				</details>
 			<?php endif; ?>
 		</details>
 

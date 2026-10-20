@@ -372,10 +372,21 @@ function theme_enqueue_scripts(): void
         true
     );
 
+    // черновик формы и калькулятора в браузере посетителя (IndexedDB) — до request-form.js и calculator.js
+    wp_enqueue_script(
+        'theme-form-draft',
+        get_theme_file_uri('assets/js/form-draft.js'),
+        array(),
+        filemtime(
+            get_theme_file_path('assets/js/form-draft.js')
+        ),
+        true
+    );
+
     wp_enqueue_script(
         'theme-request-form',
         get_theme_file_uri('assets/js/request-form.js'),
-        array(),
+        array('theme-form-draft'),
         filemtime(
             get_theme_file_path('assets/js/request-form.js')
         ),
@@ -450,7 +461,7 @@ function theme_enqueue_scripts(): void
         wp_enqueue_script(
             'theme-calculator',
             get_theme_file_uri('assets/js/calculator.js'),
-            array('jszip'),
+            array('jszip', 'theme-form-draft'),
             filemtime(
                 get_theme_file_path('assets/js/calculator.js')
             ),

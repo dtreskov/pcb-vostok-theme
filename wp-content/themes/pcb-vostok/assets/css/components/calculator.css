@@ -1134,22 +1134,18 @@
 }
 
 @media (max-width: 1199px) {
-    .cx {
-        padding-bottom: 64px;
-    }
-
     .cx-layout {
         grid-template-columns: minmax(0, 1fr);
     }
 
+    /* Итог прилипает к низу экрана, а в конце страницы встаёт на своё место
+       в потоке — над подвалом, не перекрывая его (sticky вместо fixed). */
     .cx-sum {
-        position: fixed;
-        left: 0;
-        right: 0;
+        position: sticky;
         bottom: 0;
         top: auto;
         z-index: 50;
-        margin: 0;
+        margin: 0 calc(50% - 50vw) !important; /* на всю ширину экрана, без зазора снизу */
         border-radius: var(--radius-card) var(--radius-card) 0 0;
         max-height: 78vh;
         overflow-y: auto;
@@ -2069,3 +2065,27 @@
     }
 }
 
+/* «Восстановили ваш расчёт» — черновик в браузере (calculator.js → restoreDraft) */
+.cx-restore--draft {
+    box-sizing: border-box;
+    max-width: min(1290px, 90vw);
+    margin: 16px auto 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: var(--color-gold-light);
+    color: #6B5418;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: inset 3px 0 0 var(--color-copper);
+}
+.cx-restore__btn {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-copper-dark);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}

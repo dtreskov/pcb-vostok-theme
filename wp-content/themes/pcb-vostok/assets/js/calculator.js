@@ -6,9 +6,14 @@
  *   Распаковка ZIP — assets/js/vendor/jszip.min.js (подключается раньше).
  * — Слияние источников: IPC-2581 → .gbrjob → Gerber, расхождения помечаются.
  * — Оценка монтажа: быстрая и подробная, автоподстановка из IPC-2581.
- * — Итоговая панель и текстовая сводка для формы заявки (window.PCBCalc → assets/js/request-form.js).
+ * — Итоговая панель и данные для формы заявки (window.PCBCalc → assets/js/request-form.js).
+ *   Об изменении расчёта калькулятор сообщает событием document 'pcb:calc' (detail: { pending }) —
+ *   по нему форма показывает «оценка считается» и замечает, что расчёт изменился после прикрепления.
  * — Восстановление расчёта из заявки: кнопка «Показать в калькуляторе» в /panel (плагин pcb-panel)
  *   кладёт данные в localStorage и открывает страницу с #pcb-restore — см. restoreFromPanel().
+ * — Черновик: поля и файлы калькулятора сохраняются в браузере (window.PCBDraft, form-draft.js, запись 'calc')
+ *   и восстанавливаются при возврате на страницу — см. restoreDraft(). Пока идёт восстановление,
+ *   PCBCalc.isRestoring() === true: форма заявки не сравнивает прикреплённый расчёт с текущим.
  *
  * ВНИМАНИЕ: ставки в объекте R — демонстрационные, формула цены ещё не утверждена.
  */
@@ -72,6 +77,8 @@
   /* ================= Загрузка нескольких файлов ================= */
   var drop = $('#calc-drop'), fileIn = $('#calc-file');
   var store = [], seq = 0, busyCount = 0, restoreApply = null;
+  var used = false; // клиент заполнял калькулятор или загружал файлы (не просто открыл страницу)
+  var restoring = true; // до проверки черновика (restoreDraft) — расчёт ещё не окончательный
   function kb(n) { return n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' КБ' : (n / 1048576).toFixed(1).replace('.', ',') + ' МБ'; }
   function plural(n, a, b, c) { var m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : (m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c); }
   function readText(f) { return f.text ? f.text() : new Response(f).text(); }
@@ -88,9 +95,9 @@
   function track(d) { try { document.dispatchEvent(new CustomEvent('pcb:track', { detail: d })); } catch (e) { /* без статистики */ } }
   function errCode(it) { return it.kind === 'zip' ? 'zip' : /RAR/.test(it.note) ? 'rar' : /IPC/.test(it.note) ? 'ipc' : 'format'; }
 
-  function handleFiles(files) {
+  function handleFiles(files, quiet) {
     if (!files.length) return;
-    track({ goal: 'calc_upload' });
+    if (!quiet) { used = true; track({ goal: 'calc_upload' }); } // quiet — файлы из черновика, не новая загрузка
     files.forEach(function (f) {
       store = store.filter(function (it) { return it.name !== f.name; }); // тот же файл — заменяем
       var it = { id: ++seq, file: f, name: f.name, size: f.size, kind: '?', status: 'busy', note: '', entries: [], ipc: [] };
@@ -102,6 +109,7 @@
       });
     });
     renderFiles();
+    emit(); // файлы разбираются — форма покажет «считается»
   }
 
   function readItem(f, it) {
@@ -155,7 +163,7 @@
       var sz = document.createElement('span'); sz.className = 'cx-fsize'; sz.textContent = kb(it.size);
       var del = document.createElement('button'); del.type = 'button'; del.className = 'cx-fdel'; del.textContent = '×';
       del.setAttribute('aria-label', 'Удалить ' + it.name);
-      del.addEventListener('click', function () { store = store.filter(function (x) { return x !== it; }); renderFiles(); safeAnalyse(); });
+      del.addEventListener('click', function () { store = store.filter(function (x) { return x !== it; }); renderFiles(); safeAnalyse(); saveSoon(); });
       li.appendChild(tp); li.appendChild(nm); li.appendChild(sz); li.appendChild(del);
       list.appendChild(li);
     });
@@ -168,7 +176,7 @@
     if (sub) { var s = document.createElement('span'); s.textContent = sub; $('#calc-file-status').appendChild(s); }
     $('#calc-live').textContent = title + (sub ? '. ' + sub : '');
   }
-  $('#calc-reset').addEventListener('click', function () { store = []; renderFiles(); safeAnalyse(); });
+  $('#calc-reset').addEventListener('click', function () { store = []; renderFiles(); safeAnalyse(); saveSoon(); });
 
   /* Ошибка разбора не должна оставлять калькулятор в состоянии «Разбираем файлы…» */
   function safeAnalyse() {
@@ -527,6 +535,7 @@
       '. Демо-проект заменит ' + (own.length === 1 ? 'его' : 'их') + ', а поля калькулятора заполнятся данными примера.';
     $('#calc-demo-cancel').textContent = own.length === 1 ? 'Оставить мой файл' : 'Оставить мои файлы';
     demoWarn.hidden = false;
+    var dd = demoWarn.closest('details'); if (dd) dd.open = true; // вопрос — внутри спойлера «Демо-проект»
     $('#calc-demo-replace').focus();
   });
   $('#calc-demo-replace').addEventListener('click', function () { demoWarn.hidden = true; loadDemo(demoIPC); });
@@ -810,20 +819,24 @@
   var lastRes = null;
   /* Расчёт на сервере (плагин панели, pcb-panel/v1/calc/quote): уходят только значения полей калькулятора —
      файлы проекта остаются в браузере. Включается, когда в панели опубликована формула (window.PCBCalcServer). */
-  var SRV = window.PCBCalcServer || null, srvTimer = 0, srvSeq = 0;
+  var SRV = window.PCBCalcServer || null, srvTimer = 0, srvSeq = 0, srvPending = false;
+  /* сообщить форме заявки, что расчёт изменился или пересчитывается */
+  function emit() { try { document.dispatchEvent(new CustomEvent('pcb:calc', { detail: { pending: srvPending } })); } catch (e) { /* без формы */ } }
   function recalc() {
     if (!SRV) { renderResult(compute()); return; }
     var pre = precheck();
-    if (!pre.ok) { srvSeq++; renderResult(pre); return; }
+    if (!pre.ok) { srvSeq++; srvPending = false; renderResult(pre); return; }
+    srvPending = true; emit();
     S.state.textContent = 'Пересчитываем…';
     clearTimeout(srvTimer);
     srvTimer = setTimeout(function () {
       var seq = ++srvSeq;
       fetch(SRV.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fieldData()) })
         .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-        .then(function (r) { if (seq === srvSeq) renderResult(r); })
+        .then(function (r) { if (seq === srvSeq) { srvPending = false; renderResult(r); } })
         .catch(function () {
           if (seq !== srvSeq) return;
+          srvPending = false;
           renderResult({ ok: false, lines: [], warn: [], reason: 'Не удалось получить оценку — проверьте соединение и измените любое поле, чтобы повторить.' });
         });
     }, 250);
@@ -831,6 +844,8 @@
   function currentRes() { return lastRes || (SRV ? { ok: false, lines: [], warn: [], reason: 'Оценка ещё считается' } : compute()); }
   function renderResult(r) {
     lastRes = r;
+    setTimeout(emit, 0); // после отрисовки итога
+    saveSoon();
     if (r.ok) track({ goal: 'calc_result' });
     S.br.innerHTML = ''; S.warn.hidden = true; S.per.textContent = ''; S.state.textContent = ''; S.term.innerHTML = '';
     S.total.classList.remove('is-muted');
@@ -943,13 +958,51 @@
   }
 
   /* Для формы заявки (assets/js/request-form.js): сводка и загруженные файлы. */
+  /* Короткая сводка для плашки «Данные прикреплены» в форме заявки */
+  function firstPart(t) { return String(t || '').split(' (')[0].trim(); }
+  function getBrief() {
+    var r = currentRes(), parts = [], lc = function (t) { return t ? t.charAt(0).toLowerCase() + t.slice(1) : t; };
+    var n = parseInt(val('layers'), 10);
+    if (n) parts.push(n + ' ' + plural(n, 'слой', 'слоя', 'слоёв'));
+    var L = String(val('len')).trim().replace('.', ','), W = String(val('wid')).trim().replace('.', ',');
+    if (L && W) parts.push(L + ' × ' + W + ' мм');
+    if (val('qty')) parts.push(fmt(num('qty')) + ' шт');
+    if (val('mat') && val('mat') !== 'fr4') parts.push(firstPart(selText('mat')));
+    if (val('finish')) parts.push(finishPending ? 'покрытие не уточнено' : firstPart(selText('finish')));
+    var m = asmMode();
+    parts.push(m === 'none' ? 'без монтажа' : (val('sides') === '2' ? 'монтаж с двух сторон' : 'монтаж с одной стороны'));
+    var est = null;
+    if (srvPending) est = { pending: true };
+    else if (r && r.ok && r.engineer) est = { engineer: true, text: 'рассчитает инженер' };
+    else if (r && r.ok) est = { text: fmt(r.lo) + ' – ' + fmtR(r.hi), vat: r.vat && r.vat.show ? 'в т. ч. НДС ' + String(r.vat.pct).replace('.', ',') + ' %' : '' };
+    else est = { none: true, text: r && r.reason ? r.reason : 'оценки нет' };
+    return {
+      params: parts.join(' · '),
+      estimate: est,
+      files: store.filter(function (it) { return it.status === 'ok'; }).map(function (it) { return it.name; })
+    };
+  }
+  /* «отпечаток» расчёта: значения полей и файлы — чтобы понять, изменился ли расчёт после прикрепления */
+  function fingerprint() {
+    return JSON.stringify([fieldData(), store.filter(function (it) { return it.status === 'ok'; }).map(function (it) { return it.name + ':' + it.size; })]);
+  }
+
   window.PCBCalc = {
     getSummary: function () { return buildSummary(currentRes()); },
+    getBrief: getBrief,
+    fingerprint: fingerprint,
+    isPending: function () { return srvPending || busyCount > 0; },
+    isUsed: function () { return used; },
+    isRestoring: function () { return restoring; },
     /* структурированные данные расчёта — для аналитики заявок (/panel) */
     getData: function () {
       var r = currentRes(), d = fieldData();
       if (r && r.version) d.calc_version = r.version; // версия формулы панели, по которой клиент увидел оценку
-      if (r && r.ok) { d.estimate = r.engineer ? 'engineer' : { lo: Math.round(r.lo), hi: Math.round(r.hi), per: Math.round(r.per) }; d.term = r.term; d.warn = r.warn; }
+      if (r && r.ok) {
+        d.estimate = r.engineer ? 'engineer' : { lo: Math.round(r.lo), hi: Math.round(r.hi), per: Math.round(r.per) };
+        if (!r.engineer && r.vat && r.vat.show) d.estimate.vat = r.vat.pct; // «в т. ч. НДС N %» — в панели и письме
+        d.term = r.term; d.warn = r.warn;
+      }
       d.files = store.filter(function (it) { return it.status === 'ok'; }).map(function (it) { return it.name; });
       return d;
     },
@@ -971,12 +1024,14 @@
     var head = $('#calc-head'); // под полосой «Онлайн-калькулятор», в потоке страницы — не липнет к шапке
     root.insertBefore(box, head ? head.nextSibling : root.firstChild);
   }
-  function restoreValues(d) {
+  /* src — подпись бейджа («из заявки»); без src (черновик) изменённое после разбора файлов поле — «вручную» */
+  function restoreValues(d, src) {
+    var mark = function (k) { if (src) setBadge(k, 'ok', src); else if (parsed || asmKeys.indexOf(k) >= 0) setBadge(k, 'manual'); };
     DATA_KEYS.forEach(function (k) {
       var e = el(k); if (!e || d[k] === undefined || d[k] === null) return;
       if (String(e.value) !== String(d[k])) {
         e.value = d[k];
-        if (badgeMap[k] || k === 'len' || k === 'wid') setBadge(k === 'len' || k === 'wid' ? 'size' : k, 'ok', 'заявки');
+        if (badgeMap[k] || k === 'len' || k === 'wid') mark(k === 'len' || k === 'wid' ? 'size' : k);
       }
     });
     if (Array.isArray(d.special)) $$('.cx-checks input').forEach(function (i) { i.checked = d.special.indexOf(i.dataset.key) >= 0; });
@@ -986,7 +1041,7 @@
       var v = av[i.dataset.key] || 0;
       if (+i.value === v) return;
       i.value = v; i.classList.remove('is-need');
-      if (asmKeys.indexOf(i.dataset.key) >= 0) setBadge(i.dataset.key, 'ok', 'заявки');
+      if (asmKeys.indexOf(i.dataset.key) >= 0) mark(i.dataset.key);
     });
     if (d.finish_pending === false) { finishPending = false; $('#calc-finish-confirm').hidden = true; }
     syncInner(); syncAsm(); recalc();
@@ -999,7 +1054,7 @@
     try { p = JSON.parse(raw); } catch (e) { p = null; }
     if (!p || !p.data || Date.now() - (p.t || 0) > 5 * 60 * 1000) return;
     var files = Array.isArray(p.files) ? p.files : [];
-    if (!files.length) { restoreValues(p.data); restoreNote(p, false); return; }
+    if (!files.length) { restoreValues(p.data, 'заявки'); restoreNote(p, false); return; }
     setHead('busy', 'Загружаем файлы из заявки…', '');
     Promise.all(files.map(function (f) {
       return fetch(f.url, { credentials: 'same-origin' }).then(function (r) {
@@ -1007,16 +1062,65 @@
         return r.blob();
       }).then(function (b) { return new File([b], f.name, { type: b.type }); });
     })).then(function (list) {
-      restoreApply = function () { restoreValues(p.data); };
+      restoreApply = function () { restoreValues(p.data, 'заявки'); };
       handleFiles(list);
       restoreNote(p, false);
-    }).catch(function () { restoreValues(p.data); restoreNote(p, true); });
+    }).catch(function () { restoreValues(p.data, 'заявки'); restoreNote(p, true); });
   }
+
+  /* ================= Черновик в браузере (form-draft.js) ================= */
+  var D = window.PCBDraft || null, saveTimer = 0, noSave = false;
+  function saveNow() {
+    clearTimeout(saveTimer); saveTimer = 0;
+    if (!D || restoring || noSave || !used) return;
+    D.set('calc', {
+      data: fieldData(), used: true,
+      files: store.map(function (it) { return { file: it.file }; }),
+      demo: Object.keys(demoNames)
+    });
+  }
+  function saveSoon() { if (D && !restoring && !noSave && used) { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); } }
+  // уход со страницы — сохранить сразу, не дожидаясь паузы
+  window.addEventListener('pagehide', function () { if (saveTimer) saveNow(); });
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && saveTimer) saveNow(); });
+  function draftNote(v, lost) {
+    var box = document.createElement('div');
+    box.className = 'cx-restore cx-restore--draft';
+    box.setAttribute('role', 'status');
+    var when = new Date(v.t).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    var t = document.createElement('span');
+    t.textContent = 'Восстановили ваш расчёт от ' + when + ' — он хранится только в этом браузере.' +
+      (lost ? ' Файлы сохранить не удалось — загрузите их заново.' : '') + ' ';
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'cx-restore__btn'; b.textContent = 'Начать заново';
+    b.addEventListener('click', function () {
+      noSave = true; clearTimeout(saveTimer);
+      (D ? D.del('calc') : Promise.resolve()).then(function () { location.reload(); });
+    });
+    box.appendChild(t); box.appendChild(b);
+    var head = $('#calc-head');
+    root.insertBefore(box, head ? head.nextSibling : root.firstChild);
+  }
+  function restoreDraft() {
+    var finish = function () { restoring = false; emit(); };
+    if (!D) { finish(); return; }
+    D.get('calc').then(function (v) {
+      if (!v || !v.data) { finish(); return; }
+      used = true;
+      (v.demo || []).forEach(function (n) { demoNames[n] = true; });
+      var all = v.files || [], files = all.map(function (x) { return x && x.file; }).filter(function (f) { return typeof Blob !== 'undefined' && f instanceof Blob; });
+      draftNote(v, files.length < all.length);
+      if (!files.length) { restoring = false; restoreValues(v.data); return; }
+      restoreApply = function () { restoring = false; restoreValues(v.data); }; // после разбора файлов — значения клиента поверх
+      handleFiles(files, true);
+    }).catch(finish);
+  }
+  /* после отправки заявки (request-form.js) черновик удалён — не сохранять, пока клиент снова что-то не изменит */
+  document.addEventListener('pcb:draft-cleared', function () { clearTimeout(saveTimer); saveTimer = 0; });
 
   /* поля формы заявки (этап 4, #request) на расчёт не влияют */
   function isCalcField(t) { return t.matches('input,select') && !t.closest('#request'); }
-  root.addEventListener('input', function (e) { if (isCalcField(e.target)) recalc(); });
-  root.addEventListener('change', function (e) { if (isCalcField(e.target)) recalc(); });
+  root.addEventListener('input', function (e) { if (isCalcField(e.target)) { used = true; recalc(); } });
+  root.addEventListener('change', function (e) { if (isCalcField(e.target)) { used = true; recalc(); } });
 
   $('#calc-cta').addEventListener('click', function () {
     $('#request').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
@@ -1028,7 +1132,10 @@
   });
 
   asmInit(); syncInner(); syncAsm(); recalc();
+  // расчёт из заявки (/panel) открывает сотрудник — черновик не подставляем и не сохраняем
+  var fromPanel = location.hash === '#pcb-restore';
   restoreFromPanel();
+  if (fromPanel) { noSave = true; restoring = false; emit(); } else restoreDraft();
 
 })();
 

@@ -309,6 +309,37 @@
 .request-mail { margin: 2px 0 0; font-size: 12.5px; color: var(--rq-dim); }
 .request-mail a { color: var(--color-primary-light); white-space: nowrap; }
 
+/* --- «Восстановили незаконченную заявку» — черновик в браузере (form-draft.js) --- */
+
+.request-draft {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 3px 0 0 var(--color-gold);
+    color: var(--color-primary-light);
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+.request-draft__btn {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-gold);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+.request-draft__btn:hover { text-decoration-thickness: 2px; }
+.request--calc .request-draft { background: var(--color-gold-light); color: #6B5418; box-shadow: inset 3px 0 0 var(--color-copper); }
+.request--calc .request-draft__btn { color: var(--color-copper-dark); }
+
 /* --- сообщение об ошибке отправки --- */
 
 .request-alert {
@@ -320,6 +351,45 @@
     color: var(--rq-error);
     font-size: 14px;
 }
+
+/* --- мягкий вопрос перед отправкой (пустое описание, расчёт не прикреплён или устарел) --- */
+
+.request-ask {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-left: 3px solid var(--color-gold);
+    border-radius: 0 var(--radius-card) var(--radius-card) 0;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-primary-light);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.request-ask[hidden] { display: none; }
+.request-ask__text { margin: 0; }
+.request-ask__acts { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+
+.request-ask__btn {
+    height: 36px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-copper-dark);
+    color: var(--color-white);
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.request-ask__btn:hover { background: #975224; }
+.request-ask__btn--ghost { background: transparent; color: var(--color-primary-light); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.35); }
+.request-ask__btn--ghost:hover { background: rgba(255, 255, 255, 0.08); }
+.request-ask__btn:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
 
 /* --- кнопка слева, капча справа --- */
 
@@ -642,6 +712,124 @@
 
 .request-calc:has(.is-applied) .request-calc__more { border-color: var(--color-primary); }
 
+/* --- прикреплённые данные калькулятора: пилюля «Данные прикреплены» + стрелка спойлера,
+       плашка — тело вкладки под строкой (как пояснение к «?»); «Что приложить к заявке» — на своём месте --- */
+.request-calc__btn.is-stale { background: var(--color-copper-dark); }
+.request-calc__group:has(.is-stale) { border-color: var(--color-copper-dark); }
+/* раскрытая вкладка — без нижней рамки и в «устаревшем» состоянии (иначе между пилюлей и плашкой проступает линия) */
+.request-calc__group:has(.is-stale):has([aria-expanded="true"]) { border-bottom-color: transparent; }
+
+/* стрелка спойлера вместо «?» (после прикрепления) */
+.request-calc__q.is-fold > span { position: relative; border: 0; background: none !important; font-size: 0; }
+/* «галочка» из двух рёбер повёрнутого квадрата: видимая часть смещена от центра коробки —
+   сдвигаем на 3 px (раскрыта — на 2,5 px вниз), чтобы по высоте она стояла по центру кнопки */
+.request-calc__q.is-fold > span::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin: -5px 0 0 -5px;
+    border-right: 2px solid var(--color-gold);
+    border-bottom: 2px solid var(--color-gold);
+    transform: translateY(-3px) rotate(45deg);
+    transition: transform var(--transition-fast);
+}
+.request-calc__q.is-fold[aria-expanded="true"] > span::after { transform: translateY(2.5px) rotate(225deg); }
+
+.request-calc__card {
+    position: relative;
+    z-index: 1;
+    grid-row: 2;
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 4px;
+    margin: -9.5px 0 0;
+    padding: 12px 18px 14px;
+    border: 1.5px solid var(--color-primary);
+    border-radius: 0 var(--radius-faq) var(--radius-faq) var(--radius-faq);
+    background: var(--color-white);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text-black);
+}
+
+.request-calc__card[hidden] { display: none; }
+.request-calc__card p { margin: 0; }
+.request-calc__card.is-stale { border-color: var(--color-copper-dark); }
+
+.request-calc__params { font-weight: 500; }
+.request-calc__k { color: #4A5852; }
+.request-calc__k::after { content: ":"; }
+.request-calc__sum { font-weight: 700; font-variant-numeric: tabular-nums; }
+.request-calc__sum.is-muted { font-weight: 500; color: #4A5852; }
+.request-calc__vat { font-size: 13px; color: #4A5852; white-space: nowrap; }
+.request-calc__fl { color: #4A5852; overflow-wrap: anywhere; }
+
+/* ссылки — отдельной строкой под данными */
+.request-calc__links { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 4px !important; }
+
+.request-calc__link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #975224;
+    font-family: var(--font-family);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.request-calc__link:hover { color: var(--color-copper-dark); }
+.request-calc__link:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; border-radius: 2px; }
+
+.request-calc__stale { display: none; }
+.request-calc__card.is-stale .request-calc__stale {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin: 8px -18px -14px;
+    padding: 10px 18px;
+    border-top: 1px solid rgba(168, 92, 40, 0.35);
+    border-radius: 0 0 var(--radius-faq) var(--radius-faq);
+    background: var(--color-copper-light);
+    color: var(--color-copper-dark);
+    font-weight: 600;
+}
+
+.request-calc__refresh {
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-copper-dark);
+    color: var(--color-white);
+    font-family: var(--font-family);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.request-calc__refresh:hover { background: #975224; }
+.request-calc__refresh:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; }
+
+.request-calc__card.is-pending .request-calc__sum::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    vertical-align: -1px;
+    border: 2px solid rgba(192, 112, 58, 0.3);
+    border-top-color: var(--color-copper);
+    border-radius: 50%;
+    animation: request-spin 0.8s linear infinite;
+}
+
 /* спойлер «Что приложить к заявке» — у правого края строки */
 .request-attach { grid-row: 1; grid-column: 2; justify-self: end; min-width: 0; }
 .request-attach[open] { grid-column: 1 / -1; justify-self: stretch; }
@@ -680,6 +868,7 @@
     .request-calc__btn { flex: 1 1 auto; min-width: 0; padding-block: 6px; white-space: normal; line-height: 1.2; text-align: left; }
     /* пояснение к «?» — сразу под пилюлей, спойлер — ниже */
     .request-calc__more { grid-row: 2; }
+    .request-calc__card { grid-row: 2; }
     .request-attach,
     .request-attach[open] { grid-row: 3; grid-column: 1 / -1; justify-self: stretch; }
     .request-attach[open] > summary { width: auto; margin-left: -1px; }
@@ -744,11 +933,17 @@
 .request--calc .request-agree a { color: var(--color-primary); }
 .request--calc .request-agree input { width: 16px; height: 16px; }
 
+/* отступ между блоком файлов и кнопкой отправки: 10 px шага формы + 14 px */
+.request--calc .request-actions { margin-top: 14px; }
+
 .request--calc .request-submit { height: 48px; min-width: 220px; font-size: 15px; box-shadow: 0 6px 18px rgba(168, 92, 40, 0.28); }
 .request--calc .request-submit:hover { background: #975224; }
 .request--calc .request-captcha--stub { border-color: #C9D2CD; background: var(--color-white); color: #4A5852; }
 
 .request--calc .request-alert { border: 1px solid var(--color-separator); border-left: 3px solid var(--color-copper-dark); border-radius: 0 var(--radius-card) var(--radius-card) 0; background: var(--color-copper-light); color: var(--color-copper-dark); }
+.request--calc .request-ask { border-color: var(--color-separator); border-left-color: var(--color-copper); background: var(--color-white); color: var(--color-text-black); }
+.request--calc .request-ask__btn--ghost { color: #975224; box-shadow: inset 0 0 0 1.5px var(--color-copper-dark); }
+.request--calc .request-ask__btn--ghost:hover { background: var(--color-copper-light); }
 
 .request--calc .request-success { border: 1px solid var(--color-separator); border-top: 3px solid var(--color-primary); background: var(--color-white); }
 .request--calc .request-success__ico { border: 0; background: var(--color-primary); }

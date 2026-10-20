@@ -250,7 +250,8 @@ function pcb_crm_calc_rows( array $calc ) {
 		$e      = $calc['estimate'];
 		$fmt    = function ( $n ) { return number_format( (float) $n, 0, ',', ' ' ); };
 		$rows[] = array( 'Оценка калькулятора', is_array( $e )
-			? $fmt( $e['lo'] ?? 0 ) . ' – ' . $fmt( $e['hi'] ?? 0 ) . ' ₽ (≈ ' . $fmt( $e['per'] ?? 0 ) . ' ₽ за плату)'
+			? $fmt( $e['lo'] ?? 0 ) . ' – ' . $fmt( $e['hi'] ?? 0 ) . ' ₽ (≈ ' . $fmt( $e['per'] ?? 0 ) . ' ₽ за плату'
+				. ( ! empty( $e['vat'] ) ? '; в т. ч. НДС ' . str_replace( '.', ',', (string) ( 0 + $e['vat'] ) ) . ' %' : '' ) . ')'
 			: 'расчёт инженером' );
 	}
 	if ( ! empty( $calc['warn'] ) ) {
