@@ -1,7 +1,8 @@
 /**
  * Онлайн-калькулятор (страница /calculator, _gutenberg/pages/709-calculator.html).
  *
- * — Разбор файлов проекта прямо в браузере: IPC-2581 (.xml, .cvg),
+ * — Разбор файлов проекта прямо в браузере: IPC-2581 (.xml, .cvg), ODB++ (.tgz, .tar, .zip, папка odb/ в архиве),
+ *   файл требований к плате (.txt),
  *   ZIP с Gerber и сверловкой, .gbrjob. Файлы на сервер не отправляются.
  *   Распаковка ZIP — assets/js/vendor/jszip.min.js (подключается раньше).
  * — Слияние источников: IPC-2581 → .gbrjob → Gerber, расхождения помечаются.
@@ -35,10 +36,11 @@
 
   /* Бейджи и состояния полей: ok | need | err | manual */
   var badgeMap = { qty: 'f-qty', size: 'f-len', layers: 'f-layers', thick: 'f-thick', cuout: 'f-cuout', cuin: 'f-cuin', mat: 'f-mat', finish: 'f-finish', mask: 'f-mask', silk: 'f-silk', track: 'f-track', hole: 'f-hole', q_smd: 'q-smd', q_dip: 'q-dip', q_bga: 'q-bga', q_qfn: 'q-qfn', sides: 'f-sides' };
-  var badgeText = { ok: '', need: 'заполните', err: 'ошибка', manual: 'вручную', conflict: 'расхождение' };
-  function setBadge(field, state, src) {
+  var badgeText = { ok: '', need: 'заполните', err: 'ошибка', manual: 'вручную', conflict: 'расхождение', check: 'проверьте' };
+  function setBadge(field, state, src, text) {
     var b = $('.cx-badge[data-for="' + field + '"]'); if (!b) return;
     var wrap = b.closest('.cx-field');
+    if (state !== 'check' && state !== 'conflict') fieldNote(field, '');
     wrap.classList.remove('is-need', 'is-err', 'is-conflict');
     if (!state) { b.textContent = ''; b.removeAttribute('data-state'); return; }
     b.dataset.state = state;
@@ -50,10 +52,20 @@
       else if (sel) b.textContent = 'уточните';
     }
     if (state === 'ok') { wrap.classList.remove('is-flash'); void wrap.offsetWidth; wrap.classList.add('is-flash'); setTimeout(function () { wrap.classList.remove('is-flash'); }, 1700); }
+    if (state === 'check') wrap.classList.add('is-need'); // значение подставлено, но его стоит проверить
+    if (text) b.textContent = text;
     if (state === 'err') wrap.classList.add('is-err');
     if (state === 'conflict') wrap.classList.add('is-conflict');
   }
   var asmKeys = ['q_smd', 'q_dip', 'q_bga', 'q_qfn'];
+  // Пояснение под полем: «в файле 1,5 мм — в списке нет, считаем по 1,6»
+  function fieldNote(field, msg) {
+    var b = $('.cx-badge[data-for="' + field + '"]'); if (!b) return;
+    var wrap = b.closest('.cx-field'), n = wrap.querySelector('.cx-fnote');
+    if (!msg) { if (n) n.hidden = true; return; }
+    if (!n) { n = document.createElement('p'); n.className = 'cx-fnote'; var lb = wrap.querySelector('label'); wrap.insertBefore(n, lb ? lb.nextSibling : wrap.firstChild); } // над полем — нижние края полей в ряду остаются на одной линии
+    n.textContent = msg; n.hidden = false;
+  }
   function clearBadges() { Object.keys(badgeMap).forEach(function (k) { if (asmKeys.indexOf(k) < 0) setBadge(k, null); }); }
   var parsed = false, finishPending = false;
   // ручная правка поля после разбора → «вручную»
@@ -88,19 +100,52 @@
   drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileIn.click(); } });
   ['dragenter', 'dragover'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('is-over'); }); });
   ['dragleave', 'drop'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('is-over'); }); });
-  drop.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files.length) handleFiles([].slice.call(e.dataTransfer.files)); });
+  drop.addEventListener('drop', function (e) {
+    var dt = e.dataTransfer; if (!dt) return;
+    var ents = [].slice.call(dt.items || []).map(function (i) { return i.webkitGetAsEntry ? i.webkitGetAsEntry() : null; });
+    if (!ents.some(function (x) { return x && x.isDirectory; })) { if (dt.files.length) handleFiles([].slice.call(dt.files)); return; }
+    // папки упаковываем в ZIP прямо в браузере — дальше они разбираются как обычный архив
+    var plain = [].slice.call(dt.files).filter(function (f, i) { return !(ents[i] && ents[i].isDirectory); });
+    Promise.all(ents.filter(function (x) { return x && x.isDirectory; }).map(folderToZip)).then(function (zips) {
+      handleFiles(plain.concat(zips.filter(Boolean)));
+    });
+  });
+  // Папка (FileSystemDirectoryEntry) → File «имя.zip» без бинарных файлов; до 3000 файлов и 8 уровней вложенности
+  function folderToZip(dir) {
+    if (typeof JSZip === 'undefined') return Promise.resolve(null);
+    var z = new JSZip(), count = 0;
+    function walk(d, path, depth) {
+      return new Promise(function (ok) {
+        var rd = d.createReader(), all = [];
+        (function next() {
+          rd.readEntries(function (part) { if (part.length) { all = all.concat(part); next(); } else ok(all); }, function () { ok(all); });
+        })();
+      }).then(function (list) {
+        return Promise.all(list.map(function (en) {
+          if (count > 3000) return null;
+          if (en.isDirectory) return depth < 8 ? walk(en, path + en.name + '/', depth + 1) : null;
+          if (BIN.test(en.name)) return null;
+          return new Promise(function (ok) { en.file(function (f) { count++; z.file(path + en.name, f); ok(); }, function () { ok(); }); });
+        }));
+      });
+    }
+    return walk(dir, dir.name + '/', 0).then(function () {
+      if (!count) return null;
+      return z.generateAsync({ type: 'blob' }).then(function (b) { return new File([b], dir.name + '.zip', { type: 'application/zip' }); });
+    }).catch(function () { return null; });
+  }
   fileIn.addEventListener('change', function () { handleFiles([].slice.call(fileIn.files)); fileIn.value = ''; });
 
   /* шаги для /panel/analytics — обрабатывает site-goals.js */
   function track(d) { try { document.dispatchEvent(new CustomEvent('pcb:track', { detail: d })); } catch (e) { /* без статистики */ } }
-  function errCode(it) { return it.kind === 'zip' ? 'zip' : /RAR/.test(it.note) ? 'rar' : /IPC/.test(it.note) ? 'ipc' : 'format'; }
+  function errCode(it) { return it.kind === 'zip' ? 'zip' : it.kind === 'tar' ? 'tar' : /RAR/.test(it.note) ? 'rar' : /IPC/.test(it.note) ? 'ipc' : 'format'; }
 
   function handleFiles(files, quiet) {
     if (!files.length) return;
     if (!quiet) { used = true; track({ goal: 'calc_upload' }); } // quiet — файлы из черновика, не новая загрузка
     files.forEach(function (f) {
       store = store.filter(function (it) { return it.name !== f.name; }); // тот же файл — заменяем
-      var it = { id: ++seq, file: f, name: f.name, size: f.size, kind: '?', status: 'busy', note: '', entries: [], ipc: [] };
+      var it = { id: ++seq, file: f, name: f.name, size: f.size, kind: '?', status: 'busy', note: '', entries: [], ipc: [], odb: [], spec: [] };
       store.push(it);
       busyCount++;
       readItem(f, it).then(function () {
@@ -112,23 +157,87 @@
     emit(); // файлы разбираются — форма покажет «считается»
   }
 
-  function readItem(f, it) {
-    var n = f.name.toLowerCase();
+  /* --- Архивы: ZIP (JSZip), .tgz / .tar.gz / .tar (штатный DecompressionStream), вложенные архивы --- */
+  // Что заведомо не текст — не распаковываем и не читаем (PDF, таблицы, исходники САПР, картинки, 3D)
+  var BIN = /\.(pdf|xlsx?|xlsm|docx?|pptx?|odt|ods|pcbdoc|schdoc|prjpcb|pcblib|schlib|intlib|brd|dsn|sch|kicad_pcb|kicad_sch|kicad_pro|step|stp|igs|iges|wrl|stl|dwg|dxf|png|jpe?g|gif|bmp|tiff?|svg|webp|exe|dll|bin|7z|rar|mp4|mov|z)$/i;
+  var ARCH = /\.(zip|tgz|tar\.gz|tar)$/i;
+  function u8text(u8) {
+    try { return new TextDecoder('utf-8').decode(u8); } catch (e) { var s = ''; for (var i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return s; }
+  }
+  function gunzip(u8) {
+    if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('gzip'));
+    return new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer().then(function (b) { return new Uint8Array(b); });
+  }
+  function untar(u8) { // ustar / GNU tar: заголовки по 512 байт
+    var out = [], o = 0, longName = null, str = function (a, b) { var s = ''; for (var i = a; i < b && u8[i]; i++) s += String.fromCharCode(u8[i]); return s; };
+    while (o + 512 <= u8.length && u8[o]) {
+      var name = str(o, o + 100), size = parseInt(str(o + 124, o + 136).trim(), 8) || 0, type = String.fromCharCode(u8[o + 156] || 48), pre = str(o + 345, o + 500);
+      var path = longName || ((pre ? pre + '/' : '') + name); longName = null;
+      var data = u8.subarray(o + 512, o + 512 + size);
+      if (type === 'L') longName = u8text(data).replace(/\0+$/, '');
+      else if (type === '0' || type === '\0' || type === '7') out.push({ path: path, data: data });
+      o += 512 + Math.ceil(size / 512) * 512;
+    }
+    if (!out.length && u8.length > 512) throw new Error('tar');
+    return out;
+  }
+  // Раскрыть архив в список { path, data } — с вложенными архивами (до двух уровней)
+  function expand(name, u8, depth, it) {
+    var n = name.toLowerCase();
+    var sub = function (list) {
+      return Promise.all(list.map(function (e) {
+        if (ARCH.test(e.path) && depth < 2) return expand(e.path, e.data, depth + 1, it).catch(function () { it.skipped = (it.skipped || 0) + 1; return []; });
+        return [e];
+      })).then(function (r) { return [].concat.apply([], r); });
+    };
     if (/\.zip$/.test(n)) {
-      it.kind = 'zip';
-      if (typeof JSZip === 'undefined') { it.status = 'err'; it.note = 'не удалось загрузить модуль распаковки ZIP'; return Promise.resolve(); }
-      return JSZip.loadAsync(f).then(function (z) {
+      if (typeof JSZip === 'undefined') return Promise.reject(new Error('jszip'));
+      return JSZip.loadAsync(u8).then(function (z) {
         var ps = [];
         z.forEach(function (path, zf) {
           if (zf.dir) return;
-          ps.push(zf.async('string').then(function (t) {
-            var nm = path.split('/').pop();
-            if (/\.(xml|cvg)$/i.test(nm) && isIPC(t)) it.ipc.push({ name: nm, text: t });
-            else it.entries.push({ name: nm, text: t });
-          }));
+          if (BIN.test(path)) { it.skipped = (it.skipped || 0) + 1; return; }
+          ps.push(zf.async('uint8array').then(function (d) { return { path: path, data: d }; }));
         });
-        return Promise.all(ps).then(function () { it.status = 'ok'; });
-      }).catch(function () { it.status = 'err'; it.note = 'архив повреждён или это не ZIP'; });
+        return Promise.all(ps).then(sub);
+      });
+    }
+    if (/\.(tgz|tar\.gz)$/.test(n)) return gunzip(u8).then(function (d) { return sub(untar(d).filter(function (e) { return !BIN.test(e.path); })); });
+    if (/\.tar$/.test(n)) return Promise.resolve().then(function () { return sub(untar(u8).filter(function (e) { return !BIN.test(e.path); })); });
+    return Promise.resolve([{ path: name, data: u8 }]);
+  }
+  // Разложить файлы архива: ODB++ (папка с matrix/matrix), IPC-2581, файл требований, остальное — Gerber/сверловка
+  function sortEntries(list, it) {
+    var roots = [];
+    list.forEach(function (e) { var m = /^(.*?)(?:^|\/)matrix\/matrix$/i.exec(e.path.replace(/\\/g, '/')); if (m) roots.push(m[1] ? m[1] + '/' : ''); });
+    var odb = roots.map(function (r) { return { name: r.replace(/\/$/, '').split('/').pop() || it.name, root: r, files: {} }; });
+    list.forEach(function (e) {
+      var p = e.path.replace(/\\/g, '/');
+      for (var i = 0; i < odb.length; i++) {
+        if (p.indexOf(odb[i].root) === 0 && /(^|\/)(matrix|misc|steps)\//i.test(p.slice(odb[i].root.length))) {
+          odb[i].files[p.slice(odb[i].root.length).toLowerCase()] = u8text(e.data); return;
+        }
+      }
+      var nm = p.split('/').pop(), t = u8text(e.data);
+      if (/\.(xml|cvg)$/i.test(nm) && isIPC(t)) it.ipc.push({ name: nm, text: t });
+      else if (/\.(txt|md)$/i.test(nm) && isSpec(t)) it.spec.push({ name: nm, text: t });
+      else it.entries.push({ name: nm, text: t });
+    });
+    it.odb = it.odb.concat(odb);
+  }
+
+  function readItem(f, it) {
+    var n = f.name.toLowerCase();
+    if (ARCH.test(n)) {
+      it.kind = /\.zip$/.test(n) ? 'zip' : 'tar';
+      return f.arrayBuffer().then(function (b) { return expand(f.name, new Uint8Array(b), 0, it); })
+        .then(function (list) { sortEntries(list, it); it.status = 'ok'; })
+        .catch(function (e) {
+          it.status = 'err';
+          it.note = e && e.message === 'jszip' ? 'не удалось загрузить модуль распаковки ZIP'
+            : e && e.message === 'gzip' ? 'браузер не распаковывает .tgz — обновите его или перепакуйте в ZIP'
+            : it.kind === 'zip' ? 'архив повреждён или это не ZIP' : 'архив повреждён или это не .tgz / .tar';
+        });
     }
     if (/\.gbrjob$/.test(n)) { it.kind = 'job'; return readText(f).then(function (t) { it.entries.push({ name: f.name, text: t }); it.status = 'ok'; }); }
     if (/\.(xml|cvg)$/.test(n)) {
@@ -138,22 +247,57 @@
         else { it.kind = 'bad'; it.status = 'err'; it.note = 'это не файл IPC-2581'; }
       });
     }
-    it.kind = 'bad'; it.status = 'err';
-    it.note = /\.(rar|7z)$/.test(n) ? 'RAR и 7z не поддерживаются — перепакуйте в ZIP' : 'формат не поддерживается';
-    return Promise.resolve();
+    if (/\.txt$/.test(n)) { // требования к плате — или сверловка Altium (.TXT)
+      return readText(f).then(function (t) {
+        if (isSpec(t)) { it.kind = 'spec'; it.spec.push({ name: f.name, text: t }); it.status = 'ok'; }
+        else if (/^M48/m.test(t)) { it.kind = 'drill'; it.entries.push({ name: f.name, text: t }); it.status = 'ok'; it.note = 'сверловка'; }
+        else { it.kind = 'bad'; it.status = 'err'; it.note = 'параметры платы в файле не найдены'; }
+      });
+    }
+    if (/\.(rar|7z)$/.test(n) || BIN.test(n) || f.size > 30 * 1048576) {
+      it.kind = 'bad'; it.status = 'err';
+      it.note = /\.(rar|7z)$/.test(n) ? 'RAR и 7z не поддерживаются — перепакуйте в ZIP' : BIN.test(n) ? 'не нужен для расчёта' : 'файл слишком большой';
+      if (BIN.test(n)) { it.kind = 'other'; it.status = 'ok'; }
+      return Promise.resolve();
+    }
+    // отдельный файл Gerber или сверловки — расширения у САПР любые, поэтому смотрим на содержимое
+    return readText(f).then(function (t) {
+      var c = classify({ name: f.name, text: t }), side = { Top: ', верх', Bot: ', низ', Inr: ', внутренний' }[c.side] || '';
+      if (!side && /paste|mask|silk/.test(c.type)) side = /(^|[._-])f[._]|\.gt[a-z]$|top/i.test(f.name) ? ', верх' : /(^|[._-])b[._]|\.gb[a-z]$|bot/i.test(f.name) ? ', низ' : '';
+      var role = { copper: 'медный слой' + side, outline: 'контур платы', paste: 'паста' + side, mask: 'маска' + side, silk: 'маркировка' + side, drill: 'сверловка', 'gerber?': 'Gerber, назначение слоя не определено' }[c.type];
+      if (!role) { it.kind = 'other'; it.status = 'ok'; it.note = 'не нужен для расчёта'; return; } // отчёты САПР, апертуры и т. п.
+      it.kind = c.type === 'drill' ? 'drill' : 'gerber'; it.entries.push({ name: f.name, text: t }); it.status = 'ok'; it.note = role;
+    });
   }
 
-  var typeLabel = { zip: 'ZIP', job: '.gbrjob', ipc: 'IPC-2581', bad: '—', '?': '…' };
+  var typeLabel = { zip: 'ZIP', tar: 'TGZ', job: '.gbrjob', ipc: 'IPC-2581', spec: 'ТЗ', drill: 'NC Drill', gerber: 'Gerber', other: '—', bad: '—', '?': '…' };
   function renderFiles() {
     var box = $('#calc-files-box'), list = $('#calc-file-list');
     box.hidden = !store.length;
     drop.classList.toggle('is-compact', !!store.length);
     list.innerHTML = '';
-    store.forEach(function (it) {
+    var others = store.filter(function (it) { return it.kind === 'other' && it.status === 'ok'; });
+    var rows = others.length > 1 ? store.filter(function (it) { return others.indexOf(it) < 0; }) : store;
+    // отдельные файлы Gerber и сверловки — тоже одной строкой, если их больше трёх
+    var loose = store.filter(function (it) { return (it.kind === 'gerber' || it.kind === 'drill') && it.status === 'ok'; });
+    if (loose.length > 3) {
+      var cu = loose.filter(function (x) { return /^медный/.test(x.note); }).length, dr = loose.filter(function (x) { return x.kind === 'drill'; }).length;
+      var gi = rows.indexOf(loose[0]);
+      rows = rows.filter(function (it) { return loose.indexOf(it) < 0; });
+      rows.splice(Math.max(0, gi), 0, { group: loose, kind: 'gerber', status: 'ok', ipc: [], odb: [],
+        name: 'Gerber и сверловка: ' + loose.length + ' ' + plural(loose.length, 'файл', 'файла', 'файлов'),
+        note: [cu ? 'медных слоёв ' + cu : '', loose.some(function (x) { return x.note === 'контур платы'; }) ? 'контур' : '', dr ? 'сверловка' + (dr > 1 ? ' (' + dr + ')' : '') : ''].filter(Boolean).join(', '),
+        size: loose.reduce(function (s, x) { return s + (x.size || 0); }, 0) });
+    }
+    if (others.length > 1) rows = rows.concat([{ group: others, kind: 'other', status: 'ok', ipc: [], odb: [],
+      name: 'Не нужны для расчёта: ' + others.length + ' ' + plural(others.length, 'файл', 'файла', 'файлов'),
+      note: others.map(function (x) { return x.name; }).join(', '), size: others.reduce(function (s, x) { return s + (x.size || 0); }, 0) }]);
+    rows.forEach(function (it) {
       var li = document.createElement('li');
       var tp = document.createElement('span');
-      tp.className = 'cx-ftype' + (it.kind === 'ipc' || (it.kind === 'zip' && it.ipc.length) ? ' cx-ftype--ipc' : '') + (it.status === 'err' ? ' cx-ftype--bad' : '');
-      tp.textContent = it.kind === 'zip' && it.ipc.length ? 'ZIP · IPC-2581' : typeLabel[it.kind];
+      var exact = it.ipc.length ? 'IPC-2581' : it.odb.length ? 'ODB++' : '';
+      tp.className = 'cx-ftype' + (exact ? ' cx-ftype--ipc' : '') + (it.status === 'err' ? ' cx-ftype--bad' : '');
+      tp.textContent = (it.kind === 'zip' || it.kind === 'tar') && exact ? (it.kind === 'tar' && exact === 'ODB++' ? 'ODB++' : typeLabel[it.kind] + ' · ' + exact) : typeLabel[it.kind];
       var nm = document.createElement('span'); nm.className = 'cx-fname';
       var b = document.createElement('b'); b.textContent = it.name; nm.appendChild(b);
       var sub = document.createElement('span');
@@ -163,7 +307,7 @@
       var sz = document.createElement('span'); sz.className = 'cx-fsize'; sz.textContent = kb(it.size);
       var del = document.createElement('button'); del.type = 'button'; del.className = 'cx-fdel'; del.textContent = '×';
       del.setAttribute('aria-label', 'Удалить ' + it.name);
-      del.addEventListener('click', function () { store = store.filter(function (x) { return x !== it; }); renderFiles(); safeAnalyse(); saveSoon(); });
+      del.addEventListener('click', function () { var gone = it.group || [it]; store = store.filter(function (x) { return gone.indexOf(x) < 0; }); renderFiles(); safeAnalyse(); saveSoon(); });
       li.appendChild(tp); li.appendChild(nm); li.appendChild(sz); li.appendChild(del);
       list.appendChild(li);
     });
@@ -279,8 +423,7 @@
       if (/^(DOCUMENT|MECHANICAL)$/i.test(at(bi, 'category') || '')) return false;
       return all('RefDes', bi).some(function (r) { return at(r, 'populate') !== 'false'; });
     }).length;
-    var a = { smd: 0, tht: 0, thtPins: 0, top: 0, bot: 0, parts: {}, groups: {}, unknown: 0, total: 0 };
-    var G = function (g, pins) { var x = a.groups[g] || (a.groups[g] = { n: 0, pins: 0 }); x.n++; x.pins += pins; };
+    var a = asmNew();
     all('Component').forEach(function (c) {
       if (skip[at(c, 'refDes')]) return;
       var p = pk[at(c, 'packageRef')]; if (!p || !p.pins) return;
@@ -288,46 +431,168 @@
       var L = layers[at(c, 'layerRef')] || {};
       if (L.side === 'BOTTOM') a.bot++; else a.top++;
       if (at(c, 'part')) a.parts[at(c, 'part')] = 1;
-      var name = (at(c, 'packageRef') || '').toLowerCase();
-      if (p.thru > 0) { a.tht++; a.thtPins += p.thru; if (/conn|header|usb|jst|molex|terminal|socket/.test(name)) G('conn', p.thru); else G('tht', p.thru); return; }
-      a.smd++;
-      if (/bga/.test(name)) G('bga', p.pins);
-      else if (/qfn|dfn|lga|wson|vson/.test(name)) G('qfn', p.pins);
-      else if (/qfp/.test(name)) G('qfp', p.pins);
-      else if (/soic|tssop|ssop|msop|(^|[^a-z])sop/.test(name)) G('soic', p.pins);
-      else if (/sot|sod|sc-?70/.test(name)) G('sot', p.pins);
-      else if (/(^|\D)0201(\D|$)/.test(name)) G('0201', 2);
-      else if (/(^|\D)0402(\D|$)/.test(name)) G('0402', 2);
-      else if (/(^|\D)(0603|0805|1206|1210|1812|2010|2512)(\D|$)/.test(name)) G('0603', 2);
-      else if (/conn|header|usb|jst|molex/.test(name)) G('conn', p.pins);
-      else a.unknown++;
+      asmAdd(a, at(c, 'packageRef'), p.pins, p.thru);
     });
     a.uniq = bomUniq || Object.keys(a.parts).length;
-    a.sides = a.bot > 0 && a.top > 0 ? 2 : 1;
-    a.bgaqfn = !!(a.groups.bga || a.groups.qfn);
+    asmDone(a);
     if (a.total) out.asm = a;
     var sw = all('SoftwarePackage')[0];
     out.software = sw ? [at(sw, 'name'), at(sw, 'revision')].filter(Boolean).join(' ') : '';
     return out;
   }
 
+
+  /* ================= Монтаж: группы корпусов (общие для IPC-2581 и ODB++) ================= */
+  function asmNew() { return { smd: 0, tht: 0, thtPins: 0, top: 0, bot: 0, parts: {}, groups: {}, unknown: 0, total: 0 }; }
+  function asmAdd(a, pkgName, pins, thru) {
+    var name = String(pkgName || '').toLowerCase();
+    var G = function (g, n) { var x = a.groups[g] || (a.groups[g] = { n: 0, pins: 0 }); x.n++; x.pins += n; };
+    if (thru > 0) { a.tht++; a.thtPins += thru; if (/conn|header|usb|jst|molex|terminal|socket|pls|pbs|kls|idc|dg\d/.test(name)) G('conn', thru); else G('tht', thru); return; }
+    a.smd++;
+    if (/bga/.test(name)) G('bga', pins);
+    else if (/qfn|dfn|lga|wson|vson/.test(name)) G('qfn', pins);
+    else if (/qfp/.test(name)) G('qfp', pins);
+    else if (/soic|tssop|ssop|msop|(^|[^a-z])sop|(^|[^a-z])so-?\d/.test(name)) G('soic', pins);
+    else if (/sot|sod|sc-?70|d-?pak|to-?2[56]\d/.test(name)) G('sot', pins);
+    else if (/(^|\D)0201(\D|$)/.test(name)) G('0201', 2);
+    else if (/(^|\D)0402(\D|$)/.test(name)) G('0402', 2);
+    else if (/(^|\D)(0603|0805|1206|1210|1812|2010|2512)(\D|$)/.test(name)) G('0603', 2);
+    else if (/conn|header|usb|jst|molex/.test(name)) G('conn', pins);
+    else a.unknown++;
+  }
+  function asmDone(a) { a.sides = a.bot > 0 && a.top > 0 ? 2 : 1; a.bgaqfn = !!(a.groups.bga || a.groups.qfn); }
+
+  /* ================= Разбор ODB++ ================= */
+  // files: { 'matrix/matrix': текст, 'steps/pcb/…': текст } — пути от корня ODB-папки, в нижнем регистре
+  function parseODB(files) {
+    var get = function (p) { return files[p] || ''; };
+    var kv = function (t) { var o = {}; String(t).split(/\r?\n/).forEach(function (l) { var m = /^\s*\.?(\w+)\s*=\s*(.*?)\s*$/.exec(l); if (m && m[2] !== '' && !(m[1].toLowerCase() in o)) o[m[1].toLowerCase()] = m[2]; }); return o; };
+    var mm = function (t) { return /UNITS\s*=\s*INCH/i.test(t) ? 25.4 : 1; }; // единицы файла: MM или INCH
+    var mx = get('matrix/matrix');
+    if (!mx) throw new Error('odb');
+    var out = { src: 'ODB++' }, layers = [];
+    mx.replace(/LAYER\s*\{([^}]*)\}/g, function (_, b) { var o = kv(b); o.row = +o.row; layers.push(o); return ''; });
+    layers.sort(function (x, y) { return x.row - y.row; });
+    var board = layers.filter(function (l) { return /board/i.test(l.context); });
+    var sig = board.filter(function (l) { return /^(signal|power_ground|mixed)$/i.test(l.type); });
+    var stepName = ((/STEP\s*\{[^}]*NAME\s*=\s*(\S+)/i.exec(mx) || [])[1] || 'pcb').toLowerCase();
+    if (!Object.keys(files).some(function (p) { return p.indexOf('steps/' + stepName + '/') === 0; })) { // название шага не совпало — берём первый
+      var any = Object.keys(files).map(function (p) { return (/^steps\/([^/]+)\//.exec(p) || [])[1]; }).filter(Boolean)[0];
+      if (any) stepName = any;
+    }
+    var S = 'steps/' + stepName + '/', lf = function (l, f) { return get(S + 'layers/' + String(l.name).toLowerCase() + '/' + f); };
+    var info = kv(get('misc/info'));
+    out.software = info.save_app || info.odb_source || '';
+    if (sig.length) out.layers = sig.length;
+    // толщина и материал — из атрибутов САПР: если стек не заполнен, там значения по умолчанию, поэтому «проверьте»
+    var ja = kv(get('misc/attrlist'));
+    var th = parseFloat(ja.board_thickness) * mm(get('misc/attrlist'));
+    if (th > 0.1) out.thick = th;
+    var diel = board.filter(function (l) { return /dielectric/i.test(l.type); });
+    var mat = diel.map(function (l) { return l.dielectric_name || kv(lf(l, 'attrlist')).comment; }).filter(Boolean)[0];
+    if (mat) out.mat = mat;
+    // медь: .copper_weight в атрибутах слоя (мкм)
+    var cu = sig.map(function (l) { var t = lf(l, 'attrlist'), w = parseFloat(kv(t).copper_weight); return w > 0 ? w : null; });
+    var snap = function (w) { var st = [12, 18, 35, 70, 105, 140].filter(function (x) { return Math.abs(w - x) / x < 0.08; })[0]; return st || Math.round(w); }; // 35,56 мкм (1 oz) → 35
+    if (cu[0]) out.cuout = snap(cu[0]);
+    if (sig.length > 2) { var ci = cu.slice(1, -1).filter(Boolean)[0]; if (ci) out.cuin = snap(ci); }
+    // габариты — по контуру платы (profile)
+    var pr = get(S + 'profile'), xs = [], ys = [], pk = mm(pr);
+    pr.replace(/^\s*O[BSC]\s+(-?[\d.]+)\s+(-?[\d.]+)/gm, function (_, x, y) { xs.push(+x); ys.push(+y); return ''; });
+    if (xs.length > 2) out.size = { w: (Math.max.apply(null, xs) - Math.min.apply(null, xs)) * pk, h: (Math.max.apply(null, ys) - Math.min.apply(null, ys)) * pk };
+    // мин. дорожка — самый тонкий круглый символ, которым проведены линии (L) и дуги (A) на сигнальных слоях
+    var track = Infinity;
+    sig.forEach(function (l) {
+      var t = lf(l, 'features'); if (!t) return;
+      var k = mm(t) === 25.4 ? 0.0254 : 0.001, sy = {}; // символ r200 — в мкм (MM) или в mil (INCH)
+      t.replace(/^\$(\d+)\s+(\S+)/gm, function (_, i, s) { sy[i] = s; return ''; });
+      t.replace(/^(?:L(?:\s+\S+){4}|A(?:\s+\S+){6})\s+(\d+)/gm, function (_, i) { var m = /^r([\d.]+)$/.exec(sy[i] || ''); if (m) { var w = +m[1] * k; if (w > 0 && w < track) track = w; } return ''; });
+    });
+    if (track < Infinity) out.track = Math.round(track * 1000) / 1000;
+    // отверстия — таблица инструментов сверловки
+    var hmin = Infinity, hits = 0;
+    board.filter(function (l) { return /^drill$/i.test(l.type); }).forEach(function (l) {
+      var t = lf(l, 'tools'), k = mm(t) === 25.4 ? 0.0254 : 0.001;
+      t.replace(/TOOLS\s*\{([^}]*)\}/g, function (_, b) { var o = kv(b), d = parseFloat(o.finish_size) || parseFloat(o.drill_size); if (d > 0 && d * k < hmin) hmin = d * k; return ''; });
+      hits += (lf(l, 'features').match(/^P\s/gm) || []).length;
+    });
+    if (hmin < Infinity) out.hole = { min: Math.round(hmin * 1000) / 1000, hits: hits };
+    // монтаж: корпуса и типы выводов — eda/data, компоненты — слои comp_+_top / comp_+_bot
+    var pkgs = [], cur = null;
+    get(S + 'eda/data').split(/\r?\n/).forEach(function (ln) {
+      var m = /^PKG\s+(\S+)/.exec(ln); if (m) { cur = { name: m[1], pins: 0, thru: 0 }; pkgs.push(cur); return; }
+      m = /^PIN\s+\S+\s+([TBS])\b/.exec(ln); if (m && cur) { cur.pins++; if (m[1] === 'T') cur.thru++; }
+    });
+    var a = asmNew(), firstSig = sig.length ? sig[0].row : 0;
+    board.filter(function (l) { return /^component$/i.test(l.type); }).forEach(function (l) {
+      var t = lf(l, 'components'); if (!t) return;
+      var bottom = /bot/i.test(l.name) || l.row > firstSig, names = {};
+      t.replace(/^@(\d+)\s+(\S+)/gm, function (_, i, n) { names[n.replace(/^\./, '')] = i; return ''; });
+      t.split(/^CMP\s/m).slice(1).forEach(function (b) {
+        var head = b.split(/\r?\n/)[0], f = head.split(/\s+/), p = pkgs[+f[0]] || { name: '', pins: 0, thru: 0 };
+        var pins = (b.match(/^TOP\s/gm) || []).length || p.pins; if (!pins) return;
+        var mt = names.comp_mount_type != null ? (new RegExp('[;,]' + names.comp_mount_type + '=(\\d)').exec(head) || [])[1] : null;
+        var thru = p.pins ? Math.round(p.thru * pins / p.pins) : (mt === '2' || mt === '3' ? pins : 0);
+        if (!p.pins && mt == null) thru = 0;
+        a.total++; if (bottom) a.bot++; else a.top++;
+        if (f[6] && f[6] !== '???') a.parts[f[6]] = 1;
+        asmAdd(a, p.name, pins, thru);
+      });
+    });
+    a.uniq = Object.keys(a.parts).length;
+    asmDone(a);
+    if (a.total) out.asm = a;
+    return out;
+  }
+
+  /* ================= Файл требований к плате (.txt) ================= */
+  // «Ключ: значение» на строку, ключи по-русски или по-английски. Формат свободный — берём то, что узнали.
+  var specKeys = [
+    ['cuout', /copper|\bcu\b|мед[ьи]|фольг/i], ['mask', /mask|маск/i], ['silk', /silk|legend|marking|маркир|шелко/i],
+    ['finish', /finish|покрыт/i], ['thick', /thick|толщ/i], ['hole', /hole|drill|отверст|сверл/i],
+    ['track', /track|trace|line|дорож|проводн/i], ['layers', /layer|сло[йёеия]/i], ['mat', /material|материал|основани/i],
+    ['size', /size|dimension|габарит|размер/i], ['qty', /quantit|\bqty\b|кол-?во|количеств|тираж/i]
+  ];
+  function specNum(v) { var m = /(\d+(?:[.,]\d+)?)/.exec(v); return m ? parseFloat(m[1].replace(',', '.')) : NaN; }
+  function parseSpec(text) {
+    var out = {}, n = 0;
+    String(text).split(/\r?\n|;/).forEach(function (ln) {
+      var m = /^\s*([^:=]{2,40}?)\s*[:=]\s*(.+?)\s*$/.exec(ln) || /^\s*([^\-–—]{2,40}?)\s+[\-–—]\s+(.+?)\s*$/.exec(ln);
+      if (!m) return;
+      var key = m[1], v = m[2].replace(/[.;]+$/, '').trim(); if (!v) return;
+      var hit = specKeys.filter(function (k) { return k[1].test(key); })[0]; if (!hit || out[hit[0]] != null) return;
+      var f = hit[0], x;
+      if (f === 'cuout') { var oz = /(\d+(?:[.,]\d+)?)\s*(oz|унц)/i.exec(v), um = /(\d+)\s*(мкм|µm|um|мк)/i.exec(v); x = oz ? Math.round(parseFloat(oz[1].replace(',', '.')) * 35) : um ? +um[1] : null; }
+      else if (f === 'thick' || f === 'hole' || f === 'track') { x = specNum(v); if (/mil/i.test(v)) x *= 0.0254; else if (/мкм|µm|um/i.test(v)) x /= 1000; if (!(x > 0)) x = null; if (f === 'hole' && x) x = { min: x, hits: 0 }; }
+      else if (f === 'layers' || f === 'qty') { x = parseInt(v, 10); if (!(x > 0)) x = null; }
+      else if (f === 'size') { var s = /(\d+(?:[.,]\d+)?)\s*[x×хX*]\s*(\d+(?:[.,]\d+)?)/.exec(v); x = s ? { w: parseFloat(s[1].replace(',', '.')), h: parseFloat(s[2].replace(',', '.')) } : null; }
+      else x = v;
+      if (x != null) { out[f] = x; n++; }
+    });
+    out.count = n;
+    return out;
+  }
+  function isSpec(t) { return t.length < 200000 && !/^M48/m.test(t) && parseSpec(t.slice(0, 20000)).count >= 3; }
+
   /* ================= Слияние источников ================= */
-  var ipcAsm = null, reportShown = false;
+  var ipcAsm = null, asmSrc = 'IPC-2581', reportShown = false;
   function analyseAll() {
     clearBadges();
-    var entries = [], ipcDocs = [], errs = 0;
+    var entries = [], ipcDocs = [], odbDocs = [], specDocs = [], errs = 0;
     store.forEach(function (it) {
       if (it.status === 'err') { errs++; return; }
       entries = entries.concat(it.entries.map(function (e) { e.from = it; return e; }));
       ipcDocs = ipcDocs.concat(it.ipc.map(function (d) { d.from = it; return d; }));
+      odbDocs = odbDocs.concat(it.odb.map(function (d) { d.from = it; return d; }));
+      specDocs = specDocs.concat(it.spec.map(function (d) { d.from = it; return d; }));
     });
     // Gerber + gbrjob
-    var job = null, types = {}, copper = [], outline = null, drills = [], paste = [], copperText = [];
+    var job = null, types = {}, copper = [], outlines = [], drills = [], paste = [], copperText = [];
     entries.forEach(function (e) {
       var c = classify(e); types[c.type] = (types[c.type] || 0) + 1; e.cls = c.type;
       if (c.type === 'job') { try { job = readJob(e.text); job.src = '.gbrjob'; } catch (x) { e.from.note = 'файл .gbrjob не читается'; } }
       if (c.type === 'copper') { copper.push(c); copperText.push(e.text); }
-      if (c.type === 'outline') outline = e;
+      if (c.type === 'outline') outlines.push({ e: e, score: c.score || 1 });
       if (c.type === 'drill') drills.push(e);
       if (c.type === 'paste') paste.push(e);
     });
@@ -337,18 +602,42 @@
       try { ipc = parseIPC(d.text); d.from.note = 'IPC-2581' + (ipc.software ? ' · ' + ipc.software : '') + (ipc.asm ? ' · ' + fmt(ipc.asm.total) + ' компонентов' : ''); }
       catch (x) { d.from.status = 'err'; d.from.note = 'не удалось прочитать XML'; errs++; track({ ev: [['calc_err', 'xml']] }); }
     });
+    // ODB++: в архиве бывает несколько копий одного проекта (папка, .tgz, .zip) — берём первую, что прочиталась
+    var odb = null;
+    odbDocs.forEach(function (d) {
+      if (odb) return;
+      try { odb = parseODB(d.files); d.from.note = 'ODB++' + (odb.software ? ' · ' + odb.software : '') + (odb.asm ? ' · ' + fmt(odb.asm.total) + ' компонентов' : ''); }
+      catch (x) { if (!d.from.note) d.from.note = 'не удалось прочитать ODB++'; track({ ev: [['calc_err', 'odb']] }); }
+    });
+    // файл требований к плате: первое значение каждого поля
+    var spec = null;
+    specDocs.forEach(function (d) {
+      var s = parseSpec(d.text); spec = spec || {};
+      Object.keys(s).forEach(function (k) { if (k !== 'count' && spec[k] == null) spec[k] = s[k]; });
+      if (d.from.kind === 'spec') d.from.note = 'требования к плате · ' + s.count + ' ' + plural(s.count, 'параметр', 'параметра', 'параметров');
+    });
     // подписи файлов в списке
     store.forEach(function (it) {
-      if (it.kind === 'zip' && it.status === 'ok' && !it.ipc.length) {
+      if ((it.kind === 'zip' || it.kind === 'tar') && it.status === 'ok' && !it.ipc.length && !(odb && it.odb.length)) {
         var f = it.entries.filter(function (e) { return e.cls && e.cls !== 'skip' && e.cls !== 'gerber?'; });
         var cu = it.entries.filter(function (e) { return e.cls === 'copper'; }).length, hasJob = it.entries.some(function (e) { return e.cls === 'job'; });
-        it.note = 'Gerber: ' + f.length + ' ' + plural(f.length, 'файл', 'файла', 'файлов') + (cu ? ', медных слоёв ' + cu : '') + (hasJob ? ', есть .gbrjob' : '');
+        it.note = f.length ? 'Gerber: ' + f.length + ' ' + plural(f.length, 'файл', 'файла', 'файлов') + (cu ? ', медных слоёв ' + cu : '') + (hasJob ? ', есть .gbrjob' : '') : 'Gerber и сверловка не найдены';
       }
+      if ((it.kind === 'zip' || it.kind === 'tar') && it.status === 'ok' && it.spec.length) it.note += ' · есть требования к плате';
       if (it.kind === 'job' && it.status === 'ok' && !it.note) it.note = 'параметры платы и стек';
     });
 
     var G = {};
-    if (outline) { var bb = gerberBBox(outline.text); if (bb && bb.w > 1 && bb.h > 1) G.size = bb; }
+    // контур: у Altium их бывает несколько (.GKO, .GM1…GM16) — берём слой с лучшим признаком,
+    // а среди равных — размер, который повторяется чаще (на слое размеров рамка шире платы)
+    var boxes = outlines.map(function (o) { return { b: gerberBBox(o.e.text), s: o.score }; }).filter(function (o) { return o.b && o.b.w > 1 && o.b.h > 1; });
+    if (boxes.length) {
+      var best = Math.max.apply(null, boxes.map(function (o) { return o.s; })), cnt = {};
+      boxes = boxes.filter(function (o) { return o.s === best; });
+      boxes.forEach(function (o) { var k = Math.round(o.b.w * 2) + 'x' + Math.round(o.b.h * 2); cnt[k] = (cnt[k] || 0) + 1; o.k = k; });
+      boxes.sort(function (x, y) { return (cnt[y.k] - cnt[x.k]) || (y.b.w * y.b.h - x.b.w * x.b.h); });
+      G.size = boxes[0].b;
+    }
     if (copper.length) G.layers = copper.length;
     var mins = copperText.map(minAperture).filter(Boolean); if (mins.length) G.track = Math.min.apply(null, mins);
     if (drills.length) { var di = drills.map(function (d) { return drillInfo(d.text); }), mn = di.map(function (d) { return d.min; }).filter(Boolean); if (mn.length) G.hole = { min: Math.min.apply(null, mn), hits: di.reduce(function (s, d) { return s + d.hits; }, 0) }; }
@@ -361,17 +650,23 @@
     });
     gerberPads = (pasteBySide.top || 0) + (pasteBySide.bot || 0);
     gerberBottom = pasteBySide.bot || 0;
-    ipcAsm = ipc && ipc.asm ? ipc.asm : null;
-    if (ipcAsm) ipc.sides = ipcAsm.sides;
+    ipcAsm = ipc && ipc.asm ? ipc.asm : odb && odb.asm ? odb.asm : null;
+    asmSrc = ipc && ipc.asm ? 'IPC-2581' : 'ODB++';
+    if (ipc && ipc.asm) ipc.sides = ipc.asm.sides;
+    if (odb && odb.asm) odb.sides = odb.asm.sides;
     if (gerberPads) G.sides = gerberBottom > 0 ? 2 : 1;
 
     parsed = store.length > 0;
     var items = [];
-    function put(field, state, label, value, src) { items.push({ field: field, state: state, label: label, value: value, src: src }); setBadge(field, state, src); }
+    function put(field, state, label, value, src, note, badge) { items.push({ field: field, state: state, label: label, value: value, src: src, note: note }); setBadge(field, state, src, badge); }
     var srcs = [ipc, job, null].filter(Boolean);
     function cands(field) {
       var c = [];
+      var weak = field === 'thick' || field === 'mat'; // в ODB++ — атрибуты САПР, часто значения по умолчанию
       if (ipc && ipc[field] != null) c.push({ v: ipc[field], src: 'IPC-2581' });
+      if (odb && odb[field] != null && !weak) c.push({ v: odb[field], src: 'ODB++' });
+      if (spec && spec[field] != null) c.push({ v: spec[field], src: 'ТЗ' });
+      if (odb && odb[field] != null && weak) c.push({ v: odb[field], src: 'ODB++', weak: true });
       if (job && job[field] != null) c.push({ v: job[field], src: '.gbrjob' });
       if (G[field] != null) c.push({ v: G[field], src: { size: 'контура Gerber', layers: 'медных слоёв Gerber', track: 'апертур, оценка', hole: 'сверловки', sides: 'слоя пасты Gerber' }[field] });
       return c;
@@ -383,39 +678,64 @@
       sides: function (a, b) { return a === b; },
       thick: function (a, b) { return Math.abs(a - b) < 0.06; },
       cuout: function (a, b) { return Math.abs(a - b) < 4; },
-      hole: function (a, b) { return Math.abs(a.min - b.min) < 0.03; }
+      hole: function (a, b) { return Math.abs(a.min - b.min) < 0.03; },
+      track: function (a, b) { return Math.abs(a - b) < 0.015; },
+      mat: function (a, b) { return matMap(a) === matMap(b); },
+      mask: function (a, b) { return colorKey(a) === colorKey(b); },
+      silk: function (a, b) { return colorKey(a) === colorKey(b); },
+      qty: function (a, b) { return a === b; }
     };
     var txt = {
       sides: function (v) { return v === 2 ? 'две стороны' : 'одна сторона'; }, size: sizeTxt, layers: String, thick: function (v) { return fmtMM(v) + ' мм'; }, cuout: function (v) { return v + ' мкм'; }, cuin: function (v) { return v + ' мкм'; },
-      hole: function (v) { return fmtMM(v.min) + ' мм' + (v.hits ? ' · ' + fmt(v.hits) + ' отв.' : ''); }, track: function (v) { return fmtMM(v) + ' мм'; }
+      hole: function (v) { return fmtMM(v.min) + ' мм' + (v.hits ? ' · ' + fmt(v.hits) + ' отв.' : ''); }, track: function (v) { return fmtMM(v) + ' мм'; },
+      qty: function (v) { return fmt(v) + ' шт'; }
     };
+    // ближайший пункт списка; если он отличается от значения из файла — вернёт его подпись
+    function pick(key, v, eps) {
+      var s = el(key), o = nearest(s, v); if (!o) return false;
+      s.value = o.value;
+      return Math.abs(parseFloat(o.value) - v) > eps + 1e-9 ? o.textContent.trim() : true;
+    }
+    var unit = { thick: ' мм', cuout: ' мкм', cuin: ' мкм', layers: '' };
     var apply = {
       sides: function (v) { el('sides').value = String(v); },
       size: function (v) { el('len').value = Math.round(Math.max(v.w, v.h) * 10) / 10; el('wid').value = Math.round(Math.min(v.w, v.h) * 10) / 10; },
-      layers: function (v) { var o = nearest(el('layers'), v); if (!o) return false; el('layers').value = o.value; syncInner(); },
-      thick: function (v) { var o = nearest(el('thick'), v); if (!o) return false; el('thick').value = o.value; },
-      cuout: function (v) { var o = nearest(el('cuout'), v); if (!o) return false; el('cuout').value = o.value; },
-      cuin: function (v) { var o = nearest(el('cuin'), v); if (!o) return false; el('cuin').value = o.value; },
+      layers: function (v) { var r = pick('layers', v, 0); syncInner(); return r; },
+      thick: function (v) { return pick('thick', v, 0.03); },
+      cuout: function (v) { return pick('cuout', v, 2); },
+      cuin: function (v) { return pick('cuin', v, 2); },
       hole: function (v) { el('hole').value = Math.round(v.min * 100) / 100; },
       track: function (v) { el('track').value = Math.round(v * 1000) / 1000; },
       mat: function (v) { var m = matMap(v); if (!m) return false; el('mat').value = m; },
-      mask: function (v) { var c = colorMap[String(v).toLowerCase()]; if (!c) return false; el('mask').value = c; },
-      silk: function (v) { var c = colorMap[String(v).toLowerCase()]; if (!c || !el('silk').querySelector('[value="' + c + '"]')) return false; el('silk').value = c; }
+      mask: function (v) { var c = colorKey(v); if (!c) return false; el('mask').value = c; },
+      silk: function (v) { var c = colorKey(v); if (!c || !el('silk').querySelector('[value="' + c + '"]')) return false; el('silk').value = c; },
+      qty: function (v) { var q = el('qty'); q.value = Math.max(v, parseFloat(q.min) || 1); }
     };
-    var labels = { sides: 'Расположение компонентов', size: 'Габариты', layers: 'Число слоёв', thick: 'Толщина платы', cuout: 'Медь наружных слоёв', cuin: 'Медь внутренних слоёв', mat: 'Материал', mask: 'Цвет маски', silk: 'Цвет маркировки', track: 'Мин. ширина дорожки', hole: 'Мин. отверстие' };
+    var labels = { sides: 'Расположение компонентов', size: 'Габариты', layers: 'Число слоёв', thick: 'Толщина платы', cuout: 'Медь наружных слоёв', cuin: 'Медь внутренних слоёв', mat: 'Материал', mask: 'Цвет маски', silk: 'Цвет маркировки', track: 'Мин. ширина дорожки', hole: 'Мин. отверстие', qty: 'Тираж' };
     function resolve(field) {
       var c = cands(field), label = labels[field];
+      if (!c.length && field === 'silk') { // как с HASL: подставляем белую и просим уточнить
+        el('silk').value = 'white';
+        put(field, 'check', label, 'не указан → белая', null, 'уточните выбор', 'уточните');
+        return fieldNote(field, 'В файлах цвет маркировки не указан — подставили белую.');
+      }
       if (!c.length) return put(field, 'need', label, field === 'track' || field === 'hole' || field === 'size' || field === 'layers' ? 'не найдено в файлах' : 'нет в файлах', null);
       var top = c[0];
-      if (apply[field](top.v) === false) return put(field, 'need', label, top.v + ' — выберите из списка', null);
-      var f = txt[field] || String;
+      var r = apply[field](top.v);
+      if (r === false) return put(field, 'need', label, top.v + ' — выберите из списка', null);
+      var f = txt[field] || String, near = typeof r === 'string' ? r + unit[field] : null;
+      var where = /Gerber|сверлов|апертур/.test(top.src) ? 'По Gerber' : 'В ' + top.src.split(',')[0];
+      var nearMsg = near ? where + ' ' + f(top.v) + ' — такого нет в списке, считаем по ближайшему: ' + near + '.' : '';
       if (same[field]) {
         var diff = c.slice(1).filter(function (x) { return !same[field](top.v, x.v); });
-        if (diff.length) return put(field, 'conflict', label, [top].concat(diff).map(function (x) { return x.src.split(',')[0] + ': ' + f(x.v); }).join(' · '), null);
+        if (diff.length) { put(field, 'conflict', label, [top].concat(diff).map(function (x) { return x.src.split(',')[0] + ': ' + f(x.v); }).join(' · '), null); return fieldNote(field, nearMsg); }
       }
+      if (top.weak) { put(field, 'check', label, f(top.v) + (near ? ' → ' + near : ''), null, 'из ODB++ — проверьте: если стек слоёв в проекте не заполнен, САПР пишет значение по умолчанию'); return fieldNote(field, nearMsg); }
+      if (near) { put(field, 'check', label, f(top.v) + ' → ' + near, null, 'из ' + top.src + ' — в списке нет, считаем по ближайшему', 'ближайшее'); return fieldNote(field, nearMsg); }
       put(field, 'ok', label, f(top.v), top.src);
     }
-    if (store.length && (entries.length || ipc)) {
+    if (store.length && (entries.length || ipc || odb || spec)) {
+      if (spec && spec.qty) resolve('qty');
       ['size', 'layers', 'thick', 'cuout'].forEach(resolve);
       if (parseInt(val('layers'), 10) >= 4) resolve('cuin');
       resolve('mat');
@@ -423,6 +743,7 @@
       (function () {
         var cf = $('#calc-finish-confirm'), c = [];
         if (ipc && ipc.finish) c.push({ v: ipc.finish, src: 'IPC-2581' });
+        if (spec && spec.finish) c.push({ v: spec.finish, src: 'ТЗ' });
         if (job && job.finish) c.push({ v: job.finish, src: '.gbrjob' });
         var hit = null, top = c[0];
         if (top) hit = finishMap.filter(function (p) { return p[0].test(top.v); })[0];
@@ -434,17 +755,17 @@
       })();
       resolve('mask'); resolve('silk'); resolve('track'); resolve('hole');
       if (cands('sides').length) resolve('sides');
-      if (ipc && ipc.asm) items.push({ field: 'asm', state: 'ok', label: 'Компоненты — для монтажа', value: fmt(ipc.asm.total) + ' шт', src: 'IPC-2581' });
+      if (ipcAsm) items.push({ field: 'asm', state: 'ok', label: 'Компоненты — для монтажа', value: fmt(ipcAsm.total) + ' шт', src: asmSrc });
       else if (gerberPads) items.push({ field: 'asm', state: 'ok', label: 'SMD-площадок — для оценки монтажа', value: '≈ ' + fmt(gerberPads), src: 'слоя пасты' });
       else items.push({ field: 'asm', state: 'need', label: 'Данные для монтажа', value: 'не найдены', src: null });
     } else { finishPending = false; $('#calc-finish-confirm').hidden = true; }
 
     // шапка списка файлов
-    var fields = items.filter(function (i) { return i.field !== 'asm'; });
+    var fields = items.filter(function (i) { return i.field !== 'asm' && i.field !== 'qty'; });
     var ok = fields.filter(function (i) { return i.state === 'ok'; }).length, conf = fields.filter(function (i) { return i.state === 'conflict'; }).length, need = fields.length - ok;
     var nOk = store.filter(function (it) { return it.status === 'ok'; }).length;
     if (store.length) {
-      if (!fields.length) setHead('err', 'Не удалось получить данные из файлов', errs ? 'Проверьте формат: нужны IPC-2581, ZIP с Gerber или .gbrjob' : '');
+      if (!fields.length) setHead('err', 'Не удалось получить данные из файлов', errs ? 'Проверьте формат: нужны IPC-2581, ODB++, Gerber со сверловкой или .gbrjob' : '');
       else setHead(conf ? 'err' : need ? 'warn' : 'ok', 'Обработано файлов: ' + nOk + ' из ' + store.length + ' · заполнено ' + ok + ' из ' + fields.length + ' параметров',
         conf ? 'Источники расходятся в ' + conf + ' ' + plural(conf, 'поле', 'полях', 'полях') + ' — проверьте отмеченные' : need ? need + ' ' + plural(need, 'поле требует', 'поля требуют', 'полей требуют') + ' внимания' : 'Проверьте значения ниже');
     }
@@ -453,13 +774,13 @@
     if (busyCount) setHead('busy', 'Разбираем файлы…', '');
 
     // отчёт
-    var src = []; if (ipc) src.push('IPC-2581'); if (job) src.push('.gbrjob'); if (copper.length || outline || drills.length) src.push('Gerber');
-    $('#calc-report-files').textContent = src.length ? 'Источники: ' + src.join(', ') + '. При расхождении приоритет у IPC-2581, затем .gbrjob, затем Gerber.' : '';
+    var src = []; if (ipc) src.push('IPC-2581'); if (odb) src.push('ODB++'); if (spec) src.push('требования к плате (ТЗ)'); if (job) src.push('.gbrjob'); if (copper.length || outlines.length || drills.length) src.push('Gerber');
+    $('#calc-report-files').textContent = src.length ? 'Источники: ' + src.join(', ') + '. При расхождении приоритет у IPC-2581, затем ODB++, ТЗ, .gbrjob и Gerber. Толщину и материал из ODB++ сверяем с ТЗ.' : '';
     var list = $('#calc-report-list'); list.innerHTML = '';
-    var order = { conflict: 0, err: 1, need: 2, ok: 3 };
+    var order = { conflict: 0, err: 1, need: 2, check: 2, ok: 3 };
     items.sort(function (a, b) { return order[a.state] - order[b.state]; }).forEach(function (i) {
       var li = document.createElement('li');
-      var note = i.src ? 'из ' + i.src : i.state === 'conflict' ? 'выберите верное значение вручную' : i.field === 'finish' ? 'уточните выбор' : 'заполните вручную';
+      var note = i.note ? i.note : i.src ? 'из ' + i.src : i.state === 'conflict' ? 'выберите верное значение вручную' : i.field === 'finish' ? 'уточните выбор' : 'заполните вручную';
       li.innerHTML = '<span class="ic ic--' + i.state + '" aria-hidden="true"></span><span><span class="lbl"></span> <span class="src"></span></span><span class="v"></span>';
       li.querySelector('.lbl').textContent = i.label; li.querySelector('.src').textContent = note; li.querySelector('.v').textContent = i.value;
       list.appendChild(li);
@@ -472,7 +793,7 @@
     if (asmFilled) asmInit();
     asmFilled = false;
     updatePasteHint();
-    if (ipcAsm) { // точные данные из IPC-2581: подставляем сразу и открываем подробную оценку
+    if (ipcAsm) { // точные данные из IPC-2581 или ODB++: подставляем сразу и открываем подробную оценку
       applyAsm();
       $('input[name="asm"][value="detail"]').checked = true; syncAsm();
     }
@@ -572,7 +893,7 @@
       var a = ipcAsm;
       var gn = function (g) { return a.groups[g] ? a.groups[g].n : 0; };
       el('q_smd').value = a.smd - gn('bga') - gn('qfn') - gn('qfp'); el('q_dip').value = a.thtPins; el('q_bga').value = gn('bga'); el('q_qfn').value = gn('qfn') + gn('qfp');
-      asmKeys.forEach(function (k) { setBadge(k, 'ok', 'IPC-2581'); });
+      asmKeys.forEach(function (k) { setBadge(k, 'ok', asmSrc); });
       $$('.cx-table input[type="number"]').forEach(function (i) { i.value = 0; i.classList.remove('is-need'); });
       Object.keys(a.groups).forEach(function (g) {
         var m = groupMap[g]; if (!m) return;
@@ -595,7 +916,7 @@
     var P = function (html) { var p = document.createElement('p'); p.innerHTML = html; why.appendChild(p); return p; };
     if (ipcAsm) {
       var a = ipcAsm;
-      $('#calc-asm-title').innerHTML = 'В файле IPC-2581: <b>' + fmt(a.total) + ' ' + plural(a.total, 'компонент', 'компонента', 'компонентов') + '</b> — SMD ' + fmt(a.smd) + ', DIP ' + fmt(a.tht) + ' (' + fmt(a.thtPins) + ' выв.)' + (a.sides === 2 ? ', на двух сторонах' : '') + '.';
+      $('#calc-asm-title').innerHTML = 'В файле ' + asmSrc + ': <b>' + fmt(a.total) + ' ' + plural(a.total, 'компонент', 'компонента', 'компонентов') + '</b> — SMD ' + fmt(a.smd) + ', DIP ' + fmt(a.tht) + ' (' + fmt(a.thtPins) + ' выв.)' + (a.sides === 2 ? ', на двух сторонах' : '') + '.';
       P('<b>Как считаем.</b> Компоненты, стороны и тип выводов взяты из посадочных мест и BOM в файле — это точнее, чем оценка по слою пасты.');
       var gs = Object.keys(a.groups).map(function (g) { return groupName[g] + ' — ' + a.groups[g].n; });
       if (gs.length) P('<b>Группы корпусов</b> для подробной оценки распознаны по названиям посадочных мест: ' + gs.join(', ') + '.');
@@ -604,7 +925,7 @@
       $('#calc-asm-title').innerHTML = 'В ваших файлах <b>≈ ' + fmt(gerberPads) + ' SMD-площадок</b> — грубо это около ' + fmt(Math.round(gerberPads / 2.4)) + ' компонентов' + (gerberBottom ? ', на двух сторонах' : '') + '.';
       P('<b>Как считаем.</b> На слое пасты ≈ ' + fmt(gerberPads) + ' площадок. Большинство компонентов на типичной плате — резисторы и конденсаторы с двумя площадками, микросхемы добавляют больше. В среднем выходит около 2,4 площадки на компонент.');
       P('<b>Это грубая оценка.</b> На платах с крупными микросхемами реальное число компонентов может быть заметно меньше.');
-      P('<b>Что заполнить вручную:</b> выводы DIP-компонентов и число корпусов BGA, QFN и QFP — по Gerber их не отличить. Или переключитесь на подробную оценку и укажите группы корпусов. Точные цифры даст файл IPC-2581.');
+      P('<b>Что заполнить вручную:</b> выводы DIP-компонентов и число корпусов BGA, QFN и QFP — по Gerber их не отличить. Или переключитесь на подробную оценку и укажите группы корпусов. Точные цифры даст файл IPC-2581 или ODB++.');
     }
     $('#calc-to-detail').hidden = mode === 'detail';
     syncApply();
@@ -620,20 +941,21 @@
     if (ff) {
       var p = ff[1].split(',');
       if (p[0] === 'Copper') return { type: 'copper', layer: parseInt(String(p[1]).replace(/\D/g, ''), 10), side: p[2] };
-      if (p[0] === 'Profile') return { type: 'outline' };
+      if (p[0] === 'Profile') return { type: 'outline', score: 3 };
       if (p[0] === 'Paste') return { type: 'paste', side: p[1] };
       if (p[0] === 'Soldermask') return { type: 'mask' };
       if (p[0] === 'Legend') return { type: 'silk' };
       if (/Plated|NonPlated/.test(p[0])) return { type: 'drill' };
     }
     if (/^M48/m.test(t) || /\.(drl|xln|exc)$/.test(n)) return { type: 'drill' };
-    if (/edge[._]cuts|\.gko$|\.gm1$|outline|profile/.test(n)) return { type: 'outline' };
+    if (/edge[._]cuts|\.gko$|outline|profile|\.gml$/.test(n)) return { type: 'outline', score: 2 };
+    if (/\.gm\d*$/.test(n)) return { type: 'outline', score: /\.gm1$/.test(n) ? 1.5 : 1 }; // механические слои Altium
     if (/[fb][._]paste|\.gtp$|\.gbp$/.test(n)) return { type: 'paste' };
     if (/[fb][._]mask|\.gts$|\.gbs$/.test(n)) return { type: 'mask' };
     if (/silk|\.gto$|\.gbo$/.test(n)) return { type: 'silk' };
     if (/f[._]cu|\.gtl$/.test(n)) return { type: 'copper', side: 'Top' };
     if (/b[._]cu|\.gbl$/.test(n)) return { type: 'copper', side: 'Bot' };
-    if (/in\d+[._]cu|\.g\d+$/.test(n)) return { type: 'copper', side: 'Inr' };
+    if (/in\d+[._]cu|\.g\d+$|\.gp\d+$/.test(n)) return { type: 'copper', side: 'Inr' };
     if (/%FS[LT][AI]X\d\dY\d\d\*%/.test(t)) return { type: 'gerber?' };
     return { type: 'skip' };
   }
@@ -706,7 +1028,15 @@
   }
   var finishMap = [[/enepig/i, 'enepig'], [/enig/i, 'enig'], [/hard|^G$/i, 'hard'], [/flash|^GS$/i, 'flash'], [/silver|^I?Ag$/i, 'iag'], [/hal|hasl|^S$|^T$|^X$/i, 'hasl']];
   var colorMap = { green: 'green', black: 'black', blue: 'blue', red: 'red', white: 'white', yellow: 'yellow' };
-  function matMap(s) { s = String(s).toLowerCase(); if (/fr-?4/.test(s)) return /tg/.test(s) ? 'fr4tg' : 'fr4'; if (/poly|pi\b/.test(s)) return 'pi'; if (/alu/.test(s)) return 'alu'; if (/rogers|ptfe|ro\d/.test(s)) return 'hf'; return null; }
+  var colorRu = [[/зел/, 'green'], [/ч[её]рн/, 'black'], [/син|голуб/, 'blue'], [/красн/, 'red'], [/бел/, 'white'], [/ж[её]лт/, 'yellow']];
+  function colorKey(v) {
+    var s = String(v).toLowerCase(), w = (/[a-z]+/.exec(s) || [])[0];
+    if (colorMap[s]) return colorMap[s];
+    var en = Object.keys(colorMap).filter(function (k) { return s.indexOf(k) >= 0; })[0]; if (en) return en;
+    var ru = colorRu.filter(function (p) { return p[0].test(s); })[0]; return ru ? ru[1] : w && colorMap[w] || null;
+  }
+  // High Tg — от Tg 170; «FR-4 TG150» — обычный FR-4 (mid-Tg)
+  function matMap(s) { s = String(s).toLowerCase(); if (/fr-?4/.test(s)) { var tg = /tg\s*[-:=]?\s*(\d{3})/.exec(s); return tg ? (+tg[1] >= 170 ? 'fr4tg' : 'fr4') : /tg/.test(s) ? 'fr4tg' : 'fr4'; } if (/poly|pi\b/.test(s)) return 'pi'; if (/alu/.test(s)) return 'alu'; if (/rogers|ptfe|ro\d/.test(s)) return 'hf'; return null; }
 
   var gerberPads = 0, gerberBottom = 0;
 

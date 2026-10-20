@@ -274,11 +274,13 @@
     transform: rotate(45deg);
 }
 
-.ic--need {
+.ic--need,
+.ic--check {
     background: var(--color-gold);
 }
 
-.ic--need::after {
+.ic--need::after,
+.ic--check::after {
     content: "!";
     position: absolute;
     inset: 0;
@@ -580,6 +582,24 @@
 }
 
 .cx-badge[data-state="need"] {
+    background: var(--color-gold-light);
+    color: #7A5A12;
+    box-shadow: inset 0 0 0 1px rgba(216, 180, 90, .7);
+}
+
+/* Пояснение под полем: значение из файла не совпало со списком / подставлено по умолчанию */
+.cx-fnote {
+    margin: -2px 0 0;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #7A5A12;
+}
+
+.cx-fnote[hidden] {
+    display: none;
+}
+
+.cx-badge[data-state="check"] {
     background: var(--color-gold-light);
     color: #7A5A12;
     box-shadow: inset 0 0 0 1px rgba(216, 180, 90, .7);

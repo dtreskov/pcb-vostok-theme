@@ -20,9 +20,9 @@
       <svg class="cx-drop__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"/><path d="M12 11v6"/><path d="M9.5 13.5l2.5 -2.5l2.5 2.5"/></svg>
       <div class="cx-drop__txt">
         <p class="cx-drop__title"><span class="cx-drop__t1">Перетащите файлы сюда или</span><span class="cx-drop__t2">Добавить ещё файлы —</span> <span class="cx-link">выберите на компьютере</span></p>
-        <p class="cx-drop__hint" id="calc-drop-hint">IPC-2581 (.xml, .cvg) · ZIP с Gerber и сверловкой · .gbrjob — можно несколько файлов</p>
+        <p class="cx-drop__hint" id="calc-drop-hint">IPC-2581 (.xml, .cvg) · ODB++ (.tgz, .zip) · Gerber и сверловка — файлами, папкой или ZIP · .gbrjob · требования к плате (.txt)</p>
       </div>
-      <input type="file" id="calc-file" accept=".zip,.gbrjob,.xml,.cvg" multiple hidden>
+      <input type="file" id="calc-file" multiple hidden>
     </div>
     <p class="cx-live" id="calc-live" role="status" aria-live="polite"></p>
 
@@ -47,25 +47,29 @@
         <summary>Какие файлы подойдут</summary>
         <div class="cx-faq__body">
           <p><b>Файл IPC-2581 (.xml или .cvg)</b> — лучший вариант. Один файл заполнит параметры платы и монтажа: габариты, слои, толщину, медь, материал, отверстия, число и типы компонентов, стороны монтажа. Покрытие и цвет маски — если они указаны в проекте.</p>
-          <p><b>ZIP-архив с Gerber и сверловкой</b> — габариты, число слоёв, отверстия, минимальная ширина дорожки и число SMD-площадок для грубой оценки монтажа.</p>
+          <p><b>ODB++ (.tgz или .zip)</b> — почти так же полно, как IPC-2581: габариты, слои, медь, отверстия, минимальная дорожка, компоненты и стороны монтажа. Толщину и материал САПР часто оставляет по умолчанию — сверьте их с полями. Покрытия и цвета маски в ODB++ нет.</p>
+          <p><b>Gerber и сверловка</b> — отдельными файлами, папкой или в ZIP-архиве: габариты, число слоёв, отверстия, минимальная ширина дорожки и число SMD-площадок для грубой оценки монтажа.</p>
           <p><b>Файл .gbrjob</b> — толщина платы, медь, материал, финишное покрытие, цвет маски и маркировки.</p>
-          <p>Файлы можно добавлять по одному или вместе. Если данные в них расходятся, мы отметим это у поля. RAR и 7z калькулятор не читает — перепакуйте проект в ZIP или приложите архив к заявке.</p>
+          <p><b>Требования к плате (.txt)</b> — если вы готовите для фабрики текстовый файл с параметрами в виде «Толщина: 1,6 мм» или «Surface finish: HASL», калькулятор возьмёт из него толщину, материал, медь, покрытие, цвета и тираж. Если данные в нём и в проекте расходятся, мы это покажем.</p>
+          <p>Файлы можно добавлять по одному или вместе. Можно загрузить всю выгрузку как есть — папкой или архивом: калькулятор найдёт в нём нужные файлы, в том числе во вложенных архивах, а PDF, таблицы и исходники САПР пропустит. Если данные расходятся, мы отметим это у поля. RAR и 7z калькулятор не читает — перепакуйте проект в ZIP или приложите архив к заявке.</p>
         </div>
       </details>
       <details class="cx-faq__item" name="calc-faq">
         <summary>Как выгрузить из САПР</summary>
         <div class="cx-faq__body">
-          <p>Есть два способа:</p>
+          <p>Есть три способа:</p>
           <ol class="cx-ways">
             <li><b>IPC-2581</b> — один файл, из которого заполняется больше всего полей.</li>
-            <li><b>ZIP с Gerber и сверловкой</b>, а если САПР умеет — ещё и <b>.gbrjob</b>.</li>
+            <li><b>ODB++</b> — почти столько же данных, удобно для Altium и Allegro.</li>
+            <li><b>Gerber и сверловка</b>, а если САПР умеет — ещё и <b>.gbrjob</b>.</li>
           </ol>
           <div class="cx-cad">
             <details>
               <summary>KiCad 8 и новее <span class="cx-beta">Beta</span></summary>
               <div class="cx-cad__body">
                 <p><b>IPC-2581:</b> «Файл → Выходные файлы для производства → IPC-2581» (File → Fabrication Outputs → IPC-2581).</p>
-                <p><b>Gerber и .gbrjob:</b> «Файл → Графический вывод», отметьте «Создать файл задания Gerber», нажмите «Вывести», затем «Создать файлы сверловки». Упакуйте всё в один ZIP.</p>
+                <p><b>ODB++</b> (KiCad 9 и новее): там же — «ODB++». Выберите сжатие ZIP или TGZ.</p>
+                <p><b>Gerber и .gbrjob:</b> «Файл → Графический вывод», отметьте «Создать файл задания Gerber», нажмите «Вывести», затем «Создать файлы сверловки». Загрузите все файлы — по отдельности, папкой или одним ZIP.</p>
                 <p>Чтобы в файлах были толщина и покрытие, заполните «Параметры платы → Стек слоёв».</p>
               </div>
             </details>
@@ -73,14 +77,16 @@
               <summary>Altium Designer <span class="cx-beta">Beta</span></summary>
               <div class="cx-cad__body">
                 <p><b>IPC-2581:</b> File » Fabrication Outputs » IPC-2581. Файл сохранится с расширением .cvg — загружайте его как есть.</p>
-                <p><b>Gerber:</b> File » Fabrication Outputs » Gerber X2 Files и NC Drill Files, затем упакуйте в один ZIP. Файл .gbrjob Altium не создаёт.</p>
+                <p><b>ODB++:</b> File » Fabrication Outputs » ODB++ Files. Загружайте получившийся .tgz или .zip — или сразу всю папку выгрузки в одном ZIP.</p>
+                <p><b>Gerber:</b> File » Fabrication Outputs » Gerber X2 Files и NC Drill Files, затем загрузите файлы или всю папку выгрузки. Файл .gbrjob Altium не создаёт.</p>
               </div>
             </details>
             <details>
               <summary>OrCAD / Allegro <span class="cx-beta">Beta</span></summary>
               <div class="cx-cad__body">
                 <p><b>IPC-2581:</b> File → Export → IPC 2581.</p>
-                <p><b>Gerber:</b> Export → Gerber (окно Artwork Control Form) и отдельно NC Drill, затем упакуйте в один ZIP.</p>
+                <p><b>ODB++:</b> File → Export → ODB++ inside.</p>
+                <p><b>Gerber:</b> Export → Gerber (окно Artwork Control Form) и отдельно NC Drill, затем загрузите файлы или всю папку выгрузки.</p>
               </div>
             </details>
             <details>
@@ -91,7 +97,7 @@
               </div>
             </details>
           </div>
-          <p><b>Другие САПР:</b> ZIP с Gerber (лучше в формате X2) и сверловкой, остальные параметры — вручную.</p>
+          <p><b>Другие САПР:</b> Gerber (лучше в формате X2) и сверловка, остальные параметры — вручную.</p>
           <p class="cx-note-beta"><span class="cx-beta">Beta</span> Пути в меню уточняем — в вашей версии САПР они могут отличаться.</p>
         </div>
       </details>
