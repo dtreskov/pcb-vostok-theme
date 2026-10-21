@@ -38,7 +38,8 @@
     e.addEventListener('input', function () { var v = e.value.replace('.', ',').replace(/[^\d,]/g, ''), p = v.indexOf(','); if (p >= 0) v = v.slice(0, p + 1) + v.slice(p + 1).replace(/,/g, ''); if (v !== e.value) e.value = v; });
   });
   function chk(key) { var e = el(key); return !!(e && e.checked); }
-  function fmt(n) { return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(n)); }
+  var NF = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+  function fmt(n) { return NF.format(Math.round(n)); }
   function fmtR(n) { return fmt(n) + ' ₽'; }
   function fmtMM(n) { return (Math.round(n * 100) / 100).toString().replace('.', ','); }
 
@@ -50,6 +51,18 @@
     if (/оценка/.test(src)) return 'оценка';
     if (/Gerber|сверловки|апертур|слоя пасты|контура/.test(src)) return 'из Gerber';
     return 'из ' + src;
+  }
+  var flashQ = [], flashT = 0, switching = false;
+  function flashLater(w) {
+    flashQ.push(w);
+    if (flashT) return;
+    flashT = requestAnimationFrame(function () {
+      var q = flashQ; flashQ = []; flashT = 0;
+      q.forEach(function (x) { x.classList.remove('is-flash'); });
+      void root.offsetWidth; // одна перерисовка на всю пачку
+      q.forEach(function (x) { x.classList.add('is-flash'); });
+      setTimeout(function () { q.forEach(function (x) { x.classList.remove('is-flash'); }); }, 1700);
+    });
   }
   function setBadge(field, state, src, text) {
     var b = $('.cx-badge[data-for="' + field + '"]'); if (!b) return;
@@ -65,7 +78,7 @@
       if (sel && sel.querySelector('option[value=""]')) sel.value = '';
       else if (sel) b.textContent = 'уточните';
     }
-    if (state === 'ok') { wrap.classList.remove('is-flash'); void wrap.offsetWidth; wrap.classList.add('is-flash'); setTimeout(function () { wrap.classList.remove('is-flash'); }, 1700); }
+    if (state === 'ok' && !silent && !switching) flashLater(wrap);
     if (state === 'check') wrap.classList.add('is-need'); // значение подставлено, но его стоит проверить
     if (text) b.textContent = text;
     if (state === 'err') wrap.classList.add('is-err');
@@ -702,7 +715,10 @@
   function boardSize(b) { return (b.gf && b.gf.G.size) || b.docSize || (b.spec[0] && b.spec[0]._p.size) || null; }
   function boardLayers(b) { return (b.gf && b.gf.G.layers) || b.docLayers || (b.spec[0] && b.spec[0]._p.layers) || null; }
   function boardComps(b) { var d = (b.ipc.concat(b.odb)).filter(function (x) { return x._p && x._p.asm; })[0]; return d ? d._p.asm.total : b.gf && b.gf.pnpAsm ? b.gf.pnpAsm.total : 0; }
+  var BDC = null;
   function splitBoards(entries, ipcDocs, odbDocs, specDocs) {
+    var sig = store.map(function (it) { return it.id + ':' + it.status; }).join(',');
+    if (BDC && BDC.sig === sig) return selectBoard(BDC);
     var errs = parseDocs(ipcDocs, odbDocs, specDocs), list = [], byKey = {};
     var board = function (key) { if (!byKey[key]) { byKey[key] = { key: key, name: '', entries: [], ipc: [], odb: [], spec: [], stems: {}, dir: '', bucket: '', id: '', gf: null }; list.push(byKey[key]); } return byKey[key]; };
     entries.forEach(function (e) {
@@ -774,6 +790,12 @@
       b.name = nm.replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
     });
     list.forEach(function (b) { var same = list.filter(function (x) { return x.name === b.name; }); if (same.length > 1) same.forEach(function (x, k) { if (k) x.name += ' (' + (k + 1) + ')'; }); });
+    var free = entries.filter(function (e) { return !e.board && e.cls !== 'skip' && e.cls !== 'gerber?'; }).length;
+    BDC = { sig: sig, list: list, errs: errs, lostSpec: lost, free: list.length > 1 ? free : 0 };
+    return selectBoard(BDC);
+  }
+  function selectBoard(C) {
+    var list = C.list;
     // выбранная плата: восстановленная из черновика/заявки → прежняя → с наибольшим числом компонентов → самая большая
     if (wantBoard) { var w = list.filter(function (b) { return b.name === wantBoard; })[0]; if (w) boardKey = w.key; wantBoard = null; }
     var cur = list.filter(function (b) { return b.key === boardKey; })[0] || null;
@@ -782,8 +804,7 @@
       cur = list.slice().sort(function (a, b) { return (boardComps(b) - boardComps(a)) || (area(b) - area(a)); })[0];
       boardKey = cur.key;
     }
-    var free = entries.filter(function (e) { return !e.board && e.cls !== 'skip' && e.cls !== 'gerber?'; }).length;
-    return { list: list, cur: cur, errs: errs, lostSpec: lost, free: list.length > 1 ? free : 0 };
+    return { list: list, cur: cur, errs: C.errs, lostSpec: C.lostSpec, free: C.free };
   }
   function boardMeta(b) {
     var s = boardSize(b), L = boardLayers(b), n = boardComps(b), out = [];
@@ -802,7 +823,7 @@
     var c = curBoard(); if (!c || on === solo) return;
     if (on) { setQty = val('qty'); var s = parseFloat(setQty); solo = true; if (s > 0) el('qty').value = s * perSet(c.name); }
     else { solo = false; if (setQty !== '') el('qty').value = setQty; }
-    used = true; renderBoards(lastBD); recalc(); saveSoon();
+    used = true; renderBoards(lastBD); syncSetUI(); recalc(); saveSoon();
   }
   function perSet(name) { var n = perSetMap[name]; return n > 0 ? n : 1; }
   function inSet(name) { return !offMap[name]; }
@@ -815,6 +836,7 @@
     var av = d.asm_values || {};
     $$('[data-key^="q_"], [data-key^="d_"], [data-key^="p_"]').forEach(function (i) { i.value = av[i.dataset.key] || 0; });
     finishPending = !!d.finish_pending;
+    asmEst = !!d.asm_est;
     syncInner();
   }
   // Выполнить fn для каждой платы комплекта: поля временно принимают значения платы, тираж = комплекты × штук в комплекте
@@ -836,20 +858,39 @@
     var bad = list.filter(function (r) { return !r.ok; });
     if (bad.length) { res.reason = 'Заполните параметры ' + (bad.length > 1 ? 'плат ' : 'платы ') + bad.map(function (r) { return '«' + r.name + '»'; }).join(', ') + ' — выберите её в блоке «Файлы проекта».'; return res; }
     var eng = list.filter(function (r) { return r.engineer; }), priced = list.filter(function (r) { return !r.engineer; });
+    // общая доставка: платы комплекта едут одной партией — постоянная часть (брокер, сборы, минимум за отправку)
+    // платится один раз. Работает для формулы в браузере (у ответа есть goods/ship); ответ сервера складываем как есть.
+    var shared = priced.length > 1 && priced.every(function (r) { return r.goods != null && r.ship != null; });
+    var cur = curBoard(), estB = [];
     list.forEach(function (r) {
-      res.lines.push({ cur: !!(curBoard() && curBoard().name === r.name), name: '«' + r.name + '»' + (r.n > 1 ? ' × ' + r.n : '') + ' — ' + fmt(r.qty) + ' шт', text: r.engineer ? 'расчёт инженером' : fmt(r.lo) + ' – ' + fmtR(r.hi) });
+      var sub = (r.lines || []).filter(function (l) { return !l.incl && !(shared && /^Доставка/.test(l.name)); });
+      res.lines.push({ board: r.name, cur: !!(cur && cur.name === r.name), sub: r.engineer ? null : sub,
+        name: '«' + r.name + '»' + (r.n > 1 ? ' × ' + r.n : '') + ' — ' + fmt(r.qty) + ' шт',
+        text: r.engineer ? 'расчёт инженером' : shared ? '≈ ' + fmtR(r.goods) : fmt(r.lo) + ' – ' + fmtR(r.hi) });
       (r.warn || []).forEach(function (w) { res.warn.push('«' + r.name + '»: ' + w); });
-      (r.notes || []).forEach(function (t) { res.notes.push('«' + r.name + '»: ' + t); });
+      (r.notes || []).forEach(function (t) { if (/^Монтаж посчитан ориентировочно/.test(t)) estB.push('«' + r.name + '»'); else res.notes.push('«' + r.name + '»: ' + t); });
       if (r.vat) res.vat = r.vat; if (r.version) res.version = r.version;
     });
+    if (estB.length) res.notes.unshift('Монтаж посчитан ориентировочно — компоненты не учтены поштучно: ' + estB.join(', ') + '. Проверьте блок 3 у ' + (estB.length > 1 ? 'этих плат.' : 'этой платы.'));
+    if (shared) {
+      var goods = priced.reduce(function (s, r) { return s + r.goods; }, 0), apart = priced.reduce(function (s, r) { return s + r.ship; }, 0);
+      res.ship = shipCost(goods); res.saving = Math.max(0, apart - res.ship);
+      res.lines.push({ name: 'Доставка и таможня — одной партией', v: res.ship });
+      if (res.saving > 1) res.lines.push({ name: 'Экономия против заказа плат по отдельности', text: '≈ ' + fmtR(res.saving), soft: true });
+    }
     res.lines.push({ name: 'Проверка по ПМИ', text: 'входит', incl: true });
     res.lines.push({ name: 'Приёмка ОТК на фабрике', text: 'входит', incl: true });
     res.term = eng.length ? '2–3 месяца от размещения заказа' : (list[0].term || 'около 6–8 недель от размещения заказа');
     if (!priced.length) { res.ok = true; res.engineer = true; return res; }
     if (eng.length) res.notes.push('В сумму не входят платы с расчётом инженером: ' + eng.map(function (r) { return '«' + r.name + '»'; }).join(', ') + '.');
-    res.lo = priced.reduce(function (s, r) { return s + r.lo; }, 0);
-    res.hi = priced.reduce(function (s, r) { return s + r.hi; }, 0);
-    res.total = priced.reduce(function (s, r) { return s + (r.total || (r.lo + r.hi) / 2); }, 0);
+    if (shared) {
+      res.total = priced.reduce(function (s, r) { return s + r.goods; }, 0) + res.ship;
+      res.lo = res.total * 0.85; res.hi = res.total * 1.2;
+    } else {
+      res.lo = priced.reduce(function (s, r) { return s + r.lo; }, 0);
+      res.hi = priced.reduce(function (s, r) { return s + r.hi; }, 0);
+      res.total = priced.reduce(function (s, r) { return s + (r.total || (r.lo + r.hi) / 2); }, 0);
+    }
     res.per = res.total / sets; res.qty = sets; res.ok = true; res.partial = eng.length > 0;
     return res;
   }
@@ -879,7 +920,6 @@
     boards = list; lastBD = BD;
     if (list.length < 2) solo = false;
     boardsInfo = list.length > 1 ? list.map(function (b) { var s = boardSize(b); return { name: b.name, size: s ? fmtMM(Math.max(s.w, s.h)) + ' × ' + fmtMM(Math.min(s.w, s.h)) : '', layers: boardLayers(b) || '', comps: boardComps(b) || 0, current: b === BD.cur, n: perSet(b.name), on: inSet(b.name) }; }) : [];
-    var ql = $('label[for="f-qty"]'); if (ql && ql.firstChild && ql.firstChild.nodeType === 3) ql.firstChild.textContent = list.length > 1 && !solo ? 'Комплектов, шт ' : 'Тираж, шт ';
     if (!box) return;
     var many = list.length > 1; box.hidden = !many; if (now) now.hidden = !many;
     renderTabs(BD, many);
@@ -888,8 +928,19 @@
     box.classList.toggle('is-solo', solo);
     $('#calc-boards-title').innerHTML = (solo
       ? '<b>В проекте ' + n + ' ' + plural(n, 'плата', 'платы', 'плат') + ' — сейчас считаем только «' + esc(BD.cur.name) + '».</b> Плата посчитана отдельно, без комплекта: тираж в блоке 2 — штук этой платы. Нажмите на другую плату, чтобы посчитать отдельно её.'
-      : '<b>В проекте ' + n + ' ' + plural(n, 'плата', 'платы', 'плат') + ' — считаем комплект.</b> У каждой платы свои параметры: нажмите на плату, чтобы проверить их в блоках 2 и 3. Отметьте, какие платы входят в заказ и сколько их в одном комплекте.') +
+      : '<b>В проекте ' + n + ' ' + plural(n, 'плата', 'платы', 'плат') + ' — считаем комплект.</b> Укажите число комплектов и сколько каждой платы в одном комплекте. У каждой платы свои параметры — нажмите на плату, чтобы проверить их в блоках 2 и 3.') +
       (BD.free ? ' Файлов, которые не удалось отнести ни к одной плате: ' + BD.free + '.' : '') + (BD.lostSpec ? ' Требования к плате (' + BD.lostSpec + ') не сопоставлены ни с одной платой.' : '');
+    // «Комплектов: [N]» — под заголовком блока плат
+    var sw = $('#calc-sets');
+    if (!sw) {
+      sw = document.createElement('label'); sw.id = 'calc-sets'; sw.className = 'cx-sets';
+      sw.appendChild(document.createTextNode('Комплектов:'));
+      var si = document.createElement('input'); si.type = 'number'; si.min = '1'; si.step = '1'; si.id = 'calc-sets-n'; si.setAttribute('inputmode', 'numeric');
+      si.addEventListener('input', function () { el('qty').value = si.value; used = true; syncSetUI(); }); // пересчёт — общий обработчик ввода
+      sw.appendChild(si);
+      $('#calc-boards-title').after(sw);
+    }
+    sw.hidden = solo;
     var sb = $('#calc-solo');
     if (!sb) { sb = document.createElement('button'); sb.type = 'button'; sb.id = 'calc-solo'; sb.className = 'cx-mini cx-boards__solo'; sb.addEventListener('click', function () { toggleSolo(!solo); }); $('#calc-boards').appendChild(sb); }
     sb.textContent = solo ? 'Вернуться к расчёту комплекта' : 'Посчитать «' + BD.cur.name + '» отдельно';
@@ -902,29 +953,51 @@
       var t = document.createElement('b'); t.textContent = b.name; var m = document.createElement('span'); m.textContent = boardMeta(b);
       var sum = document.createElement('span'); sum.className = 'cx-board__sum';
       btn.appendChild(t); btn.appendChild(m); btn.appendChild(sum);
-      btn.addEventListener('click', function () { pickBoard(b); });
+      // выбор — кликом по любой части карточки, кроме галочки и поля «в комплекте»
+      card.addEventListener('click', function (e) { if (e.target.closest('input, label')) return; pickBoard(b, $('#calc-boards')); });
       var ctl = document.createElement('div'); ctl.className = 'cx-board__ctl';
+      // «в заказе» — в правом верхнем углу карточки
       var lb = document.createElement('label'), cb = document.createElement('input');
-      cb.type = 'checkbox'; cb.checked = inSet(b.name); lb.appendChild(cb); lb.appendChild(document.createTextNode(' в заказе'));
-      cb.addEventListener('change', function () { if (cb.checked) delete offMap[b.name]; else offMap[b.name] = 1; card.classList.toggle('is-off', !cb.checked); renderTabs(lastBD, true); used = true; recalc(); });
+      lb.className = 'cx-board__on'; cb.type = 'checkbox'; cb.checked = inSet(b.name); lb.appendChild(cb); lb.appendChild(document.createTextNode(' в заказе'));
+      cb.addEventListener('change', function () { if (cb.checked) delete offMap[b.name]; else offMap[b.name] = 1; card.classList.toggle('is-off', !cb.checked); renderTabs(lastBD, true); used = true; syncSetUI(); recalc(); });
+      // «по [N] в комплекте = M шт»
       var nl = document.createElement('label'), ni = document.createElement('input');
+      nl.className = 'cx-board__per';
       ni.type = 'number'; ni.min = '1'; ni.max = '99'; ni.step = '1'; ni.value = perSet(b.name); ni.className = 'cx-board__n';
-      ni.setAttribute('aria-label', 'Штук платы «' + b.name + '» в комплекте');
-      nl.appendChild(document.createTextNode('× ')); nl.appendChild(ni); nl.appendChild(document.createTextNode(' в комплекте'));
-      ni.addEventListener('input', function () { var v = parseInt(ni.value, 10); if (v > 0) perSetMap[b.name] = Math.min(v, 99); used = true; recalc(); });
-      ctl.appendChild(lb); ctl.appendChild(nl);
+      ni.setAttribute('aria-label', 'Штук платы «' + b.name + '» в одном комплекте');
+      nl.appendChild(document.createTextNode('по ')); nl.appendChild(ni); nl.appendChild(document.createTextNode(' в комплекте'));
+      ni.addEventListener('input', function () { var v = parseInt(ni.value, 10); if (v > 0) perSetMap[b.name] = Math.min(v, 99); used = true; syncSetUI(); recalc(); });
+      var tot = document.createElement('span'); tot.className = 'cx-board__total';
+      ctl.appendChild(nl); ctl.appendChild(tot);
+      card.appendChild(lb);
       card.appendChild(btn); card.appendChild(ctl);
       wrap.appendChild(card);
     });
+    syncSetUI();
     if (now) now.textContent = solo
       ? 'Плата «' + BD.cur.name + '» (' + (idx + 1) + ' из ' + n + ') посчитана отдельно, без комплекта. Тираж — штук этой платы.'
       : 'Параметры платы «' + BD.cur.name + '» — ' + (idx + 1) + ' из ' + n + ' в комплекте. Другую плату выберите в блоке «Файлы проекта». Тираж — число комплектов.';
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function pickBoard(b) {
-    if (boardKey === b.key) return;
+  // anchor — элемент, который не должен сдвинуться на экране (вкладки или блок плат): отчёт выше
+  // у разных плат разной длины, без поправки страница «подпрыгивает»
+  function pickBoard(b, anchor) {
+    if (boardKey === b.key || root.classList.contains('is-busy')) return;
     var c = curBoard(); if (c) bstate[c.name] = fieldData();
-    boardKey = b.key; safeAnalyse(); saveSoon();
+    boardKey = b.key;
+    // сразу показываем выбор и троббер, считаем — после отрисовки
+    $$('.cx-btab').forEach(function (x) { x.setAttribute('aria-pressed', x.textContent === b.name ? 'true' : 'false'); });
+    $$('#calc-boards-list .cx-board').forEach(function (x) { x.classList.toggle('is-cur', x.dataset.name === b.name); });
+    var top0 = anchor ? anchor.getBoundingClientRect().top : 0;
+    root.classList.add('is-busy');
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        switching = true;
+        try { safeAnalyse(); } finally { switching = false; root.classList.remove('is-busy'); }
+        if (anchor) { var d = anchor.getBoundingClientRect().top - top0; if (Math.abs(d) > 1) window.scrollBy(0, d); }
+        saveSoon();
+      }, 0);
+    });
   }
   // вкладки плат над параметрами: переключать плату там же, где её правят; длинные имена — с многоточием и подсказкой
   function renderTabs(BD, many) {
@@ -936,17 +1009,45 @@
         var x = document.createElement('button'); x.type = 'button'; x.className = 'cx-btab' + (!solo && !inSet(b.name) ? ' is-off' : '');
         x.textContent = b.name; x.title = b.name + (boardMeta(b) ? ' — ' + boardMeta(b) : '') + (!solo && !inSet(b.name) ? ' · не в заказе' : '');
         x.setAttribute('aria-pressed', b === BD.cur ? 'true' : 'false');
-        x.addEventListener('click', function () { pickBoard(b); });
+        x.addEventListener('click', function () { pickBoard(b, t); });
         t.appendChild(x);
       });
     });
   }
+  // Комплект: итог штук на карточках, «Комплектов» в блоке плат, тираж открытой платы в блоке 2 (только чтение)
+  function syncSetUI() {
+    var set = isSet(), sets = parseInt(val('qty'), 10), cur = curBoard();
+    var si = $('#calc-sets-n'); if (si && document.activeElement !== si) si.value = val('qty');
+    $$('#calc-boards-list .cx-board').forEach(function (card) {
+      var t = card.querySelector('.cx-board__total'); if (!t) return;
+      var nm = card.dataset.name;
+      t.textContent = !inSet(nm) ? '' : sets > 0 ? '= ' + fmt(sets * perSet(nm)) + ' шт' : '';
+    });
+    var f = el('qty'), wrap = f.closest('.cx-field'), ro = $('#f-qty-total'), hint = $('#f-qty-set');
+    if (!ro) {
+      ro = document.createElement('input'); ro.type = 'text'; ro.id = 'f-qty-total'; ro.readOnly = true; ro.tabIndex = -1; ro.className = 'cx-qty-total';
+      f.after(ro);
+      hint = document.createElement('p'); hint.id = 'f-qty-set'; hint.className = 'cx-fnote cx-qty-set';
+      f.before(hint); // над полем — нижние края полей в ряду остаются на одной линии
+    }
+    wrap.classList.toggle('is-set', set);
+    hint.hidden = !set;
+    if (!set || !cur) return;
+    var k = perSet(cur.name);
+    ro.value = sets > 0 ? fmt(sets * k) : '—';
+    hint.textContent = '';
+    hint.appendChild(document.createTextNode((sets > 0 ? fmt(sets) + ' ' + plural(sets, 'комплект', 'комплекта', 'комплектов') : 'Число комплектов не указано') + ' × ' + k + ' шт. Меняется в '));
+    var a = document.createElement('button'); a.type = 'button'; a.className = 'cx-linkbtn'; a.textContent = 'блоке «Файлы проекта»';
+    a.addEventListener('click', function () { var s = $('#calc-sets-n'); $('#calc-boards').scrollIntoView({ behavior: 'smooth', block: 'center' }); if (s) setTimeout(function () { s.focus({ preventScroll: true }); }, 400); });
+    hint.appendChild(a); hint.appendChild(document.createTextNode('.'));
+  }
   // суммы по платам — на карточках выбора
   function renderBoardSums(r) {
+    syncSetUI();
     $$('#calc-boards-list .cx-board').forEach(function (card) {
       var s = card.querySelector('.cx-board__sum'); if (!s) return;
       var x = r && r.boards ? r.boards.filter(function (y) { return y.name === card.dataset.name; })[0] : null;
-      s.textContent = !inSet(card.dataset.name) ? 'не в заказе' : !x ? '' : !x.ok ? 'заполните параметры' : x.engineer ? 'расчёт инженером' : fmt(x.lo) + ' – ' + fmtR(x.hi);
+      s.textContent = !inSet(card.dataset.name) ? 'не в заказе' : !x ? '' : !x.ok ? 'заполните параметры' : x.engineer ? 'расчёт инженером' : r.ship != null && x.goods != null ? '≈ ' + fmtR(x.goods) + ' без доставки' : fmt(x.lo) + ' – ' + fmtR(x.hi);
     });
   }
 
@@ -1182,7 +1283,8 @@
 
     // отчёт
     var src = []; if (ipc) src.push('IPC-2581'); if (odb) src.push('ODB++'); if (spec) src.push('требования к плате (ТЗ)'); if (job) src.push('.gbrjob'); if (pnpA) src.push('Pick&Place'); if (copper.length || outlines.length || drills.length) src.push('Gerber');
-    $('#calc-report-files').textContent = src.length ? 'Источники: ' + src.join(', ') + '.' + (src.length > 1 ? ' При расхождении приоритет у IPC-2581, затем ODB++, ТЗ, .gbrjob и Gerber.' : '') : '';
+    var rf = $('#calc-report-files'); rf.textContent = src.length ? 'Источники: ' + src.join(', ') + '.' : '';
+    if (src.length > 1) { rf.appendChild(document.createElement('br')); rf.appendChild(document.createTextNode('При расхождении приоритет у IPC-2581, затем ODB++, ТЗ, .gbrjob и Gerber.')); }
     var list = $('#calc-report-list'); list.innerHTML = '';
     var order = { conflict: 0, err: 1, need: 2, check: 2, ok: 3 };
     items.sort(function (a, b) { return order[a.state] - order[b.state]; }).forEach(function (i) {
@@ -1308,8 +1410,10 @@
   var groupMap = { '0201': ['d_0201'], '0402': ['d_0402'], '0603': ['d_0603'], sot: ['d_sot'], soic: ['d_soic', 'p_soic'], qfp: ['d_qfp', 'p_qfp'], qfn: ['d_qfn', 'p_qfn'], bga: ['d_bga', 'p_bga'], tht: ['d_tht', 'p_tht'], conn: ['d_conn'] };
   var groupName = { '0201': 'чип 0201', '0402': 'чип 0402', '0603': 'чип 0603 и крупнее', sot: 'SOT/SOD', soic: 'SOIC/TSSOP', qfp: 'QFP', qfn: 'QFN/DFN', bga: 'BGA', tht: 'DIP', conn: 'разъёмы' };
   applyBtn.addEventListener('click', function () { applyAsm(); });
-  $('#calc-asm-reset').addEventListener('click', function () { asmInit(); asmFilled = false; syncApply(); recalc(); });
+  $('#calc-asm-reset').addEventListener('click', function () { asmInit(); asmFilled = false; asmEst = false; syncApply(); updatePasteHint(); recalc(); });
+  var asmEst = false; // в блоке 3 — оценка (по пасте Gerber или по Pick&Place без точных корпусов), а не поштучный учёт
   function applyAsm() {
+    asmEst = ipcAsm ? !!ipcAsm.est : gerberPads > 0;
     if (ipcAsm) {
       var a = ipcAsm;
       var gn = function (g) { return a.groups[g] ? a.groups[g].n : 0; };
@@ -1326,30 +1430,47 @@
       setBadge('q_smd', 'ok', 'файлов, оценка');
       ['q_dip', 'q_bga', 'q_qfn'].forEach(function (k) { setBadge(k, 'need'); });
     }
-    asmFilled = true; syncApply(); recalc();
+    asmFilled = true; syncApply(); updatePasteHint(); recalc();
   }
   function updatePasteHint() {
     var n = $('#calc-asm-note'), why = $('#calc-asm-why');
     var mode = asmMode();
     if ((!gerberPads && !ipcAsm) || mode === 'none' || (mode === 'detail' && !ipcAsm)) { n.hidden = true; return; }
     n.hidden = false;
+    var a = ipcAsm, srcEst = !a || !!a.est; // данные о монтаже — оценка, а не поштучный учёт
+    // строка «Ориентировочно» — сразу под заголовком, перед «Подробнее»
+    var w = $('#calc-asm-est'), more = n.querySelector('.cx-note__more');
+    if (!w) { w = document.createElement('p'); w.id = 'calc-asm-est'; w.className = 'cx-note__est'; }
+    if (w.nextSibling !== more) n.insertBefore(w, more);
+    n.classList.toggle('is-est', srcEst); w.hidden = !srcEst;
+    if (srcEst) w.innerHTML = '<b>Ориентировочно:</b> ' + (!a ? 'компоненты не считались поштучно — их число оценено по площадкам пасты.'
+      : a.noFp ? 'число компонентов точное, корпуса и тип монтажа оценены по позиционным обозначениям.'
+      : 'число компонентов точное, тип монтажа и выводы оценены по посадочным местам.');
     why.innerHTML = '';
-    var P = function (html) { var p = document.createElement('p'); p.innerHTML = html; why.appendChild(p); return p; };
-    if (ipcAsm) {
-      var a = ipcAsm;
+    var P = function (label, html) { var p = document.createElement('p'); p.innerHTML = '<b>' + label + '</b> ' + html; why.appendChild(p); return p; };
+    var sides = function (top, bot) { return bot ? 'верх — ' + fmt(top) + ', низ — ' + fmt(bot) : 'одна сторона'; };
+    if (a) {
       $('#calc-asm-title').innerHTML = 'В файле ' + asmSrc + ': <b>' + fmt(a.total) + ' ' + plural(a.total, 'компонент', 'компонента', 'компонентов') + '</b> — SMD ' + fmt(a.smd) + ', DIP ' + fmt(a.tht) + ' (' + fmt(a.thtPins) + ' выв.)' + (a.sides === 2 ? ', на двух сторонах' : '') + '.';
-      if (a.est) {
-        P('<b>Как считаем.</b> Число компонентов и стороны монтажа — из файла Pick&Place, это точно. Тип монтажа (SMD или DIP) и число выводов оценены по ' + (a.noFp ? 'позиционным обозначениям — посадочных мест в файле нет' : 'названиям посадочных мест') + ', проверьте их.');
-        if (a.noFp) P('<b>Без посадочных мест</b> все компоненты, кроме разъёмов (X, J, P…), посчитаны как простые SMD. Микросхемы в корпусах BGA, QFN и QFP укажите вручную.');
-      } else P('<b>Как считаем.</b> Компоненты, стороны и тип выводов взяты из посадочных мест и BOM в файле — это точнее, чем оценка по слою пасты.');
       var gs = Object.keys(a.groups).map(function (g) { return groupName[g] + ' — ' + a.groups[g].n; });
-      if (gs.length) P('<b>Группы корпусов</b> для подробной оценки распознаны по названиям посадочных мест: ' + gs.join(', ') + '.');
-      if (a.unknown) P('<b>Не распознано ' + fmt(a.unknown) + ' ' + plural(a.unknown, 'корпус', 'корпуса', 'корпусов') + '.</b> Их нет в подробной таблице — добавьте вручную в подходящие группы.');
+      if (a.est) {
+        P('Точно:', fmt(a.total) + ' ' + plural(a.total, 'компонент', 'компонента', 'компонентов') + ' (' + sides(a.top, a.bot) + ')' + (a.uniq ? ', уникальных позиций — ' + fmt(a.uniq) : '') + '. Это из файла Pick&Place.');
+        P('Оценено:', a.noFp
+          ? 'посадочных мест в файле нет, поэтому разъёмы (X, J, P…) посчитаны как DIP, а все остальные компоненты — как простые SMD.'
+          : 'тип монтажа (SMD или DIP) и число выводов — по названиям посадочных мест.' + (gs.length ? ' Распознанные группы: ' + gs.join(', ') + '.' : ''));
+        P('Проверьте:', a.noFp ? 'микросхемы в корпусах BGA, QFN и QFP — укажите их число в полях ниже или в подробной оценке.' : 'выводы DIP-компонентов и корпуса BGA, QFN, QFP.' + (a.unknown ? ' Не распознано ' + fmt(a.unknown) + ' ' + plural(a.unknown, 'корпус', 'корпуса', 'корпусов') + ' — добавьте их в подходящие группы.' : ''));
+        P('Точнее:', 'IPC-2581 или ODB++ — в них есть тип каждого вывода.');
+      } else {
+        P('Точно:', 'компоненты, стороны и тип выводов взяты из посадочных мест и BOM в файле (' + sides(a.top, a.bot) + ').');
+        if (gs.length) P('Группы корпусов', 'для подробной оценки распознаны по названиям посадочных мест: ' + gs.join(', ') + '.');
+        if (a.unknown) P('Не распознано:', fmt(a.unknown) + ' ' + plural(a.unknown, 'корпус', 'корпуса', 'корпусов') + ' — их нет в подробной таблице, добавьте вручную в подходящие группы.');
+      }
     } else {
-      $('#calc-asm-title').innerHTML = 'В ваших файлах <b>≈ ' + fmt(gerberPads) + ' SMD-площадок</b> — грубо это около ' + fmt(Math.round(gerberPads / 2.4)) + ' компонентов' + (gerberBottom ? ', на двух сторонах' : '') + '.';
-      P('<b>Как считаем.</b> На слое пасты ≈ ' + fmt(gerberPads) + ' площадок. Большинство компонентов на типичной плате — резисторы и конденсаторы с двумя площадками, микросхемы добавляют больше. В среднем выходит около 2,4 площадки на компонент.');
-      P('<b>Это грубая оценка.</b> На платах с крупными микросхемами реальное число компонентов может быть заметно меньше.');
-      P('<b>Что заполнить вручную:</b> выводы DIP-компонентов и число корпусов BGA, QFN и QFP — по Gerber их не отличить. Или переключитесь на подробную оценку и укажите группы корпусов. Точные цифры даст файл IPC-2581 или ODB++.');
+      var est = Math.round(gerberPads / 2.4);
+      $('#calc-asm-title').innerHTML = 'В ваших файлах <b>≈ ' + fmt(gerberPads) + ' SMD-площадок</b> — это около ' + fmt(est) + ' ' + plural(est, 'компонента', 'компонентов', 'компонентов') + (gerberBottom ? ', на двух сторонах' : '') + '.';
+      P('Из файлов:', '≈ ' + fmt(gerberPads) + ' площадок на слое пасты' + (gerberBottom ? ' (низ — ' + fmt(gerberBottom) + ')' : '') + '. Отдельных компонентов в Gerber нет.');
+      P('Как оценили:', 'в среднем 2,4 площадки на компонент — большинство деталей на плате резисторы и конденсаторы с двумя площадками. На платах с крупными микросхемами компонентов может быть заметно меньше.');
+      P('Не видно по Gerber:', 'выводы DIP-компонентов и корпуса BGA, QFN, QFP — укажите их в полях ниже или переключитесь на подробную оценку.');
+      P('Точнее:', 'Pick&Place даст точное число компонентов, IPC-2581 или ODB++ — ещё и тип каждого вывода.');
     }
     $('#calc-to-detail').hidden = mode === 'detail';
     syncApply();
@@ -1358,7 +1479,8 @@
 
 
   /* --- Определение типа файла --- */
-  function classify(e) {
+  function classify(e) { return e._c || (e._c = classifyRaw(e)); }
+  function classifyRaw(e) {
     var n = e.name.toLowerCase(), t = e.text;
     if (/\.gbrjob$/.test(n)) return { type: 'job' };
     if (/\.(csv|pos|txt)$/.test(n) && isPnP(t)) return { type: 'pnp' };
@@ -1469,6 +1591,7 @@
   /* ================= Расчёт (ДЕМО-ставки) ================= */
   var R = {
     prepPcb: 4500, prepPerLayer: 900,
+    shipK: 0.1, shipFix: 3500, // доставка и таможня: доля от стоимости + постоянная часть на отправку (брокер, сборы)
     dm2: { 1: 380, 2: 520, 4: 1150, 6: 1750, 8: 2350, 10: 3000, 12: 3650, 14: 4300, 16: 5000, 18: 5800, 20: 6600, 22: 7400, 24: 8200 },
     thick: { 0.4: 1.15, 0.6: 1.08, 0.8: 1.03, 1.0: 1, 1.2: 1, 1.6: 1, 2.0: 1.08, 2.4: 1.15, 3.2: 1.3 },
     cu: { 18: 0.97, 35: 1, 70: 1.25, 105: 1.5 },
@@ -1478,6 +1601,7 @@
     asmSetupSide: 9000, feeder: 180, joint: { chip: 0.9, fine: 1.4, qfn: 2.2, bga: 3.2 }, tht: 6, conn: 45, fw: 60, coat: 0.6, axi: 6000
   };
   function feeders(n) { return n ? Math.min(n, Math.round(6 + n * 0.2)) : 0; } // оценка числа уникальных позиций
+  function shipCost(goods) { return goods * R.shipK + R.shipFix; }
   function volumeK(area) { if (area < 2) return 1.6; if (area < 10) return 1.25; if (area < 50) return 1; if (area < 200) return 0.85; return 0.72; }
 
   /* Проверка заполненности — до любого расчёта (и локального, и на сервере). */
@@ -1543,6 +1667,7 @@
       comps = ['d_0201', 'd_0402', 'd_0603', 'd_sot', 'd_soic', 'd_qfp', 'd_qfn', 'd_bga', 'd_tht', 'd_conn'].reduce(function (s, k) { return s + (num(k) || 0); }, 0);
       asm = R.asmSetupSide * sides + feeders(comps) * R.feeder + j * qty;
     }
+    res.notes = [];
     var asmEmpty = (m === 'quick' && !['q_smd', 'q_dip', 'q_bga', 'q_qfn'].some(function (k) { return num(k) > 0; })) ||
       (m === 'detail' && !$$('.cx-table input[type="number"]').some(function (i) { return parseFloat(i.value) > 0 && /^d_/.test(i.dataset.key); }));
     if (m !== 'none' && asmEmpty) {
@@ -1550,17 +1675,18 @@
       res.lines.push({ name: 'Компоненты', text: 'по BOM', soft: true });
       asm = 0; axi = false;
     } else if (m !== 'none') {
-      res.lines.push({ name: 'Монтаж' + (sides === 2 ? ', 2 стороны' : ''), v: asm });
+      res.lines.push({ name: 'Монтаж' + (sides === 2 ? ', 2 стороны' : '') + (asmEst ? ' — оценка' : ''), v: asm });
+      if (asmEst) res.notes.push('Монтаж посчитан ориентировочно: компоненты не учтены поштучно — проверьте блок 3.');
       if (axi) res.lines.push({ name: 'Рентген-контроль BGA / QFN', v: R.axi });
       res.lines.push({ name: 'Компоненты', text: 'по BOM', soft: true });
     }
     res.lines.push({ name: 'Проверка по ПМИ', text: 'входит', incl: true });
     res.lines.push({ name: 'Приёмка ОТК на фабрике', text: 'входит', incl: true });
     var goods = res.lines.reduce(function (a, l) { return a + (l.v || 0); }, 0);
-    var ship = goods * 0.1 + 3500;
+    var ship = shipCost(goods);
+    res.goods = goods; res.ship = ship;
     res.lines.push({ name: 'Доставка и таможня', v: ship });
     res.total = goods + ship;
-    res.notes = [];
     if (finishPending) res.notes.push('Финишное покрытие не уточнено — в расчёте HASL.');
     res.lo = res.total * 0.85; res.hi = res.total * 1.2;
     res.per = res.total / qty;
@@ -1655,6 +1781,7 @@
     r.lines.forEach(function (l) {
       var li = document.createElement('li');
       if (l.soft) li.className = 'is-soft'; if (l.incl) li.className = 'is-incl'; if (l.cur) li.className = 'is-cur';
+      if (l.sub && l.sub.length) { S.br.appendChild(boardLine(l)); return; }
       li.innerHTML = '<span></span><span></span>';
       li.children[0].textContent = l.name;
       li.children[1].textContent = l.text ? l.text : (r.engineer ? '—' : '≈ ' + fmtR(l.v));
@@ -1674,6 +1801,24 @@
     renderSummaryText(r);
   }
 
+  // строка платы в итоге комплекта: название — кнопка спойлера, под ней статьи этой платы
+  var subOpen = {};
+  function boardLine(l) {
+    var li = document.createElement('li'); li.className = 'is-board' + (l.cur ? ' is-cur' : '') + (subOpen[l.board] ? ' is-open' : '');
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'cx-break__board';
+    b.setAttribute('aria-expanded', subOpen[l.board] ? 'true' : 'false');
+    var n = document.createElement('span'), v = document.createElement('span');
+    n.textContent = l.name; v.textContent = l.text; b.appendChild(n); b.appendChild(v);
+    var ul = document.createElement('ul'); ul.className = 'cx-break__sub'; ul.hidden = !subOpen[l.board];
+    l.sub.forEach(function (s) {
+      var x = document.createElement('li'); if (s.soft) x.className = 'is-soft';
+      x.innerHTML = '<span></span><span></span>'; x.children[0].textContent = s.name; x.children[1].textContent = s.text ? s.text : '≈ ' + fmtR(s.v);
+      ul.appendChild(x);
+    });
+    b.addEventListener('click', function () { subOpen[l.board] = !subOpen[l.board]; ul.hidden = !subOpen[l.board]; li.classList.toggle('is-open', subOpen[l.board]); b.setAttribute('aria-expanded', subOpen[l.board] ? 'true' : 'false'); });
+    li.appendChild(b); li.appendChild(ul);
+    return li;
+  }
   function selText(key) { var e = el(key); return e && e.selectedOptions ? e.selectedOptions[0].textContent : ''; }
   /* Текстовая сводка всех заполненных полей — для формы заявки (кнопка «Прикрепить данные из калькулятора»). */
   var inSummary = false;
@@ -1688,10 +1833,11 @@
         L.push('');
         L.push('Плата «' + b.name + '»' + (inSet(b.name) ? ' — ' + perSet(b.name) + ' шт в комплекте' + (sets > 0 ? ', всего ' + fmt(sets * perSet(b.name)) + ' шт' : '') : ' — не входит в заказ'));
         buildSummary(null).split('\n').forEach(function (s) { if (!/^(Тираж|Файлы проекта|Оценка калькулятора)/.test(s)) L.push('  ' + s); });
-        if (x && x.ok) L.push('  Оценка платы: ' + (x.engineer ? 'расчёт инженером' : fmt(x.lo) + ' – ' + fmtR(x.hi) + ' (≈ ' + fmtR(x.per) + ' за плату)'));
+        if (x && x.ok) L.push('  Оценка платы: ' + (x.engineer ? 'расчёт инженером' : r.ship != null && x.goods != null ? '≈ ' + fmtR(x.goods) + ' без доставки (≈ ' + fmtR(x.goods / x.qty) + ' за плату)' : fmt(x.lo) + ' – ' + fmtR(x.hi) + ' (≈ ' + fmtR(x.per) + ' за плату)'));
       }, true);
     } finally { inSummary = false; }
     L.push('');
+    if (r && r.ok && r.ship != null) L.push('Доставка и таможня одной партией: ≈ ' + fmtR(r.ship) + (r.saving > 1 ? ' (экономия ≈ ' + fmtR(r.saving) + ' против заказа плат по отдельности)' : ''));
     if (r && r.ok) {
       L.push('Оценка калькулятора за комплект: ' + (r.engineer ? 'расчёт инженером' : fmt(r.lo) + ' – ' + fmtR(r.hi) + ' (≈ ' + fmtR(r.per) + ' за комплект' + (r.vat && r.vat.show ? ', в т. ч. НДС ' + String(r.vat.pct).replace('.', ',') + ' %' : '') + ')'));
       (r.notes || []).forEach(function (t) { L.push(t); });
@@ -1761,8 +1907,8 @@
     return L.join('\n');
   }
   function renderSummaryText(r) {
-    summaryText = buildSummary(r);
-    var out = $('#calc-summary-text'); if (out) out.textContent = summaryText;
+    var out = $('#calc-summary-text'); if (!out) return;
+    summaryText = buildSummary(r); out.textContent = summaryText;
   }
   var summaryText = '';
 
@@ -1776,6 +1922,7 @@
     d.asm_values = {};
     $$('[data-key^="q_"], [data-key^="d_"], [data-key^="p_"]').forEach(function (i) { if (+i.value) d.asm_values[i.dataset.key] = +i.value; });
     d.finish_pending = finishPending;
+    if (asmEst && d.asm !== 'none') d.asm_est = true;
     return d;
   }
 
@@ -1845,8 +1992,10 @@
         d.set = { sets: num('qty') || 0, boards: eachBoard(function (b, st) {
           var x = r && r.boards ? r.boards.filter(function (y) { return y.name === b.name; })[0] : null, o = { name: b.name, n: perSet(b.name), on: inSet(b.name), data: fieldData() };
           if (x && x.ok) o.estimate = x.engineer ? 'engineer' : { lo: Math.round(x.lo), hi: Math.round(x.hi), per: Math.round(x.per) };
+          if (x && x.ok && !x.engineer && x.goods != null) o.estimate.goods = Math.round(x.goods); // без доставки — она общая на комплект
           return o;
         }, true) };
+        if (r && r.ok && r.ship != null) { d.set.ship = Math.round(r.ship); d.set.saving = Math.round(r.saving || 0); }
       }
       return d;
     },
@@ -1889,6 +2038,7 @@
       if (asmKeys.indexOf(i.dataset.key) >= 0) mark(i.dataset.key);
     });
     if (d.finish_pending === false) { finishPending = false; $('#calc-finish-confirm').hidden = true; }
+    if (d.asm_est !== undefined || d.asm) asmEst = !!d.asm_est;
     syncInner(); syncAsm(); recalc();
   }
   function restoreFromPanel() {

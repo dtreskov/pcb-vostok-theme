@@ -2537,3 +2537,305 @@
         margin: 0;
     }
 }
+
+/* ===== Скорость, комплект, оценочный монтаж — 2026-10-21 ===== */
+
+/* троббер: плата переключается — итог и поля приглушены, у выбранной вкладки и карточки крутилка */
+.cx.is-busy {
+    cursor: progress;
+}
+
+.cx.is-busy .cx-sum__total,
+.cx.is-busy .cx-break,
+.cx.is-busy .cx-grid {
+    opacity: .45;
+    transition: opacity .15s;
+}
+
+.cx.is-busy .cx-sum__total::after {
+    content: "";
+    display: inline-block;
+    width: .6em;
+    height: .6em;
+    margin-left: .35em;
+    vertical-align: middle;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, .25);
+    border-top-color: var(--color-gold);
+    animation: cx-spin .8s linear infinite;
+}
+
+.cx.is-busy .cx-btab[aria-pressed="true"]::after,
+.cx.is-busy .cx-board.is-cur .cx-board__pick b::after {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-left: 6px;
+    vertical-align: -1px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .35);
+    border-top-color: currentColor;
+    animation: cx-spin .8s linear infinite;
+}
+
+.cx.is-busy .cx-board.is-cur .cx-board__pick b::after {
+    border-color: rgba(192, 112, 58, .25);
+    border-top-color: var(--color-copper);
+}
+
+/* карточка платы целиком кликабельна (кроме галочки и поля «в комплекте») */
+.cx-board {
+    cursor: pointer;
+}
+
+.cx-board__ctl {
+    cursor: default;
+}
+
+.cx-board:hover:not(.is-cur) {
+    border-color: rgba(192, 112, 58, .55);
+}
+
+/* итог комплекта: у платы — спойлер со своими статьями */
+.cx-break li.is-board {
+    display: block;
+    padding: 0;
+}
+
+.cx-break__board {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 14px;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.cx-break__board span:first-child::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 8px;
+    vertical-align: 2px;
+    border-right: 1.5px solid var(--color-gold);
+    border-bottom: 1.5px solid var(--color-gold);
+    transform: rotate(45deg);
+    transition: transform .15s;
+}
+
+.cx-break li.is-open .cx-break__board span:first-child::after {
+    transform: rotate(-135deg);
+    vertical-align: -1px;
+}
+
+.cx-break__board span:last-child {
+    color: var(--color-white);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cx-break li.is-cur .cx-break__board span:first-child {
+    font-weight: 700;
+}
+
+.cx-break__sub {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0 0 0 12px;
+    border-left: 2px solid rgba(216, 180, 90, .35);
+}
+
+.cx-break__sub[hidden] {
+    display: none;
+}
+
+.cx .cx-break__sub li {
+    padding: 4px 0;
+    border: 0;
+    font-size: 12.5px;
+    opacity: .85;
+}
+
+/* блок 3: явная пометка «Ориентировочно» */
+.cx-note.is-est {
+    border-left-color: var(--color-gold);
+}
+
+.cx-note__est {
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--color-gold-light);
+    color: #5F4A12;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.cx-note__est[hidden] {
+    display: none;
+}
+
+.cx-note__est b {
+    color: #5F4A12;
+}
+
+/* «≠» рисуем линиями — символ шрифта садится в кружке неровно */
+.ic--conflict::after {
+    content: "";
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 2px;
+    background: #fff;
+    border-radius: 1px;
+    box-shadow: 0 4px 0 #fff;
+    transform: translate(-50%, -3px);
+    display: block;
+}
+
+.ic--conflict::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1.5px;
+    height: 12px;
+    background: #fff;
+    border-radius: 1px;
+    transform: translate(-50%, -50%) rotate(30deg);
+}
+
+/* карточки плат (комплект): «в заказе» — в углу, внизу «по [N] в комплекте = M шт» */
+.cx-boards__list {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.cx-board {
+    position: relative;
+}
+
+.cx-board__pick {
+    padding-right: 92px;
+}
+
+.cx-board__on {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--color-text-grey);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.cx .cx-board__on input {
+    margin: 0;
+}
+
+.cx-board__ctl {
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.cx-board__per {
+    white-space: nowrap;
+}
+
+.cx-board__total {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--color-text-black);
+    white-space: nowrap;
+}
+
+.cx-board.is-off .cx-board__per {
+    opacity: .5;
+}
+
+.cx-board.is-off .cx-board__total {
+    font-weight: 500;
+    color: var(--color-text-grey);
+}
+
+.cx-boards.is-solo .cx-board__on {
+    display: none;
+}
+
+/* «Комплектов: [N]» под заголовком блока плат */
+.cx-sets {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #5F4A12;
+}
+
+.cx-sets[hidden] {
+    display: none;
+}
+
+.cx .cx-sets input {
+    width: 80px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1.5px solid #8C9A93;
+    border-radius: var(--radius-button);
+    background: var(--color-white);
+    font: inherit;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* блок 2 в комплекте: тираж платы — только для чтения */
+.cx-qty-total {
+    display: none;
+}
+
+.cx-field.is-set #f-qty,
+.cx-field.is-set .cx-badge[data-for="qty"] {
+    display: none;
+}
+
+.cx .cx-field.is-set .cx-qty-total {
+    display: block;
+    width: 100%;
+    height: var(--cx-fh, 46px);
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: 1.5px dashed #B8C2BD;
+    border-radius: var(--radius-button);
+    background: var(--color-section-alt);
+    font: inherit;
+    font-size: 15px;
+    color: var(--color-text-black);
+    cursor: default;
+}
+
+.cx-qty-set[hidden] {
+    display: none;
+}
+
+.cx-linkbtn {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--color-copper-dark);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
