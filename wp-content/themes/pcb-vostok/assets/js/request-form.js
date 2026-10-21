@@ -34,8 +34,9 @@
   'use strict';
 
   var CFG = window.PCBRequest || {};
-  var MAX_FILES = 10;
-  var MAX_TOTAL = 50 * 1048576;
+  var MAX_FILES = 20;              // те же лимиты — PCB_RQ_MAX_FILES / PCB_RQ_MAX_TOTAL в плагине (handler.php)
+  var MAX_TOTAL = 100 * 1048576;
+  var MAX_MB = MAX_TOTAL / 1048576;
   var BLOCKED = /\.(exe|msi|bat|cmd|com|scr|ps1|vbs|js|jar|sh|php|phtml|dll)$/i;
   var MAIL = CFG.mail || 'info@pcb-vostok.ru';
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -161,7 +162,7 @@
         if (BLOCKED.test(it.file.name)) { it.bad = 'Такой тип файлов не принимаем — упакуйте проект в архив'; return; }
         n++;
         if (n > MAX_FILES) { it.bad = 'Больше ' + MAX_FILES + ' файлов — упакуйте их в один архив'; return; }
-        if (sum + it.file.size > MAX_TOTAL) { it.bad = 'Вместе больше 50 МБ — пришлите этот файл на почту ' + MAIL + ' или ссылкой'; return; }
+        if (sum + it.file.size > MAX_TOTAL) { it.bad = 'Вместе больше ' + MAX_MB + ' МБ — пришлите этот файл на почту ' + MAIL + ' или ссылкой'; return; }
         sum += it.file.size;
       });
     }
@@ -193,13 +194,20 @@
       root.classList.toggle('has-files', items.length > 0);
       if (items.length) setContentState(false);
       root.classList.toggle('has-errors', bad > 0);
-      total.innerHTML = items.length ? nfiles(items.length) + ', <b>' + fmt(sum) + '</b> из 50 МБ' : '';
-      saveSoon(); dropContext();
+      total.innerHTML = items.length ? nfiles(items.length) + ', <b>' + fmt(sum) + '</b> из ' + MAX_MB + ' МБ' : '';
+      saveSoon(); dropContext(); placeDrop();
       status.textContent = '';
       if (items.length) {
         status.appendChild(document.createTextNode(bad ? (bad === 1 ? 'Один файл не подходит' : nfiles(bad) + ' не подходят') : nfiles(items.length) + ' — приложено к заявке'));
-        status.appendChild(el('span', null, nfiles(items.length) + ', ' + fmt(sum) + ' из 50 МБ'));
+        status.appendChild(el('span', null, nfiles(items.length) + ', ' + fmt(sum) + ' из ' + MAX_MB + ' МБ'));
       }
+    }
+    /* калькулятор: когда файлы есть, зона загрузки встаёт в строку «N файлов — приложено к заявке» справа
+       (подсказка о составе — в строке над зоной, о лимитах — в статусе); файлов нет — на своём месте */
+    function placeDrop() {
+      if (!isCalc || !drop) return;
+      if (items.length) { if (drop.parentNode !== head) head.appendChild(drop); }
+      else if (drop.parentNode === head) filebox.parentNode.insertBefore(drop, dupNote && dupNote.parentNode ? dupNote : filebox);
     }
     function fkey(f) { return f.name + '|' + f.size; }
     function addFiles(fileList) {

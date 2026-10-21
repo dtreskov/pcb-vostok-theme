@@ -241,7 +241,7 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 					<label class="crm-drop">
 						<input type="file" name="files[]" multiple>
 						<span>Перетащите файлы сюда или выберите на компьютере</span>
-						<span class="crm-sub">Например, файлы, которые клиент дослал на почту. До 10 файлов и 50 МБ за раз, без исполняемых файлов.</span>
+						<span class="crm-sub">Например, файлы, которые клиент дослал на почту. До 20 файлов и 100 МБ за раз, без исполняемых файлов.</span>
 					</label>
 					<ul class="crm-picked"></ul>
 					<div class="crm-form__acts">

@@ -13,8 +13,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const PCB_RQ_MAX_FILES  = 10;
-const PCB_RQ_MAX_TOTAL  = 52428800; // 50 МБ
+const PCB_RQ_MAX_FILES  = 20;        // те же лимиты — MAX_FILES / MAX_TOTAL в request-form.js темы
+const PCB_RQ_MAX_TOTAL  = 104857600; // 100 МБ; хостинг: post_max_size и upload_max_filesize не меньше 110M
 const PCB_RQ_RATE_LIMIT = 5;        // заявок с одного IP
 const PCB_RQ_RATE_TTL   = 600;      // за 10 минут
 const PCB_RQ_SERVICES   = array(
@@ -402,7 +402,7 @@ function pcb_rq_collect_files( array $params ) {
 		return pcb_rq_error( 'Не больше ' . PCB_RQ_MAX_FILES . ' файлов — упакуйте их в один архив.' );
 	}
 	if ( $total > PCB_RQ_MAX_TOTAL ) {
-		return pcb_rq_error( 'Файлы вместе больше 50 МБ. Пришлите их на почту info@pcb-vostok.ru или ссылкой.', 413 );
+		return pcb_rq_error( 'Файлы вместе больше ' . (int) ( PCB_RQ_MAX_TOTAL / 1048576 ) . ' МБ. Пришлите их на почту info@pcb-vostok.ru или ссылкой.', 413 );
 	}
 	return $out;
 }

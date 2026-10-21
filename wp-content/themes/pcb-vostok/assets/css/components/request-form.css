@@ -888,6 +888,16 @@
 .request--calc .has-files .request-drop__idle { display: none; }
 .request--calc .has-files .request-drop__more { display: block; }
 .request--calc .has-files .request-drop.is-over .request-drop__more { display: none; }
+/* файлы есть — зона загрузки справа в строке «N файлов — приложено к заявке» (request-form.js → placeDrop) */
+.request--calc .request-files__head { flex-wrap: wrap; }
+.request--calc .request-files__head .request-drop { display: flex; flex-direction: row; flex: 0 0 auto; align-items: center; min-height: 0; gap: 8px; margin-left: auto; padding: 8px 14px; border-width: 1.5px; border-radius: var(--radius-pill); background: var(--color-white); }
+.request--calc .request-files__head .request-drop svg { width: 18px; height: 18px; }
+.request--calc .request-files__head .request-drop__hint { display: none; }
+.request--calc .request-files__head .request-drop__more { font-size: 14px; white-space: nowrap; }
+.request--calc .request-files__head .request-drop.is-over .request-drop__over { font-size: 14px; white-space: nowrap; }
+@media (max-width: 560px) {
+    .request--calc .request-files__head .request-drop { flex-basis: 100%; justify-content: center; }
+}
 
 /* .cx-files */
 .request--calc .request-filebox { display: none; border: 1px solid var(--color-separator); border-radius: var(--radius-card); background: var(--color-white); overflow: hidden; }

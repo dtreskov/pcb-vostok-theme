@@ -206,7 +206,7 @@ function pcb_crm_add_files( $id, array $file_params, $kind = 'manager' ) {
 	$current = (array) get_post_meta( $id, '_pcb_files', true );
 	$total   = array_sum( array_map( function ( $f ) { return (int) ( $f['size'] ?? 0 ); }, $current ) );
 	$adding  = array_sum( array_map( function ( $f ) { return (int) $f['size']; }, $files ) );
-	if ( $total + $adding > 10 * PCB_RQ_MAX_TOTAL ) {
+	if ( $total + $adding > 524288000 ) { // 500 МБ на заявку — не зависит от лимита одной отправки
 		return new WP_Error( 'pcb_crm', 'В заявке уже слишком много файлов (больше 500 МБ).', array( 'status' => 413 ) );
 	}
 	$stored = pcb_rq_store_files( $files, (string) get_post_meta( $id, '_pcb_number', true ) );
