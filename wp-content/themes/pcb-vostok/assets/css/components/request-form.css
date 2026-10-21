@@ -313,6 +313,12 @@
 
 .request-drop__calc { margin: 0 0 2px; font-size: 13px; line-height: 1.45; color: #4A5852; }
 .request-drop__calc b { font-weight: 600; color: var(--color-text-black); overflow-wrap: anywhere; }
+/* файл уже есть в калькуляторе — не добавлен (под зоной) */
+.request-drop__dup { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--color-gold-light); color: #6B5418; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+/* «Приложить», «Вернуть» — действие текстом в строке */
+.request-drop__act { padding: 0; border: 0; background: none; color: var(--color-copper-dark); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.request-drop__act:hover { text-decoration-thickness: 2px; }
+.request-drop__act:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; border-radius: 2px; }
 
 /* --- «Восстановили незаконченную заявку» — черновик в браузере (form-draft.js) --- */
 
@@ -719,10 +725,6 @@
 
 /* --- прикреплённые данные калькулятора: пилюля «Данные прикреплены» + стрелка спойлера,
        плашка — тело вкладки под строкой (как пояснение к «?»); «Что приложить к заявке» — на своём месте --- */
-.request-calc__btn.is-stale { background: var(--color-copper-dark); }
-.request-calc__group:has(.is-stale) { border-color: var(--color-copper-dark); }
-/* раскрытая вкладка — без нижней рамки и в «устаревшем» состоянии (иначе между пилюлей и плашкой проступает линия) */
-.request-calc__group:has(.is-stale):has([aria-expanded="true"]) { border-bottom-color: transparent; }
 
 /* стрелка спойлера вместо «?» (после прикрепления) */
 .request-calc__q.is-fold > span { position: relative; border: 0; background: none !important; font-size: 0; }
@@ -762,7 +764,6 @@
 
 .request-calc__card[hidden] { display: none; }
 .request-calc__card p { margin: 0; }
-.request-calc__card.is-stale { border-color: var(--color-copper-dark); }
 
 .request-calc__params { font-weight: 500; overflow-wrap: anywhere; } /* комплект: длинные имена плат и файлов */
 .request-calc__k { color: #4A5852; }
@@ -771,6 +772,22 @@
 .request-calc__sum.is-muted { font-weight: 500; color: #4A5852; }
 .request-calc__vat { font-size: 13px; color: #4A5852; white-space: nowrap; }
 .request-calc__fl { color: #4A5852; overflow-wrap: anywhere; }
+
+/* «В заявку уйдёт:» — две галочки: «Расчёт» (сводка + спойлер с полным текстом) и «Файлы из калькулятора» */
+.request-calc__head { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: #4A5852; }
+.request-calc__opt { display: grid; gap: 2px; padding-left: 26px; }
+.request-calc__opt + .request-calc__opt { margin-top: 6px; }
+.request-calc__chk { display: flex; align-items: center; gap: 8px; margin-left: -26px; cursor: pointer; }
+.request-calc__chk input { width: 18px; height: 18px; margin: 0; flex: 0 0 auto; accent-color: var(--color-primary); cursor: pointer; }
+.request-calc__chk b { font-weight: 600; }
+.request-calc__opt.is-off > :not(.request-calc__chk) { opacity: 0.5; }
+.request-calc__opt.is-off .request-calc__full { display: none; }
+.request-calc__full > summary { width: fit-content; color: var(--color-primary); font-size: 13px; font-weight: 600; cursor: pointer; list-style: none; text-decoration: underline; text-underline-offset: 2px; }
+.request-calc__full > summary::-webkit-details-marker { display: none; }
+.request-calc__full > summary::after { content: " ▾"; text-decoration: none; display: inline-block; margin-left: 2px; transition: transform var(--transition-fast); }
+.request-calc__full[open] > summary::after { transform: rotate(180deg); }
+.request-calc__full > summary:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; border-radius: 2px; }
+.request-calc__text { margin-top: 6px; padding: 10px 12px; border-radius: 8px; background: var(--color-section-alt); color: var(--color-text-black); font-size: 13px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; }
 
 /* ссылки — отдельной строкой под данными */
 .request-calc__links { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 4px !important; }
@@ -790,37 +807,6 @@
 
 .request-calc__link:hover { color: var(--color-copper-dark); }
 .request-calc__link:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; border-radius: 2px; }
-
-.request-calc__stale { display: none; }
-.request-calc__card.is-stale .request-calc__stale {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 14px;
-    margin: 8px -18px -14px;
-    padding: 10px 18px;
-    border-top: 1px solid rgba(168, 92, 40, 0.35);
-    border-radius: 0 0 var(--radius-faq) var(--radius-faq);
-    background: var(--color-copper-light);
-    color: var(--color-copper-dark);
-    font-weight: 600;
-}
-
-.request-calc__refresh {
-    height: 32px;
-    padding: 0 16px;
-    border: 0;
-    border-radius: var(--radius-pill);
-    background: var(--color-copper-dark);
-    color: var(--color-white);
-    font-family: var(--font-family);
-    font-size: 13.5px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.request-calc__refresh:hover { background: #975224; }
-.request-calc__refresh:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 2px; }
 
 .request-calc__card.is-pending .request-calc__sum::before {
     content: "";
@@ -890,11 +876,17 @@
 .request--calc .request-drop em { color: #975224; font-weight: 600; }
 .request--calc .request-drop.is-over .request-drop__over { color: var(--color-copper-dark); }
 .request--calc .request-drop__hint { margin-top: 4px; font-size: 14px; color: #4A5852; }
-.request--calc .has-files .request-drop { flex-direction: row; justify-content: flex-start; gap: 14px; padding: 14px 18px; text-align: left; }
-.request--calc .has-files .request-drop svg { width: 24px; height: 24px; margin: 0; flex: 0 0 24px; }
-.request--calc .has-files .request-drop__idle,
-.request--calc .has-files .request-drop__hint { display: none; }
-.request--calc .has-files .request-drop__more { display: block; font-size: 15px; }
+.request--calc .request-drop__idle, .request--calc .request-drop__more { font-size: 15px; }
+/* зона всегда компактная — как свёрнутая зона этапа 1: значок слева, справа строка действия и подсказка во всю ширину */
+.request--calc .request-drop { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; justify-items: start; gap: 2px 14px; padding: 14px 18px; text-align: left; }
+.request--calc .request-drop svg { grid-row: 1 / span 2; width: 24px; height: 24px; margin: 0; }
+.request--calc .request-drop__idle,
+.request--calc .request-drop__more,
+.request--calc .request-drop.is-over .request-drop__over,
+.request--calc .request-drop__hint { grid-column: 2; }
+.request--calc .request-drop__hint { max-width: none; margin-top: 0; font-size: 13px; }
+.request--calc .has-files .request-drop__idle { display: none; }
+.request--calc .has-files .request-drop__more { display: block; }
 .request--calc .has-files .request-drop.is-over .request-drop__more { display: none; }
 
 /* .cx-files */
@@ -915,7 +907,11 @@
 .request--calc .request-file { border: 0; border-radius: 0; background: transparent; padding: 10px 18px; font-size: 14px; }
 .request--calc .request-file + .request-file { border-top: 1px solid var(--color-separator); }
 .request--calc .request-file__ext { font-size: 11.5px; padding: 5px 8px; border-radius: 4px; background: var(--color-section-alt); color: var(--color-primary-dark); }
-.request--calc .request-file__name { font-weight: 600; color: var(--color-text-black); }
+.request--calc .request-file__name { overflow: visible; white-space: normal; font-weight: 600; color: var(--color-text-black); }
+/* строка файла — как в этапе 1: имя (с многоточием), под ним серая пометка; файлы калькулятора — зелёная метка типа */
+.request--calc .request-file__n { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.request--calc .request-file__tag { display: block; margin: 0; padding: 0; border-radius: 0; background: none; color: #4A5852; font-size: 12.5px; font-weight: 400; }
+.request--calc .request-file.is-calc .request-file__ext { background: var(--color-primary); color: var(--color-white); }
 .request--calc .request-file__size { font-size: 12.5px; color: #4A5852; }
 .request--calc .request-file__rm { width: 30px; height: 30px; border: 1px solid var(--color-separator); background: var(--color-white); color: #4A5852; }
 .request--calc .request-file__rm:hover { border-color: var(--color-copper); color: var(--color-copper-dark); background: var(--color-white); }

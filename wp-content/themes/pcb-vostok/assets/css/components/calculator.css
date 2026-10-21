@@ -2839,3 +2839,34 @@
     text-underline-offset: 2px;
     cursor: pointer;
 }
+
+/* Зона загрузки этапа 1 — компактная и до загрузки (решение 2026-10-21, как зона файлов в форме заявки):
+   значок слева, справа «Перетащите файлы…» и подсказка; после загрузки — те же правила .is-compact */
+.cx-drop {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    text-align: left;
+}
+
+.cx-drop .cx-drop__ico {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    flex: 0 0 24px;
+}
+
+.cx-drop .cx-drop__title {
+    font-size: 15px;
+}
+
+.cx-drop .cx-drop__hint {
+    margin-top: 2px;
+    font-size: 13px;
+}
+
+/* перенос строки в подсказке не нужен — текст идёт сплошным абзацем во всю ширину */
+.cx-drop .cx-drop__hint br {
+    display: none;
+}

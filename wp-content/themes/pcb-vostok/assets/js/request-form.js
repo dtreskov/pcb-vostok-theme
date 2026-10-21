@@ -14,13 +14,15 @@
  *   .request-success       группа «Заявка отправлена»; в текстах можно писать {номер} и {почта}
  *   .request-calc__btn / __q / __more, details.request-attach — только на калькуляторе
  *
- * Калькулятор (только этап 4 страницы калькулятора): «Прикрепить данные из калькулятора» делает снимок
- * расчёта — PCBCalc.getData() (уходит в заявку как calc_data → _pcb_calc), короткую сводку для плашки
- * и файлы из калькулятора. Описание задачи не трогается — это только слова клиента. Если расчёт в
- * калькуляторе изменился после прикрепления (событие 'pcb:calc'), плашка предлагает обновить данные.
- * «Отправить на точный расчёт» в итоге калькулятора (событие 'pcb:calc-attach') прикрепляет расчёт сам.
- * Перед отправкой — мягкие вопросы (не блокируют): пустое описание; считал в калькуляторе (плату или комплект),
- * но не прикрепил; расчёт изменился после прикрепления.
+ * Калькулятор (только этап 4 страницы калькулятора): если клиент пользовался калькулятором (PCBCalc.isUsed()),
+ * расчёт и файлы калькулятора прикреплены к заявке сами. Пилюля — «Расчёт и файлы прикреплены» (или «Расчёт
+ * прикреплён к заявке», «Файлы калькулятора прикреплены»); плашка — «В заявку уйдёт:» две галочки: «Предварительный расчёт» (сводка PCBCalc.getBrief() вживую, под спойлером — полный текст PCBCalc.getSummary()) и «Файлы из
+ * калькулятора» (стоят в списке файлов с пометкой «из калькулятора»). Снимок PCBCalc.getData() берётся в момент
+ * отправки (calc_data → _pcb_calc). Сняты обе галочки — ничего не прикрепляется; пилюля «Прикрепить данные из
+ * калькулятора» и «Отправить на точный расчёт» в итоге калькулятора (событие 'pcb:calc-attach') возвращают.
+ * Описание задачи — только слова клиента.
+ * Файл, который уже есть в калькуляторе, в форму второй раз не добавляется — под зоной сказано почему.
+ * Перед отправкой — мягкий вопрос (не блокирует): пустое описание.
  * Отправка: FormData на window.PCBRequest.endpoint (плагин pcb-panel, includes/requests/handler.php).
  *
  * Черновик: поля (кроме согласия), файлы и прикреплённый расчёт сохраняются в браузере (window.PCBDraft,
@@ -169,18 +171,19 @@
       var sum = 0, bad = 0;
       items.forEach(function (it, i) {
         sum += it.file.size; if (it.bad) bad++;
-        var li = el('li', 'request-file' + (it.bad ? ' is-bad' : ''));
+        var li = el('li', 'request-file' + (it.bad ? ' is-bad' : '') + (it.calc ? ' is-calc' : ''));
         li.appendChild(el('span', 'request-file__ext', ext(it.file.name)));
-        var nm = el('span', 'request-file__name', it.file.name); nm.title = it.file.name;
+        var nm = el('span', 'request-file__name'); nm.title = it.file.name;
+        nm.appendChild(el('span', 'request-file__n', it.file.name));
         if (it.calc) nm.appendChild(el('span', 'request-file__tag', 'из калькулятора'));
         li.appendChild(nm);
         li.appendChild(el('span', 'request-file__size', fmt(it.file.size)));
         var rm = el('button', 'request-file__rm'); rm.type = 'button'; rm.setAttribute('aria-label', 'Убрать файл');
         rm.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
         rm.addEventListener('click', function () {
-          var wasCalc = items[i].calc; items.splice(i, 1);
+          var it2 = items[i]; items.splice(i, 1);
+          if (it2.calc) { excl[fkey(it2.file)] = true; renderCard(); } // файл калькулятора — не отправлять, в калькуляторе остаётся
           render();
-          if (wasCalc) renderCard();
         });
         li.appendChild(rm);
         if (it.bad) li.appendChild(el('span', 'request-file__msg', it.bad));
@@ -198,11 +201,16 @@
         status.appendChild(el('span', null, nfiles(items.length) + ', ' + fmt(sum) + ' из 50 МБ'));
       }
     }
-    function addFiles(fileList, calc) {
+    function fkey(f) { return f.name + '|' + f.size; }
+    function addFiles(fileList) {
+      var api = isCalc ? API() : null, inCalc = {}, dup = [];
+      if (api) api.getFiles().forEach(function (f) { inCalc[fkey(f)] = true; });
       [].forEach.call(fileList, function (f) {
-        items = items.filter(function (it) { return !(it.file.name === f.name && it.file.size === f.size); });
-        items.push({ file: f, calc: !!calc, bad: '' });
+        if (inCalc[fkey(f)]) { dup.push(f); return; } // тот же файл уже в калькуляторе — второй раз не добавляем
+        items = items.filter(function (it) { return fkey(it.file) !== fkey(f); });
+        items.push({ file: f, calc: false, bad: '' });
       });
+      showDup(dup);
       render();
     }
     if (drop && input) {
@@ -219,159 +227,207 @@
 
     /* ---------- калькулятор ---------- */
     var calcBtn = $('.request-calc__btn'), help = $('.request-calc__q'), more = $('.request-calc__more'), attach = $('details.request-attach');
-    var calcRow = $('.request-calc'), calcGroup = $('.request-calc__group');
+    var calcRow = $('.request-calc');
     var API = function () { return window.PCBCalc || null; };
-    var snap = null;   // { data, brief, fp, pending, stale } — что уйдёт в заявку
-    var ack = {};      // ответы на мягкие вопросы перед отправкой
-    var waiters = [];  // ждут окончания расчёта (отправка во время «оценка считается»)
+    var noData = false;   // снята галочка «Расчёт» — calc_data не отправляется
+    var noFiles = false;  // снята галочка «Файлы из калькулятора»
+    var forced = false;   // приложил кнопкой или из итога калькулятора, даже не меняя полей
+    var excl = {};        // файлы калькулятора, убранные из заявки крестиком (в калькуляторе остаются)
+    var ack = {};         // ответы на мягкие вопросы перед отправкой
+    var waiters = [];     // ждут окончания расчёта (отправка во время «оценка считается»)
 
     var card = null;
     var calcLabel = calcBtn && (calcBtn.querySelector('[data-calc-label]') || calcBtn);
     var calcText = calcLabel ? calcLabel.textContent : '';
     if (calcRow) {
-      // плашка — тело вкладки под пилюлей (как пояснение к «?»): после прикрепления открыта, закрывается стрелкой
+      // плашка — тело вкладки под пилюлей: сводка расчёта вживую; открывается стрелкой или самой пилюлей
       card = el('div', 'request-calc__card'); card.hidden = true; card.setAttribute('role', 'status'); card.setAttribute('aria-live', 'polite');
       card.id = id('rq-calc-card');
       card.innerHTML =
-        '<p class="request-calc__params"></p>' +
-        '<p class="request-calc__est"><span class="request-calc__k">Оценка</span> <b class="request-calc__sum"></b> <span class="request-calc__vat"></span></p>' +
-        '<p class="request-calc__files"><span class="request-calc__k">Файлы</span> <span class="request-calc__fl"></span></p>' +
-        '<p class="request-calc__links"><button type="button" class="request-calc__link" data-act="edit">Изменить в калькуляторе</button>' +
-          '<button type="button" class="request-calc__link" data-act="detach">Открепить</button></p>' +
-        '<div class="request-calc__stale"><span>Расчёт в калькуляторе изменился после прикрепления</span>' +
-          '<button type="button" class="request-calc__refresh" data-act="refresh">Обновить данные</button></div>';
+        '<p class="request-calc__head">В заявку уйдёт:</p>' +
+        '<div class="request-calc__opt" data-opt="data">' +
+          '<label class="request-calc__chk"><input type="checkbox" data-part="data" checked> <b>Предварительный расчёт</b></label>' +
+          '<p class="request-calc__params"></p>' +
+          '<p class="request-calc__est"><span class="request-calc__k">Оценка</span> <b class="request-calc__sum"></b> <span class="request-calc__vat"></span></p>' +
+          '<details class="request-calc__full"><summary>Все данные расчёта</summary><div class="request-calc__text"></div></details>' +
+        '</div>' +
+        '<div class="request-calc__opt" data-opt="files">' +
+          '<label class="request-calc__chk"><input type="checkbox" data-part="files" checked> <b>Файлы из калькулятора</b></label>' +
+          '<p class="request-calc__fl"></p>' +
+        '</div>' +
+        '<p class="request-calc__links"><button type="button" class="request-calc__link" data-act="edit">Изменить в калькуляторе</button></p>';
       calcRow.appendChild(card);
+      var full = card.querySelector('.request-calc__full');
+      full.addEventListener('toggle', function () { if (full.open) fullText(); });
+      card.addEventListener('change', function (e) {
+        var part = e.target.getAttribute && e.target.getAttribute('data-part'); if (!part) return;
+        if (part === 'data') noData = !e.target.checked;
+        if (part === 'files') { noFiles = !e.target.checked; if (!noFiles) excl = {}; }
+        var keepOpen = on();
+        syncCalc();
+        if (!keepOpen || !on()) { setCard(false); if (calcBtn) calcBtn.focus(); } // сняты обе — расчёт не прикладывается
+      });
       card.addEventListener('click', function (e) {
         var b = e.target.closest('[data-act]'); if (!b) return;
         var act = b.getAttribute('data-act');
-        if (act === 'refresh') { attachCalc(); }
-        if (act === 'detach') { detachCalc(); if (calcBtn) calcBtn.focus(); }
         if (act === 'edit') {
           var t = document.getElementById('calc-files') || document.getElementById('calculator');
           if (t) t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
         }
       });
     }
+    // из калькулятора что-то уходит в заявку: клиент считал (или приложил явно) и не снял обе галочки
+    function on() {
+      var api = API();
+      return !!(card && api && (forced || api.isUsed()) && (!noData || !noFiles));
+    }
+    function withData() { return on() && !noData; }
+    // полный текст расчёта — под спойлером «Все данные расчёта»; строку о файлах не повторяем (у них своя галочка)
+    function fullText() {
+      var api = API(); if (!api || !full || !full.open) return;
+      card.querySelector('.request-calc__text').textContent = String(api.getSummary() || '')
+        .split('\n').filter(function (l) { return !/^Файлы проекта:/.test(l); }).join('\n');
+    }
+    // файлы калькулятора в списке формы — по текущему состоянию калькулятора
+    function syncCalc() {
+      if (!card) return;
+      var api = API(); if (api && api.isRestoring()) return;
+      var want = on() && !noFiles ? api.getFiles().filter(function (f) { return !excl[fkey(f)]; }) : [];
+      var keys = {}; want.forEach(function (f) { keys[fkey(f)] = true; });
+      items = want.map(function (f) { return { file: f, calc: true, bad: '' }; })
+        .concat(items.filter(function (it) { return !it.calc && !keys[fkey(it.file)]; }));
+      render(); renderCard();
+    }
+    function setCalc(yes, open) {
+      noData = noFiles = !yes;
+      if (dupNote) dupNote.hidden = true;
+      if (yes) { forced = true; excl = {}; track({ goal: 'calc_attach' }); setHelp(false); }
+      syncCalc();
+      setCard(yes && open !== false);
+    }
     var cardOpen = false;
     function setCard(open) {
-      cardOpen = !!(open && snap);
+      var yes = on();
+      cardOpen = !!(open && yes);
       if (card) card.hidden = !cardOpen;
-      if (snap && help) help.setAttribute('aria-expanded', cardOpen ? 'true' : 'false');
+      if (yes && help) help.setAttribute('aria-expanded', cardOpen ? 'true' : 'false');
       if (cardOpen && attach) attach.open = false;
     }
 
     function renderCard() {
       saveSoon(); dropContext();
       if (!card) return;
-      root.classList.toggle('has-calc', !!snap);
+      var yes = on(), api = API();
+      root.classList.toggle('has-calc', yes);
       if (calcBtn) {
-        calcBtn.classList.toggle('is-applied', !!snap);
-        calcBtn.classList.toggle('is-stale', !!(snap && snap.stale));
-        calcLabel.textContent = snap ? (snap.stale ? 'Расчёт изменился' : 'Данные прикреплены') : calcText;
+        calcBtn.classList.toggle('is-applied', yes);
+        calcLabel.textContent = !yes ? calcText : noData ? 'Файлы калькулятора прикреплены' : noFiles || !api.getFiles().length ? 'Расчёт прикреплён к заявке' : 'Расчёт и файлы прикреплены';
       }
       if (help) {
-        help.classList.toggle('is-fold', !!snap);   // «?» → стрелка спойлера
-        help.setAttribute('aria-label', snap ? 'Показать или скрыть прикреплённые данные' : 'Что делает кнопка');
-        help.setAttribute('aria-controls', snap ? card.id : (more && more.id) || '');
-        if (!snap) help.setAttribute('aria-expanded', more && more.classList.contains('is-open') ? 'true' : 'false');
+        help.classList.toggle('is-fold', yes);   // «?» → стрелка спойлера
+        help.setAttribute('aria-label', yes ? 'Показать или скрыть, что уйдёт в заявку' : 'Что делает кнопка');
+        help.setAttribute('aria-controls', yes ? card.id : (more && more.id) || '');
+        if (!yes) help.setAttribute('aria-expanded', more && more.classList.contains('is-open') ? 'true' : 'false');
       }
-      if (!snap) { card.hidden = true; cardOpen = false; return; }
+      if (!yes) { card.hidden = true; cardOpen = false; return; }
       card.hidden = !cardOpen;
-      var br = snap.brief || {}, est = br.estimate || {};
-      card.classList.toggle('is-stale', !!snap.stale);
-      card.classList.toggle('is-pending', !!snap.pending);
+      card.querySelector('[data-part="data"]').checked = !noData;
+      card.querySelector('[data-part="files"]').checked = !noFiles;
+      card.querySelector('[data-opt="data"]').classList.toggle('is-off', noData);
+      card.querySelector('[data-opt="files"]').classList.toggle('is-off', noFiles);
+      fullText();
+      var br = api.getBrief() || {}, est = br.estimate || {}, pend = api.isPending();
+      card.classList.toggle('is-pending', pend);
       card.querySelector('.request-calc__params').textContent = br.params || '';
       var sum = card.querySelector('.request-calc__sum'), vat = card.querySelector('.request-calc__vat');
-      sum.textContent = snap.pending || est.pending ? 'считается…' : (est.text || '—');
-      sum.classList.toggle('is-muted', !!(snap.pending || est.pending || est.none || est.engineer));
-      vat.textContent = snap.pending ? '' : (est.vat || '');
+      sum.textContent = pend || est.pending ? 'считается…' : (est.text || '—');
+      sum.classList.toggle('is-muted', !!(pend || est.pending || est.none || est.engineer));
+      vat.textContent = pend ? '' : (est.vat || '');
       var names = items.filter(function (it) { return it.calc; }).map(function (it) { return it.file.name; });
-      card.querySelector('.request-calc__fl').textContent = names.length ? names.join(', ') : 'из калькулятора не приложены';
+      var inCalc = api.getFiles().map(function (f) { return f.name; });
+      card.querySelector('.request-calc__fl').textContent = noFiles ? (inCalc.length ? inCalc.join(', ') + ' — не прикрепляются' : 'в калькуляторе нет файлов')
+        : names.length ? names.join(', ') : (inCalc.length ? 'убраны из заявки в списке файлов' : 'в калькуляторе нет файлов');
     }
-
-    function takeSnap() {
-      var api = API(); if (!api) return null;
-      return { data: api.getData(), brief: api.getBrief(), fp: api.fingerprint(), pending: api.isPending(), stale: false };
-    }
-    function attachCalc() {
-      var api = API(); if (!api) return;
-      track({ goal: 'calc_attach' });
-      snap = takeSnap();
-      items = items.filter(function (it) { return !it.calc; });
-      addFiles(api.getFiles(), true);
-      ack.calc = ack.stale = false;
-      setHelp(false);
-      setCard(true);
-      renderCard();
-    }
-    function detachCalc() {
-      snap = null; cardOpen = false;
-      items = items.filter(function (it) { return !it.calc; });
-      render(); renderCard();
-    }
-    // калькулятор пересчитал или изменился
+    // калькулятор пересчитал или изменился — сводка и файлы вживую
     document.addEventListener('pcb:calc', onCalc);
     function onCalc() {
       var api = API(); if (!api || api.isRestoring()) return; // калькулятор ещё восстанавливает черновик
-      if (snap) {
-        var same = api.fingerprint() === snap.fp;
-        if (same && snap.pending && !api.isPending()) { var keep = snap; snap = takeSnap(); snap.stale = keep.stale; } // оценка досчиталась — та же
-        else if (!same && !snap.stale) { snap.stale = true; ack.stale = false; setCard(true); } // устарел — раскрыть плашку
-        renderCard();
-      }
+      syncCalc();
       if (!api.isPending()) waiters.splice(0).forEach(function (fn) { fn(); });
-      dropContext();
     }
 
-    /* Две зоны загрузки на калькуляторе (этап 1 и форма): если в калькуляторе есть файлы, зона формы —
-       для дополнительных файлов, а над ней сказано, что файлы калькулятора уже приложены или приложатся с расчётом */
+    /* Две зоны загрузки на калькуляторе (этап 1 и форма). Если в калькуляторе есть файлы: подпись зоны формы —
+       «Другие файлы к заявке», над зоной — что из калькулятора уже приложено (или что расчёт убран). */
     var dropLabel = isCalc && filesField ? filesField.querySelector('.request-label') : null;
     var dropLabelText = dropLabel ? dropLabel.textContent : '';
-    var dropNote = null;
-    if (isCalc && drop) { dropNote = el('p', 'request-drop__calc'); dropNote.hidden = true; drop.before(dropNote); }
+    var dropNote = null, dupNote = null;
+    if (isCalc && drop) {
+      dropNote = el('p', 'request-drop__calc'); dropNote.hidden = true; drop.before(dropNote);
+      dupNote = el('p', 'request-drop__dup'); dupNote.hidden = true; dupNote.setAttribute('role', 'status'); drop.after(dupNote);
+    }
+    function onBtn(text, fn) { var b = el('button', 'request-drop__act', text); b.type = 'button'; b.addEventListener('click', fn); return b; }
     function dropContext() {
       if (!dropNote) return;
-      var api = API(), names = snap ? items.filter(function (it) { return it.calc; }).map(function (it) { return it.file.name; })
-        : (api ? api.getFiles().map(function (f) { return f.name; }) : []);
-      if (dropLabel) dropLabel.textContent = names.length ? 'Дополнительные файлы' : dropLabelText;
+      var api = API(), names = api ? api.getFiles().map(function (f) { return f.name; }) : [];
+      if (dropLabel) dropLabel.textContent = names.length ? 'Другие файлы к заявке' : dropLabelText;
       dropNote.hidden = !names.length;
       if (!names.length) return;
       dropNote.textContent = '';
-      if (snap) {
-        dropNote.appendChild(document.createTextNode('Файлы из калькулятора уже в заявке: '));
-        dropNote.appendChild(el('b', null, names.join(', ')));
-        dropNote.appendChild(document.createTextNode('. Ниже можно добавить другие файлы.'));
+      if (on()) {
+        var sent = items.filter(function (it) { return it.calc; }).map(function (it) { return it.file.name; });
+        if (sent.length) {
+          // имена файлов калькулятора — в плашке и в списке ниже, здесь не повторяем
+          dropNote.appendChild(document.createTextNode('Файлы из калькулятора уже в заявке. Здесь добавьте то, чего в них нет, — например BOM или чертёж.'));
+        } else {
+          dropNote.appendChild(document.createTextNode('Файлы из калькулятора в заявку не входят. '));
+          dropNote.appendChild(onBtn('Прикрепить', function () { noFiles = false; excl = {}; syncCalc(); }));
+        }
       } else {
-        dropNote.appendChild(document.createTextNode('Файлы из калькулятора ('));
+        dropNote.appendChild(document.createTextNode('Расчёт и файлы из калькулятора ('));
         dropNote.appendChild(el('b', null, names.join(', ')));
-        dropNote.appendChild(document.createTextNode(') можно приложить к заявке вместе с расчётом — кнопкой «Прикрепить данные из калькулятора» выше. Ниже можно добавить другие файлы.'));
+        dropNote.appendChild(document.createTextNode(') в заявку не входят. '));
+        dropNote.appendChild(onBtn('Прикрепить', function () { setCalc(true, false); }));
+      }
+    }
+    // файлы, которые уже есть в калькуляторе, — не добавлены; объясняем почему
+    function showDup(dup) {
+      if (!dupNote) return;
+      dupNote.hidden = !dup.length; dupNote.textContent = '';
+      if (!dup.length) return;
+      var names = dup.map(function (f) { return '«' + f.name + '»'; }).join(', '), one = dup.length === 1;
+      if (on() && !noFiles) {
+        dupNote.appendChild(document.createTextNode(names + (one ? ' уже в заявке' : ' уже в заявке') + ' — из калькулятора, второй раз не добавляем.'));
+      } else {
+        dupNote.appendChild(document.createTextNode(names + (one ? ' загружен' : ' загружены') + ' в калькулятор — второй раз не добавляем. '));
+        dupNote.appendChild(onBtn(on() ? 'Прикрепить файлы из калькулятора' : 'Прикрепить вместе с расчётом', function () {
+          dupNote.hidden = true; if (on()) { noFiles = false; excl = {}; syncCalc(); } else setCalc(true);
+        }));
       }
     }
 
     function setHelp(open) {
       if (!help || !more) return;
       more.classList.toggle('is-open', open);
-      if (!snap) help.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (!on()) help.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
     if (help) {
       if (more) { more.id = more.id || id('rq-calc-help'); help.setAttribute('aria-controls', more.id); }
       help.setAttribute('aria-expanded', 'false');
-      // до прикрепления «?» — пояснение; после — стрелка, открывает и закрывает плашку
+      // расчёт не приложен — «?» с пояснением; приложен — стрелка, открывает и закрывает плашку
       help.addEventListener('click', function () {
         var open = help.getAttribute('aria-expanded') !== 'true';
-        if (snap) setCard(open);
+        if (on()) setCard(open);
         else { setHelp(open); if (open && attach) attach.open = false; }
       });
     }
     if (attach) attach.addEventListener('toggle', function () { if (attach.open) { setHelp(false); setCard(false); } });
-    // «Отправить на точный расчёт» в итоге калькулятора (событие 'pcb:calc-attach') — явное намерение отправить
-    // этот расчёт: прикрепляем сами (или обновляем устаревший) и раскрываем плашку — «Открепить» там же
+    // «Отправить на точный расчёт» в итоге калькулятора — приложить (если был убран) и раскрыть плашку
     document.addEventListener('pcb:calc-attach', function () {
       if (!card || !API() || root.classList.contains('is-done')) return;
-      if (!snap || snap.stale) attachCalc(); else setCard(true);
+      if (!on() || noData) setCalc(true); else setCard(true);
     });
-    // кнопка: не прикреплено — прикрепить; прикреплено — показать/скрыть плашку (обновление — в самой плашке)
-    if (calcBtn) calcBtn.addEventListener('click', function () { if (snap) setCard(!cardOpen); else attachCalc(); });
+    // пилюля: приложен — показать/скрыть плашку; нет — приложить
+    if (calcBtn) calcBtn.addEventListener('click', function () { if (on()) setCard(!cardOpen); else setCalc(true); });
 
     /* ---------- проверка и отправка ---------- */
     function fieldState(node, bad) { var f = node && (node.closest('.request-field') || node.closest('.request-agree')); if (f) f.classList.toggle('is-invalid', bad); }
@@ -398,7 +454,8 @@
       fieldState(email, badEmail); fieldState(agree, badAgree);
       var badFiles = items.some(function (it) { return it.bad; });
       var hasMsg = !!(message && message.value.trim());
-      var badContent = !items.length && !hasMsg && !snap;
+      var withCalc = isCalc && withData();
+      var badContent = !items.length && !hasMsg && !withCalc;
       setContentState(badContent);
       if (badEmail || badAgree || badFiles || badContent) {
         showAlert(badFiles && !badEmail && !badAgree && !badContent ? 'Уберите файлы, которые не подходят, или пришлите их на почту ' + MAIL + '.' :
@@ -409,20 +466,8 @@
       if (!CFG.endpoint) { showAlert('Отправка формы пока не подключена. Напишите нам на почту ' + MAIL + '.'); return; }
       showAlert('');
 
-      // мягкие вопросы — по одному; ответ запоминается до следующего изменения
-      var api = isCalc ? API() : null;
-      if (api && !snap && api.isUsed() && !ack.calc) {
-        var set = (api.getData() || {}).set, kit = set && set.boards ? set.boards.filter(function (b) { return b.on !== false; }).length : 0;
-        return askShow('Вы считали ' + (kit > 1 ? 'комплект из ' + kit + ' ' + plural(kit, 'платы', 'плат', 'плат') : 'плату') +
-          ' в калькуляторе. Прикрепить расчёт и файлы из калькулятора к заявке?',
-          ['Прикрепить и отправить', function () { attachCalc(); submitFlow(); }],
-          ['Отправить без расчёта', function () { ack.calc = true; submitFlow(); }]);
-      }
-      if (snap && snap.stale && !ack.stale) {
-        return askShow('Расчёт в калькуляторе изменился после того, как вы его прикрепили. Обновить данные в заявке?',
-          ['Обновить и отправить', function () { attachCalc(); submitFlow(); }],
-          ['Отправить прикреплённые', function () { ack.stale = true; submitFlow(); }]);
-      }
+      // мягкий вопрос; ответ запоминается до следующего изменения
+      var api = withCalc ? API() : null;
       if (!hasMsg && !ack.desc) {
         return askShow('Описание задачи пустое. Пара слов о проекте — сроки, назначение, особые требования — поможет быстрее подготовить расчёт.',
           ['Дополнить описание', function () { message.focus(); message.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); }],
@@ -431,7 +476,7 @@
 
       root.classList.add('is-sending'); submit.disabled = true;
       // оценка ещё считается — дождаться (не дольше 10 с), чтобы в заявку не ушла прошлая цифра
-      if (snap && snap.pending && api && api.isPending()) {
+      if (api && api.isPending()) {
         submitLabel.textContent = 'Ждём оценку…';
         var go = function () { clearTimeout(t); if (!root.classList.contains('is-sending')) return; buildAndSend(); };
         var t = setTimeout(function () { waiters = waiters.filter(function (f) { return f !== go; }); go(); }, 10000);
@@ -442,6 +487,8 @@
     }
 
     function buildAndSend() {
+      if (isCalc) syncCalc(); // файлы калькулятора — на момент отправки
+      var api = isCalc && withData() ? API() : null;
       var data = new FormData(form);
       data.delete('files[]');
       items.forEach(function (it) { data.append('files[]', it.file, it.file.name); });
@@ -449,8 +496,8 @@
       data.append('page', location.href);
       data.append('referrer', document.referrer || '');
       var token = captchaToken(); if (token) data.append('smart-token', token);
-      if (snap) {
-        try { data.append('calc_data', JSON.stringify(snap.data)); } catch (_) {}
+      if (api) { // снимок расчёта — в момент отправки, то, что клиент видит в итоге
+        try { data.append('calc_data', JSON.stringify(api.getData())); } catch (_) {}
       }
       ymClientId(function (cid) { if (cid) data.append('ym_client_id', cid); send(data); });
     }
@@ -496,14 +543,14 @@
 
     if (again) again.addEventListener('click', function () {
       root.classList.remove('is-done');
-      form.reset(); items = []; snap = null; carry = null; ack = {}; render(); renderCard(); showAlert(''); askHide();
+      form.reset(); items = []; noData = noFiles = forced = false; excl = {}; carry = null; ack = {}; syncCalc(); render(); renderCard(); showAlert(''); askHide(); showDup([]);
       if (message) message.style.height = '';
       successTpl.forEach(function (p) { p[0].innerHTML = p[1]; });
     });
 
     /* ---------- черновик в браузере (form-draft.js) ---------- */
     var D = window.PCBDraft || null, draftReady = false, saveTimer = 0;
-    var carry = null; // на главной: прикреплённый расчёт и файлы калькулятора — не показываем, но храним
+    var carry = null; // на главной: снятые галочки расчёта — не показываем, но храним для калькулятора
     var SKIP = { consent: 1, pcb_hp_check: 1, 'smart-token': 1, 'files[]': 1 };
     function draftFields() {
       return [].filter.call(form.elements, function (f) {
@@ -517,10 +564,11 @@
         else if (f.type === 'checkbox') { v[f.name] = f.checked; if (f.checked !== f.defaultChecked) dirty = true; }
         else { v[f.name] = f.value; if (f.value !== f.defaultValue) dirty = true; }
       });
-      var files = items.filter(function (it) { return isCalc || !it.calc; }).map(function (it) { return { file: it.file, calc: it.calc }; });
-      var s = isCalc ? (snap ? { data: snap.data, brief: snap.brief, fp: snap.fp, stale: !!snap.stale } : null) : (carry && carry.snap);
-      if (!isCalc && carry) files = files.concat(carry.files);
-      return dirty || files.length || s ? { fields: v, files: files, snap: s || null } : null;
+      // свои файлы; файлы калькулятора хранит черновик калькулятора
+      var files = items.filter(function (it) { return !it.calc; }).map(function (it) { return { file: it.file }; });
+      var c = isCalc ? { noData: noData, noFiles: noFiles, forced: forced, excl: excl } : (carry || null);
+      var cdirty = !!(c && (c.noData || c.noFiles || c.forced || (c.excl && Object.keys(c.excl).length)));
+      return dirty || files.length || cdirty ? { fields: v, files: files, calc: c } : null;
     }
     function saveNow() {
       clearTimeout(saveTimer); saveTimer = 0;
@@ -550,10 +598,10 @@
         (lost ? ' Файлы сохранить не удалось — приложите их заново.' : '')));
       var b = el('button', 'request-draft__btn', 'Очистить форму'); b.type = 'button';
       b.addEventListener('click', function () {
-        form.reset(); items = []; snap = null; carry = null; ack = {};
+        form.reset(); items = []; noData = noFiles = forced = false; excl = {}; carry = null; ack = {};
         if (message) message.style.height = '';
         [].forEach.call(root.querySelectorAll('.is-invalid'), function (n) { n.classList.remove('is-invalid'); });
-        showAlert(''); askHide(); render(); renderCard();
+        showAlert(''); askHide(); showDup([]); syncCalc(); render(); renderCard();
         clearDraft(false);
       });
       note.appendChild(b);
@@ -569,20 +617,15 @@
       });
       if (message && message.value) message.dispatchEvent(new Event('input', { bubbles: true })); // высота поля по тексту
       var all = v.files || [], ok = all.filter(function (x) { return x && typeof Blob !== 'undefined' && x.file instanceof Blob; });
-      var mine = ok.filter(function (x) { return !x.calc; }), fromCalc = ok.filter(function (x) { return x.calc; });
+      var mine = ok.filter(function (x) { return !x.calc; }); // calc: true — черновики до 2026-10-22, файлы калькулятора берём из него самого
+      items = mine.map(function (x) { return { file: x.file, calc: false, bad: '' }; });
+      var c = v.calc || null;
       if (isCalc && card) {
-        items = ok.map(function (x) { return { file: x.file, calc: !!x.calc, bad: '' }; });
-        // прикреплённый расчёт сверяем с калькулятором, когда тот восстановит свой черновик (onCalc):
-        // тот же — обновляем снимок, другой — «Расчёт изменился»
-        snap = v.snap ? { data: v.snap.data, brief: v.snap.brief, fp: v.snap.fp, stale: !!v.snap.stale, pending: true } : null;
-        if (!snap) items = items.filter(function (it) { return !it.calc; });
-      } else {
-        items = mine.map(function (x) { return { file: x.file, calc: false, bad: '' }; });
-        carry = v.snap || fromCalc.length ? { snap: v.snap || null, files: fromCalc } : null;
-      }
+        noData = !!(c && (c.noData || c.off)); noFiles = !!(c && (c.noFiles || c.off)); forced = !!(c && c.forced); excl = (c && c.excl) || {};
+      } else carry = c;
       render(); renderCard();
       showNote(v, ok.length < all.length);
-      var api = API(); if (snap && api && !api.isRestoring()) onCalc();
+      onCalc(); // файлы калькулятора — сразу или когда он восстановит свой черновик
     }
     if (D) {
       D.get('form').then(function (v) {
@@ -591,6 +634,7 @@
     }
 
     render();
+    onCalc(); // калькулятор мог закончить восстановление раньше формы
   }
 
   function boot() { [].forEach.call(document.querySelectorAll('.request-form'), init); }
