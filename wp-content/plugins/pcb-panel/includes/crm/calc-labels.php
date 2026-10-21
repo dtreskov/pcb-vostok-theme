@@ -148,10 +148,6 @@ function pcb_crm_calc_parse( $html ) {
 	return $out;
 }
 
-/**
- * Строки для карточки: array( array( название, значение ), … ) в порядке калькулятора.
- * Пустые и нулевые значения пропускаются.
- */
 /** Адрес страницы калькулятора (страница со слагом calculator). */
 function pcb_crm_calc_page_url() {
 	$page = get_page_by_path( 'calculator' );
@@ -184,20 +180,25 @@ function pcb_crm_calc_restore( $id ) {
 	);
 }
 
-function pcb_crm_calc_rows( array $calc ) {
+/**
+ * Поля одной платы: параметры, особые требования, монтаж. $sub — строки вложенные (плата комплекта),
+ * $skip — ключи, которые не выводить (у платы комплекта тираж — в её заголовке).
+ */
+function pcb_crm_calc_board_rows( array $calc, $sub = false, array $skip = array() ) {
 	$d    = pcb_crm_calc_dict();
 	$rows = array();
+	$pre  = $sub ? '· ' : '';
 	$num  = function ( $v ) { return str_replace( '.', ',', (string) $v ); };
 	$opt  = function ( $k, $v ) use ( $d ) { return $d['options'][ $k ][ (string) $v ] ?? (string) $v; };
 	$name = function ( $k ) use ( $d ) { return $d['fields'][ $k ] ?? $k; };
-	$done = array();
 
 	foreach ( array( 'qty', 'len', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel' ) as $k ) {
-		$done[ $k ] = true;
+		if ( in_array( $k, $skip, true ) ) {
+			continue;
+		}
 		if ( 'len' === $k ) {
-			$done['wid'] = true;
 			if ( '' !== (string) ( $calc['len'] ?? '' ) || '' !== (string) ( $calc['wid'] ?? '' ) ) {
-				$rows[] = array( $name( 'len' ), $num( $calc['len'] ?? '—' ) . ' × ' . $num( $calc['wid'] ?? '—' ) );
+				$rows[] = array( $pre . $name( 'len' ), $num( $calc['len'] ?? '—' ) . ' × ' . $num( $calc['wid'] ?? '—' ) );
 			}
 			continue;
 		}
@@ -208,18 +209,18 @@ function pcb_crm_calc_rows( array $calc ) {
 		if ( 'finish' === $k && ! empty( $calc['finish_pending'] ) ) {
 			$v = 'не уточнено (в расчёте — ' . $v . ')';
 		}
-		$rows[] = array( $name( $k ), $v );
+		$rows[] = array( $pre . $name( $k ), $v );
 	}
-	$done['finish_pending'] = true;
-
 	if ( ! empty( $calc['special'] ) ) {
 		$labels = array_map( function ( $k ) use ( $d ) { return $d['checks'][ $k ] ?? $k; }, (array) $calc['special'] );
-		$rows[] = array( 'Особые требования', implode( '; ', $labels ) );
+		$rows[] = array( $pre . 'Особые требования', implode( '; ', $labels ) );
 	}
-	$done['special'] = true;
-
 	if ( isset( $calc['asm'] ) ) {
-		$rows[] = array( 'Монтаж', $d['asm_modes'][ $calc['asm'] ] ?? (string) $calc['asm'] );
+		$mode = $d['asm_modes'][ $calc['asm'] ] ?? (string) $calc['asm'];
+		if ( 'none' !== $calc['asm'] && ! empty( $calc['asm_est'] ) ) {
+			$mode .= ' (оценка: компоненты не учтены поштучно)';
+		}
+		$rows[] = array( $pre . 'Монтаж', $mode );
 		$vals   = (array) ( $calc['asm_values'] ?? array() );
 		if ( 'none' !== $calc['asm'] && $vals ) {
 			// быстрая оценка: q_* — отдельные поля
@@ -244,13 +245,66 @@ function pcb_crm_calc_rows( array $calc ) {
 			}
 		}
 	}
-	$done['asm'] = $done['asm_values'] = true;
+	return $rows;
+}
+
+/** «12 300 – 15 800 ₽» */
+function pcb_crm_calc_money( $n ) {
+	return number_format( (float) $n, 0, ',', ' ' );
+}
+
+/**
+ * Строки для карточки и письма: array( array( название, значение ), … ) в порядке калькулятора.
+ * «· » в начале названия — вложенная строка. Несколько плат — §3.9 README: комплект (set) — блок по каждой
+ * плате, доставка одной партией, оценка за комплект; «отдельно» (solo) — одна плата из N.
+ */
+function pcb_crm_calc_rows( array $calc ) {
+	$d     = pcb_crm_calc_dict();
+	$rows  = array();
+	$fmt   = 'pcb_crm_calc_money';
+	$name  = function ( $k ) use ( $d ) { return $d['fields'][ $k ] ?? $k; };
+	$plur  = function ( $n, $a, $b, $c ) { $m = $n % 10; $h = $n % 100; return ( 1 === $m && 11 !== $h ) ? $a : ( ( $m >= 2 && $m <= 4 && ( $h < 12 || $h > 14 ) ) ? $b : $c ); };
+	$set   = ( isset( $calc['set'] ) && is_array( $calc['set'] ) && ! empty( $calc['set']['boards'] ) ) ? $calc['set'] : null;
+	$multi = ! empty( $calc['boards'] ) && count( (array) $calc['boards'] ) > 1;
+
+	if ( $set ) {
+		$sets = (int) ( $set['sets'] ?? ( $calc['qty'] ?? 0 ) );
+		$all  = (array) $set['boards'];
+		$on   = array_filter( $all, function ( $b ) { return ! empty( $b['on'] ); } );
+		$rows[] = array( 'Комплект', $sets . ' ' . $plur( $sets, 'комплект', 'комплекта', 'комплектов' ) . ', плат в заказе ' . count( $on ) . ' из ' . count( $all ) );
+		foreach ( $all as $b ) {
+			$title = 'Плата «' . ( $b['name'] ?? '' ) . '»';
+			if ( empty( $b['on'] ) ) {
+				$rows[] = array( $title, 'не в заказе' );
+				continue;
+			}
+			$n      = (int) ( $b['n'] ?? 0 );
+			$rows[] = array( $title, $n . ' в комплекте, всего ' . ( $n * $sets ) . ' шт' );
+			$rows   = array_merge( $rows, pcb_crm_calc_board_rows( (array) ( $b['data'] ?? array() ), true, array( 'qty' ) ) );
+			$e      = $b['estimate'] ?? null;
+			if ( 'engineer' === $e ) {
+				$rows[] = array( '· Оценка платы', 'расчёт инженером' );
+			} elseif ( is_array( $e ) && ( ! empty( $e['lo'] ) || ! empty( $e['goods'] ) ) ) {
+				$rows[] = array( '· Оценка платы без доставки', ! empty( $e['lo'] )
+					? $fmt( $e['lo'] ) . ' – ' . $fmt( $e['hi'] ?? 0 ) . ' ₽'
+					: '≈ ' . $fmt( $e['goods'] ) . ' ₽' );
+			}
+		}
+		if ( isset( $set['ship'] ) ) {
+			$rows[] = array( 'Доставка и таможня одной партией', '≈ ' . $fmt( $set['ship'] ) . ' ₽' . ( ! empty( $set['saving'] ) ? ' (экономия против заказа плат по отдельности ≈ ' . $fmt( $set['saving'] ) . ' ₽)' : '' ) );
+		}
+	} else {
+		if ( ! empty( $calc['solo'] ) && $multi ) {
+			$rows[] = array( 'Плата', '«' . ( $calc['board'] ?? '' ) . '» посчитана отдельно — одна из ' . count( (array) $calc['boards'] ) );
+		}
+		$rows = array_merge( $rows, pcb_crm_calc_board_rows( $calc ) );
+	}
 
 	if ( isset( $calc['estimate'] ) ) {
 		$e      = $calc['estimate'];
-		$fmt    = function ( $n ) { return number_format( (float) $n, 0, ',', ' ' ); };
+		$unit   = $set ? 'за комплект' : 'за плату';
 		$rows[] = array( 'Оценка калькулятора', is_array( $e )
-			? $fmt( $e['lo'] ?? 0 ) . ' – ' . $fmt( $e['hi'] ?? 0 ) . ' ₽ (≈ ' . $fmt( $e['per'] ?? 0 ) . ' ₽ за плату'
+			? $fmt( $e['lo'] ?? 0 ) . ' – ' . $fmt( $e['hi'] ?? 0 ) . ' ₽ (≈ ' . $fmt( $e['per'] ?? 0 ) . ' ₽ ' . $unit
 				. ( ! empty( $e['vat'] ) ? '; в т. ч. НДС ' . str_replace( '.', ',', (string) ( 0 + $e['vat'] ) ) . ' %' : '' ) . ')'
 			: 'расчёт инженером' );
 	}
@@ -260,15 +314,27 @@ function pcb_crm_calc_rows( array $calc ) {
 	if ( ! empty( $calc['term'] ) ) {
 		$rows[] = array( 'Срок', (string) $calc['term'] );
 	}
+	if ( $multi ) {
+		$list = array_map( function ( $b ) {
+			$p = array_filter( array(
+				'' !== (string) ( $b['size'] ?? '' ) ? $b['size'] . ' мм' : '',
+				! empty( $b['layers'] ) ? $b['layers'] . ' сл.' : '',
+				! empty( $b['comps'] ) ? $b['comps'] . ' комп.' : '',
+			) );
+			return ( $b['name'] ?? '' ) . ( $p ? ' (' . implode( ', ', $p ) . ')' : '' );
+		}, (array) $calc['boards'] );
+		$rows[] = array( 'Платы проекта', implode( '; ', $list ) );
+	}
 	if ( ! empty( $calc['files'] ) ) {
 		$rows[] = array( 'Файлы в калькуляторе', implode( ', ', (array) $calc['files'] ) );
 	}
 	if ( ! empty( $calc['calc_version'] ) ) {
 		$rows[] = array( 'Версия формулы', 'v' . (int) $calc['calc_version'] . ' — по ней клиент увидел оценку (Калькулятор → Версии)' );
 	}
-	$done['estimate'] = $done['warn'] = $done['term'] = $done['files'] = $done['calc_version'] = true;
 
 	// всё, что калькулятор начнёт передавать позже, — как есть, чтобы ничего не потерялось
+	$done = array_flip( array( 'qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel',
+		'finish_pending', 'special', 'asm', 'asm_values', 'asm_est', 'estimate', 'warn', 'term', 'files', 'calc_version', 'set', 'boards', 'board', 'solo' ) );
 	foreach ( $calc as $k => $v ) {
 		if ( isset( $done[ $k ] ) || '' === $v || null === $v || array() === $v ) {
 			continue;

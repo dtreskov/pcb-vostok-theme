@@ -18,8 +18,9 @@
  * расчёта — PCBCalc.getData() (уходит в заявку как calc_data → _pcb_calc), короткую сводку для плашки
  * и файлы из калькулятора. Описание задачи не трогается — это только слова клиента. Если расчёт в
  * калькуляторе изменился после прикрепления (событие 'pcb:calc'), плашка предлагает обновить данные.
- * Перед отправкой — мягкие вопросы (не блокируют): пустое описание; считал в калькуляторе, но не прикрепил;
- * расчёт изменился после прикрепления.
+ * «Отправить на точный расчёт» в итоге калькулятора (событие 'pcb:calc-attach') прикрепляет расчёт сам.
+ * Перед отправкой — мягкие вопросы (не блокируют): пустое описание; считал в калькуляторе (плату или комплект),
+ * но не прикрепил; расчёт изменился после прикрепления.
  * Отправка: FormData на window.PCBRequest.endpoint (плагин pcb-panel, includes/requests/handler.php).
  *
  * Черновик: поля (кроме согласия), файлы и прикреплённый расчёт сохраняются в браузере (window.PCBDraft,
@@ -190,7 +191,7 @@
       if (items.length) setContentState(false);
       root.classList.toggle('has-errors', bad > 0);
       total.innerHTML = items.length ? nfiles(items.length) + ', <b>' + fmt(sum) + '</b> из 50 МБ' : '';
-      saveSoon();
+      saveSoon(); dropContext();
       status.textContent = '';
       if (items.length) {
         status.appendChild(document.createTextNode(bad ? (bad === 1 ? 'Один файл не подходит' : nfiles(bad) + ' не подходят') : nfiles(items.length) + ' — приложено к заявке'));
@@ -260,7 +261,7 @@
     }
 
     function renderCard() {
-      saveSoon();
+      saveSoon(); dropContext();
       if (!card) return;
       root.classList.toggle('has-calc', !!snap);
       if (calcBtn) {
@@ -319,6 +320,32 @@
         renderCard();
       }
       if (!api.isPending()) waiters.splice(0).forEach(function (fn) { fn(); });
+      dropContext();
+    }
+
+    /* Две зоны загрузки на калькуляторе (этап 1 и форма): если в калькуляторе есть файлы, зона формы —
+       для дополнительных файлов, а над ней сказано, что файлы калькулятора уже приложены или приложатся с расчётом */
+    var dropLabel = isCalc && filesField ? filesField.querySelector('.request-label') : null;
+    var dropLabelText = dropLabel ? dropLabel.textContent : '';
+    var dropNote = null;
+    if (isCalc && drop) { dropNote = el('p', 'request-drop__calc'); dropNote.hidden = true; drop.before(dropNote); }
+    function dropContext() {
+      if (!dropNote) return;
+      var api = API(), names = snap ? items.filter(function (it) { return it.calc; }).map(function (it) { return it.file.name; })
+        : (api ? api.getFiles().map(function (f) { return f.name; }) : []);
+      if (dropLabel) dropLabel.textContent = names.length ? 'Дополнительные файлы' : dropLabelText;
+      dropNote.hidden = !names.length;
+      if (!names.length) return;
+      dropNote.textContent = '';
+      if (snap) {
+        dropNote.appendChild(document.createTextNode('Файлы из калькулятора уже в заявке: '));
+        dropNote.appendChild(el('b', null, names.join(', ')));
+        dropNote.appendChild(document.createTextNode('. Ниже можно добавить другие файлы.'));
+      } else {
+        dropNote.appendChild(document.createTextNode('Файлы из калькулятора ('));
+        dropNote.appendChild(el('b', null, names.join(', ')));
+        dropNote.appendChild(document.createTextNode(') можно приложить к заявке вместе с расчётом — кнопкой «Прикрепить данные из калькулятора» выше. Ниже можно добавить другие файлы.'));
+      }
     }
 
     function setHelp(open) {
@@ -337,6 +364,12 @@
       });
     }
     if (attach) attach.addEventListener('toggle', function () { if (attach.open) { setHelp(false); setCard(false); } });
+    // «Отправить на точный расчёт» в итоге калькулятора (событие 'pcb:calc-attach') — явное намерение отправить
+    // этот расчёт: прикрепляем сами (или обновляем устаревший) и раскрываем плашку — «Открепить» там же
+    document.addEventListener('pcb:calc-attach', function () {
+      if (!card || !API() || root.classList.contains('is-done')) return;
+      if (!snap || snap.stale) attachCalc(); else setCard(true);
+    });
     // кнопка: не прикреплено — прикрепить; прикреплено — показать/скрыть плашку (обновление — в самой плашке)
     if (calcBtn) calcBtn.addEventListener('click', function () { if (snap) setCard(!cardOpen); else attachCalc(); });
 
@@ -379,7 +412,9 @@
       // мягкие вопросы — по одному; ответ запоминается до следующего изменения
       var api = isCalc ? API() : null;
       if (api && !snap && api.isUsed() && !ack.calc) {
-        return askShow('Вы считали плату в калькуляторе. Прикрепить расчёт и файлы из калькулятора к заявке?',
+        var set = (api.getData() || {}).set, kit = set && set.boards ? set.boards.filter(function (b) { return b.on !== false; }).length : 0;
+        return askShow('Вы считали ' + (kit > 1 ? 'комплект из ' + kit + ' ' + plural(kit, 'платы', 'плат', 'плат') : 'плату') +
+          ' в калькуляторе. Прикрепить расчёт и файлы из калькулятора к заявке?',
           ['Прикрепить и отправить', function () { attachCalc(); submitFlow(); }],
           ['Отправить без расчёта', function () { ack.calc = true; submitFlow(); }]);
       }

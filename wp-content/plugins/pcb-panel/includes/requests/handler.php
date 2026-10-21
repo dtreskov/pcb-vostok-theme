@@ -464,19 +464,42 @@ function pcb_rq_headers( $reply_to ) {
 
 /**
  * Данные калькулятора из формы (PCBCalc.getData() темы) → безопасный массив для _pcb_calc.
- * Пропускаются только известные поля, строки и списки укорачиваются; не JSON или больше 20 КБ — пусто.
+ * Пропускаются только известные поля, строки и списки укорачиваются; не JSON или больше 64 КБ — пусто.
+ * Несколько плат (docs/calculator.md темы, §7.2): board, boards[], solo, set { sets, ship, saving, boards[] }.
  */
 function pcb_rq_clean_calc( $raw ) {
-	if ( '' === $raw || strlen( $raw ) > 20480 ) {
+	if ( '' === $raw || strlen( $raw ) > 65536 ) {
 		return array();
 	}
 	$in = json_decode( $raw, true );
-	if ( ! is_array( $in ) ) {
-		return array();
-	}
+	return is_array( $in ) ? pcb_rq_clean_calc_data( $in, true ) : array();
+}
+
+/** Одна плата (верхний уровень или set.boards[].data); $top — ещё и ключи проекта из нескольких плат. */
+function pcb_rq_clean_calc_data( array $in, $top ) {
 	$str  = function ( $v, $max ) { return is_scalar( $v ) ? mb_substr( sanitize_text_field( (string) $v ), 0, $max ) : ''; };
+	$int  = function ( $v, $max ) { return is_numeric( $v ) ? max( 0, min( $max, (int) round( $v ) ) ) : 0; };
 	$list = function ( $v, $n, $max ) use ( $str ) {
 		return is_array( $v ) ? array_values( array_filter( array_map( function ( $x ) use ( $str, $max ) { return $str( $x, $max ); }, array_slice( $v, 0, $n ) ), 'strlen' ) ) : array();
+	};
+	$est  = function ( $v ) use ( $int ) {
+		if ( 'engineer' === $v ) {
+			return 'engineer';
+		}
+		if ( ! is_array( $v ) ) {
+			return null;
+		}
+		$e = array();
+		foreach ( array( 'lo', 'hi', 'per' ) as $k ) {
+			$e[ $k ] = $int( $v[ $k ] ?? 0, PHP_INT_MAX );
+		}
+		if ( isset( $v['goods'] ) && is_numeric( $v['goods'] ) ) {
+			$e['goods'] = $int( $v['goods'], PHP_INT_MAX ); // плата комплекта без доставки
+		}
+		if ( isset( $v['vat'] ) && is_numeric( $v['vat'] ) ) {
+			$e['vat'] = max( 0, min( 50, (float) $v['vat'] ) );
+		}
+		return $e;
 	};
 	$out = array();
 	foreach ( array( 'qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel' ) as $k ) {
@@ -494,36 +517,71 @@ function pcb_rq_clean_calc( $raw ) {
 		$out['asm_values'] = array();
 		foreach ( array_slice( $in['asm_values'], 0, 60, true ) as $k => $v ) {
 			if ( preg_match( '/^[qdp]_[a-z0-9_]{1,24}$/i', (string) $k ) && is_numeric( $v ) ) {
-				$out['asm_values'][ $k ] = max( 0, min( 1000000, (int) $v ) );
+				$out['asm_values'][ $k ] = $int( $v, 1000000 );
 			}
 		}
 	}
-	if ( isset( $in['finish_pending'] ) ) {
-		$out['finish_pending'] = (bool) $in['finish_pending'];
+	foreach ( array( 'finish_pending', 'asm_est' ) as $k ) {
+		if ( isset( $in[ $k ] ) ) {
+			$out[ $k ] = (bool) $in[ $k ];
+		}
 	}
+	if ( isset( $in['estimate'] ) && null !== ( $e = $est( $in['estimate'] ) ) ) {
+		$out['estimate'] = $e;
+	}
+	if ( ! $top ) {
+		return array_filter( $out, function ( $v ) { return '' !== $v && array() !== $v; } );
+	}
+
 	if ( isset( $in['calc_version'] ) && is_numeric( $in['calc_version'] ) ) {
 		$out['calc_version'] = (int) $in['calc_version'];
-	}
-	if ( isset( $in['estimate'] ) ) {
-		if ( 'engineer' === $in['estimate'] ) {
-			$out['estimate'] = 'engineer';
-		} elseif ( is_array( $in['estimate'] ) ) {
-			$e = array();
-			foreach ( array( 'lo', 'hi', 'per' ) as $k ) {
-				$e[ $k ] = isset( $in['estimate'][ $k ] ) && is_numeric( $in['estimate'][ $k ] ) ? max( 0, (int) round( $in['estimate'][ $k ] ) ) : 0;
-			}
-			if ( isset( $in['estimate']['vat'] ) && is_numeric( $in['estimate']['vat'] ) ) {
-				$e['vat'] = max( 0, min( 50, (float) $in['estimate']['vat'] ) );
-			}
-			$out['estimate'] = $e;
-		}
 	}
 	if ( isset( $in['term'] ) ) {
 		$out['term'] = $str( $in['term'], 120 );
 	}
-	foreach ( array( 'warn' => array( 10, 200 ), 'files' => array( 20, 200 ) ) as $k => $lim ) {
+	foreach ( array( 'warn' => array( 10, 200 ), 'files' => array( 40, 200 ) ) as $k => $lim ) {
 		if ( isset( $in[ $k ] ) ) {
 			$out[ $k ] = $list( $in[ $k ], $lim[0], $lim[1] );
+		}
+	}
+	// несколько плат в проекте
+	if ( isset( $in['board'] ) ) {
+		$out['board'] = $str( $in['board'], 80 );
+	}
+	if ( ! empty( $in['solo'] ) ) {
+		$out['solo'] = true;
+	}
+	if ( isset( $in['boards'] ) && is_array( $in['boards'] ) ) {
+		$out['boards'] = array();
+		foreach ( array_slice( $in['boards'], 0, 20 ) as $b ) {
+			if ( is_array( $b ) && '' !== ( $nm = $str( $b['name'] ?? '', 80 ) ) ) {
+				$out['boards'][] = array( 'name' => $nm, 'size' => $str( $b['size'] ?? '', 40 ), 'layers' => $int( $b['layers'] ?? 0, 100 ), 'comps' => $int( $b['comps'] ?? 0, 1000000 ) );
+			}
+		}
+	}
+	if ( isset( $in['set'] ) && is_array( $in['set'] ) && empty( $out['solo'] ) ) {
+		$s   = $in['set'];
+		$set = array( 'sets' => $int( $s['sets'] ?? 0, 10000000 ), 'boards' => array() );
+		foreach ( array( 'ship', 'saving' ) as $k ) {
+			if ( isset( $s[ $k ] ) && is_numeric( $s[ $k ] ) ) {
+				$set[ $k ] = $int( $s[ $k ], PHP_INT_MAX );
+			}
+		}
+		foreach ( array_slice( (array) ( $s['boards'] ?? array() ), 0, 20 ) as $b ) {
+			if ( ! is_array( $b ) || '' === ( $nm = $str( $b['name'] ?? '', 80 ) ) ) {
+				continue;
+			}
+			$row = array( 'name' => $nm, 'n' => $int( $b['n'] ?? 0, 1000 ), 'on' => ! isset( $b['on'] ) || (bool) $b['on'] );
+			if ( isset( $b['data'] ) && is_array( $b['data'] ) ) {
+				$row['data'] = pcb_rq_clean_calc_data( $b['data'], false );
+			}
+			if ( isset( $b['estimate'] ) && null !== ( $e = $est( $b['estimate'] ) ) ) {
+				$row['estimate'] = $e;
+			}
+			$set['boards'][] = $row;
+		}
+		if ( $set['boards'] ) {
+			$out['set'] = $set;
 		}
 	}
 	return array_filter( $out, function ( $v ) { return '' !== $v && array() !== $v; } );
