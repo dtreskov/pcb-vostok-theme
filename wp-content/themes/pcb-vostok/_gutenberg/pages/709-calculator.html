@@ -2,7 +2,10 @@
 <div id="calculator" class="wp-block-group alignfull cx"><!-- wp:html -->
 <header class="cx-head" id="calc-head">
   <div class="cx-wrap cx-head__in">
-    <h1 class="cx-head__title">Онлайн-калькулятор</h1>
+    <div class="cx-head__text">
+      <h1 class="cx-head__title">Онлайн-калькулятор<sup class="cx-head__beta">beta</sup></h1>
+      <p class="cx-head__sub">Оценка стоимости плат и монтажа по файлам проекта — за пару минут</p>
+    </div>
   </div>
 </header>
 <!-- /wp:html -->
@@ -19,8 +22,8 @@
     <div class="cx-drop" id="calc-drop" data-state="idle" tabindex="0" role="button" aria-describedby="calc-drop-hint">
       <svg class="cx-drop__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"/><path d="M12 11v6"/><path d="M9.5 13.5l2.5 -2.5l2.5 2.5"/></svg>
       <div class="cx-drop__txt">
-        <p class="cx-drop__title"><span class="cx-drop__t1">Перетащите файлы сюда или</span><span class="cx-drop__t2">Добавить ещё файлы —</span> <span class="cx-link">выберите на компьютере</span></p>
-        <p class="cx-drop__hint" id="calc-drop-hint">IPC-2581 (.xml, .cvg) · ODB++ (.tgz, .zip) · Gerber и сверловка — файлами, папкой или ZIP · .gbrjob · требования к плате (.txt)</p>
+        <p class="cx-drop__title"><span class="cx-drop__t1">Перетащите файлы или папку проекта сюда или</span><span class="cx-drop__t2">Добавить ещё файлы —</span> <span class="cx-link">выберите на компьютере</span></p>
+        <p class="cx-drop__hint" id="calc-drop-hint">Подойдёт любая выгрузка для производства: ZIP-архив, папка или отдельные файлы.<br>Больше всего данных — в IPC-2581 и ODB++, но подойдут и Gerber со сверловкой, и текстовые ТЗ (.txt).</p>
       </div>
       <input type="file" id="calc-file" multiple hidden>
     </div>
@@ -35,6 +38,11 @@
       <ul class="cx-files__list" id="calc-file-list"></ul>
     </div>
 
+    <div class="cx-boards" id="calc-boards" hidden>
+      <p class="cx-boards__title" id="calc-boards-title"></p>
+      <div class="cx-boards__list" id="calc-boards-list" role="group" aria-label="Платы проекта"></div>
+    </div>
+
     <details class="cx-report" id="calc-report" hidden>
       <summary class="cx-report__sum" id="calc-report-sum">Что взято из файлов</summary>
       <p class="cx-report__files" id="calc-report-files"></p>
@@ -46,12 +54,10 @@
       <details class="cx-faq__item" name="calc-faq">
         <summary>Какие файлы подойдут</summary>
         <div class="cx-faq__body">
-          <p><b>Файл IPC-2581 (.xml или .cvg)</b> — лучший вариант. Один файл заполнит параметры платы и монтажа: габариты, слои, толщину, медь, материал, отверстия, число и типы компонентов, стороны монтажа. Покрытие и цвет маски — если они указаны в проекте.</p>
-          <p><b>ODB++ (.tgz или .zip)</b> — почти так же полно, как IPC-2581: габариты, слои, медь, отверстия, минимальная дорожка, компоненты и стороны монтажа. Толщину и материал САПР часто оставляет по умолчанию — сверьте их с полями. Покрытия и цвета маски в ODB++ нет.</p>
-          <p><b>Gerber и сверловка</b> — отдельными файлами, папкой или в ZIP-архиве: габариты, число слоёв, отверстия, минимальная ширина дорожки и число SMD-площадок для грубой оценки монтажа.</p>
-          <p><b>Файл .gbrjob</b> — толщина платы, медь, материал, финишное покрытие, цвет маски и маркировки.</p>
-          <p><b>Требования к плате (.txt)</b> — если вы готовите для фабрики текстовый файл с параметрами в виде «Толщина: 1,6 мм» или «Surface finish: HASL», калькулятор возьмёт из него толщину, материал, медь, покрытие, цвета и тираж. Если данные в нём и в проекте расходятся, мы это покажем.</p>
-          <p>Файлы можно добавлять по одному или вместе. Можно загрузить всю выгрузку как есть — папкой или архивом: калькулятор найдёт в нём нужные файлы, в том числе во вложенных архивах, а PDF, таблицы и исходники САПР пропустит. Если данные расходятся, мы отметим это у поля. RAR и 7z калькулятор не читает — перепакуйте проект в ZIP или приложите архив к заявке.</p>
+          <p><b>Заполнят почти всё</b> — <b>IPC-2581</b> (.xml, .cvg) и <b>ODB++</b> (.tgz, .zip): габариты, слои, медь, отверстия, дорожку, компоненты и стороны монтажа. В IPC-2581 бывают ещё покрытие и цвета, в ODB++ их нет, а толщину и материал САПР часто оставляет по умолчанию — сверьте их с полями.</p>
+          <p><b>Заполнят часть</b> — <b>Gerber со сверловкой</b>: габариты, слои, отверстия, дорожку и грубую оценку монтажа; <b>.gbrjob</b>: толщину, медь, покрытие и цвета; <b>требования к плате</b> (.txt) — текст для фабрики вида «Толщина: 1,6 мм»: всё, что в нём указано.</p>
+          <p><b>Дополнят</b> — <b>Pick&amp;Place</b> (.csv, .txt, .pos): точное число компонентов и стороны монтажа.</p>
+          <p>Файлы можно добавлять по одному или все сразу — архивом или папкой: нужное калькулятор найдёт сам, в том числе во вложенных архивах, а PDF, таблицы и исходники САПР пропустит. Если в проекте несколько плат, он разделит файлы по платам и посчитает комплект. Если данные в файлах расходятся, мы отметим это у поля. RAR и 7z калькулятор не читает — перепакуйте в ZIP.</p>
         </div>
       </details>
       <details class="cx-faq__item" name="calc-faq">
@@ -102,7 +108,7 @@
         </div>
       </details>
       <details class="cx-faq__item" name="calc-faq">
-        <summary>Куда попадают файлы и параметры</summary>
+        <summary>Куда попадают файлы</summary>
         <div class="cx-faq__body">
           <p><b>Файлы — никуда.</b> Они разбираются прямо в вашем браузере и не отправляются на сервер. К нам они попадут, только если вы сами приложите их к заявке.</p>
           <p>Для расчёта цены на сервер уходят только значения полей калькулятора: слойность, размеры, тираж, материал, покрытие, данные о монтаже. Содержимое файлов в них не входит.</p>
@@ -110,7 +116,7 @@
         </div>
       </details>
       <details class="cx-faq__item" name="calc-faq">
-        <summary>Нет своих файлов? Загрузим демо-проект</summary>
+        <summary>Демо-проект</summary>
         <div class="cx-faq__body">
           <p>Загрузим пример — четырёхслойную плату 80 × 55 мм. Увидите, как калькулятор заполняет поля и что отмечает для проверки. Если вы уже загрузили свои файлы, демо-проект их заменит — перед этим спросим.</p>
           <button type="button" class="cx-btn cx-btn--sm" id="calc-demo-ipc">Попробовать на демо-проекте</button>
@@ -134,6 +140,7 @@
   <div class="cx-stage__body">
     <h2 id="h-board" class="cx-stage__title">Параметры платы</h2>
     <p class="cx-stage__lead">Тираж и габариты — обязательно, остальное влияет на точность оценки.</p>
+    <div class="cx-btabs" id="calc-btabs-2" role="group" aria-label="Плата для расчёта" hidden></div>
 
     <div class="cx-grid">
       <div class="cx-field">
@@ -143,9 +150,9 @@
       <div class="cx-field">
         <label for="f-len">Габариты платы, мм <span class="cx-badge" data-for="size"></span></label>
         <div class="cx-dims">
-          <input id="f-len" type="number" min="5" step="0.1" placeholder="длина" data-key="len" aria-label="Длина, мм">
+          <input id="f-len" type="text" inputmode="decimal" autocomplete="off" placeholder="длина" data-key="len" aria-label="Длина, мм">
           <span aria-hidden="true">×</span>
-          <input id="f-wid" type="number" min="5" step="0.1" placeholder="ширина" data-key="wid" aria-label="Ширина, мм">
+          <input id="f-wid" type="text" inputmode="decimal" autocomplete="off" placeholder="ширина" data-key="wid" aria-label="Ширина, мм">
         </div>
       </div>
       <div class="cx-field">
@@ -221,11 +228,11 @@
         <div class="cx-grid">
           <div class="cx-field">
             <label for="f-track">Мин. ширина дорожки, мм <span class="cx-badge" data-for="track"></span></label>
-            <input id="f-track" type="number" min="0.05" step="0.01" placeholder="например, 0,15" data-key="track">
+            <input id="f-track" type="text" inputmode="decimal" autocomplete="off" placeholder="например, 0,15" data-key="track">
           </div>
           <div class="cx-field">
             <label for="f-hole">Мин. отверстие, мм <span class="cx-badge" data-for="hole"></span></label>
-            <input id="f-hole" type="number" min="0.1" step="0.05" placeholder="например, 0,3" data-key="hole">
+            <input id="f-hole" type="text" inputmode="decimal" autocomplete="off" placeholder="например, 0,3" data-key="hole">
           </div>
           <div class="cx-field">
             <label for="f-sides">Расположение компонентов <span class="cx-badge" data-for="sides"></span></label>
@@ -258,7 +265,8 @@
   <p class="cx-stage__num" aria-hidden="true">3</p>
   <div class="cx-stage__body">
     <h2 id="h-asm" class="cx-stage__title">Компоненты и монтаж</h2>
-    <p class="cx-stage__lead">Монтируем только компоненты нашей закупки. Стоимость самих компонентов считаем по вашему BOM — в оценку она не входит.</p>
+    <p class="cx-stage__lead">Компоненты закупаем сами по вашему BOM — их стоимость в оценку не входит.</p>
+    <div class="cx-btabs" id="calc-btabs-3" role="group" aria-label="Плата для расчёта" hidden></div>
 
     <div class="cx-seg" role="radiogroup" aria-label="Режим оценки монтажа">
       <label><input type="radio" name="asm" value="none"> Без монтажа</label>
@@ -288,7 +296,7 @@
           <input id="q-smd" type="number" min="0" step="1" value="0" data-key="q_smd">
         </div>
         <div class="cx-field">
-          <label for="q-dip">DIP-компоненты, выводов <span class="cx-badge" data-for="q_dip"></span></label>
+          <label for="q-dip">DIP, выводов <span class="cx-badge" data-for="q_dip"></span></label>
           <input id="q-dip" type="number" min="0" step="1" value="0" data-key="q_dip">
         </div>
         <div class="cx-field">
@@ -296,7 +304,7 @@
           <input id="q-bga" type="number" min="0" step="1" value="0" data-key="q_bga">
         </div>
         <div class="cx-field">
-          <label for="q-qfn">QFN, QFP и др. многовыводные <span class="cx-badge" data-for="q_qfn"></span></label>
+          <label for="q-qfn">QFN, QFP и др. <span class="cx-badge" data-for="q_qfn"></span></label>
           <input id="q-qfn" type="number" min="0" step="1" value="0" data-key="q_qfn">
         </div>
       </div>

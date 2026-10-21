@@ -501,7 +501,7 @@
     font-weight: 600;
 }
 
-.cx input[type="number"], .cx select {
+.cx input[type="number"], .cx input[inputmode="decimal"], .cx select {
     width: 100%;
     height: 46px;
     box-sizing: border-box;
@@ -576,9 +576,12 @@
     border-radius: var(--radius-pill);
 }
 
+/* «из …» — спокойно: цветные плашки остаются только у того, что требует внимания */
 .cx-badge[data-state="ok"] {
-    background: var(--color-primary-light);
-    color: var(--color-primary);
+    padding-inline: 0;
+    background: none;
+    font-weight: 500;
+    color: var(--color-text-grey);
 }
 
 .cx-badge[data-state="need"] {
@@ -1340,6 +1343,39 @@
     display: none;
 }
 
+/* значок состояния разбора: крутилка — разбираем, «!» — есть поля, требующие внимания, «≠» — расхождение или ошибка */
+.cx-files__head[data-state="busy"] .cx-files__badge {
+    background: none;
+}
+
+.cx-files__head[data-state="busy"] .cx-spin {
+    display: block;
+}
+
+.cx-files__head[data-state="warn"] .cx-files__badge {
+    background: var(--color-gold);
+}
+
+.cx-files__head[data-state="warn"] .cx-files__badge::after {
+    content: "!";
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-primary-dark);
+}
+
+.cx-files__head[data-state="err"] .cx-files__badge {
+    background: var(--color-copper-dark);
+}
+
+.cx-files__head[data-state="err"] .cx-files__badge::after {
+    content: "!";
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
+}
+
 .cx-files__head[data-state="ok"] {
     background: var(--color-primary-light);
 }
@@ -1670,6 +1706,17 @@
     padding-block: clamp(24px, 3vw, 36px);
 }
 
+/* «beta» — надстрочным индексом после заголовка */
+.cx .cx-head__beta {
+    margin-left: .3em;
+    font-size: .4em;
+    font-weight: 700;
+    letter-spacing: .06em;
+    line-height: 0;
+    vertical-align: super;
+    color: var(--color-gold);
+}
+
 .cx .cx-head__title {
     color: var(--color-white);
     font-size: clamp(28px, 3vw, 40px);
@@ -1723,7 +1770,7 @@
     gap: 5px;
 }
 
-.cx input[type="number"], .cx select {
+.cx input[type="number"], .cx input[inputmode="decimal"], .cx select {
     height: var(--cx-fh);
 }
 
@@ -1908,6 +1955,7 @@
 }
 
 .cx input[type="number"],
+.cx input[inputmode="decimal"],
 .cx select {
     border-color: #8C9A93;                  /* было #E2E8E4: 1,2 → 2,9 : 1 */
 }
@@ -2108,4 +2156,384 @@
     text-decoration: underline;
     text-underline-offset: 2px;
     cursor: pointer;
+}
+
+/* Несколько плат в проекте: выбор платы для расчёта */
+.cx-boards {
+    margin-top: 10px;
+    padding: 12px 16px 14px;
+    border-radius: var(--radius-card);
+    background: var(--color-gold-light);
+    box-shadow: inset 0 0 0 1px rgba(216, 180, 90, .7);
+}
+
+.cx-boards[hidden], .cx-board-now[hidden] {
+    display: none;
+}
+
+.cx-boards__title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #5F4A12;
+}
+
+.cx-boards__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 8px;
+}
+
+.cx-board {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--color-separator);
+    border-radius: 10px;
+    background: var(--color-white);
+    overflow: hidden;
+}
+
+.cx-board.is-cur {
+    border-color: var(--color-copper);
+    box-shadow: inset 0 0 0 1px var(--color-copper);
+}
+
+.cx-board.is-off .cx-board__pick {
+    opacity: .55;
+}
+
+.cx-board__pick {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 8px 12px 6px;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+.cx-board__pick b {
+    font-size: 14px;
+}
+
+.cx-board__pick span {
+    font-size: 12px;
+    color: var(--color-text-grey);
+}
+
+.cx-board__pick .cx-board__sum {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.cx-board__pick .cx-board__sum:empty {
+    display: none;
+}
+
+.cx-board__pick:focus-visible {
+    outline: 2px solid var(--color-copper);
+    outline-offset: -2px;
+}
+
+.cx-board__ctl {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 6px 12px 8px;
+    border-top: 1px solid var(--color-separator);
+    font-size: 12px;
+    color: var(--color-text-grey);
+}
+
+.cx-board__ctl label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.cx .cx-board__ctl input[type="number"] {
+    flex: none;
+    width: 44px;
+    min-width: 0;
+    height: 26px;
+    padding: 0 4px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.cx .cx-board__ctl input[type="checkbox"] {
+    margin: 0;
+}
+
+.cx-boards__solo {
+    margin-top: 10px;
+}
+
+.cx-boards.is-solo .cx-board__ctl,
+.cx-boards.is-solo .cx-board__sum {
+    display: none;
+}
+
+.cx-board-now {
+    margin: 4px 0 12px;
+    font-size: 13px;
+    color: #7A5A12;
+}
+
+/* ===== UI/UX, 2026-10-21 ===== */
+
+/* шапка: подзаголовок */
+.cx .cx-head__sub {
+    margin: 4px 0 0 calc(var(--cx-col) + var(--cx-gap));
+    font-size: 14px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, .72);
+}
+
+/* отчёт: строки «из файла» свёрнуты */
+.cx-report__list li[hidden] {
+    display: none;
+}
+
+.cx-report__list li.cx-report__more {
+    display: block;
+    padding: 8px 0 2px;
+}
+
+.cx-report__toggle {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-copper-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+/* пустая страница: до первого действия — без жёлтых «заполните» */
+.cx.is-fresh .cx-badge[data-state="need"] {
+    display: none;
+}
+
+.cx.is-fresh .cx-field.is-need input,
+.cx.is-fresh .cx-field.is-need select,
+.cx.is-fresh .cx-table input.is-need {
+    border-color: #8C9A93;
+    background-color: var(--color-white);
+}
+
+/* вкладки плат в блоках 2 и 3 */
+.cx-btabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+}
+
+.cx-btabs[hidden] {
+    display: none;
+}
+
+.cx-btabs__label {
+    flex: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-grey);
+}
+
+.cx-btab {
+    flex: none;
+    max-width: 14em;
+    padding: 5px 12px;
+    border: 1px solid var(--color-separator);
+    border-radius: var(--radius-pill);
+    background: var(--color-white);
+    font: inherit;
+    font-size: 13px;
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.cx-btab[aria-pressed="true"] {
+    border-color: var(--color-copper);
+    background: var(--color-copper);
+    color: #fff;
+    font-weight: 600;
+}
+
+.cx-btab.is-off {
+    opacity: .55;
+}
+
+.cx-btab:focus-visible {
+    outline: 2px solid var(--color-copper);
+    outline-offset: 2px;
+}
+
+/* итог комплекта: открытая плата */
+.cx-break li.is-cur span:first-child {
+    font-weight: 700;
+}
+
+.cx-break li.is-cur span:first-child::before {
+    content: "▸ ";
+    color: var(--color-gold);
+}
+
+/* «Очистить всё» под списком — на телефоне */
+.cx-files__foot {
+    padding: 10px 18px;
+    border-top: 1px solid var(--color-separator);
+}
+
+.cx-files__foot[hidden] {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .cx .cx-head__sub {
+        margin-left: 0;
+    }
+
+    /* отчёт: значение — под названием, а не третьей колонкой */
+    .cx-report__list li {
+        grid-template-columns: 22px minmax(0, 1fr);
+        row-gap: 2px;
+    }
+
+    .cx-report__list li .v {
+        grid-column: 2;
+        text-align: left;
+    }
+
+    /* строка файла: имя на всю ширину, размер под ним */
+    .cx-files__list li {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        row-gap: 2px;
+        padding: 10px 14px;
+    }
+
+    .cx-files__list li .cx-fsize {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: 12px;
+        color: var(--color-text-grey);
+    }
+
+    .cx-files__list li .cx-fdel {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+    }
+
+    .cx-fname b {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .cx-files__head {
+        padding-inline: 14px;
+    }
+
+    /* подробная таблица монтажа: группа — строкой, два поля под ней */
+    .cx-table, .cx-table tbody, .cx-table tr, .cx-table th, .cx-table td {
+        display: block;
+    }
+
+    .cx-table thead {
+        display: none;
+    }
+
+    .cx-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 10px;
+        padding: 8px 0;
+        border-top: 1px solid var(--color-separator);
+    }
+
+    .cx-table tbody th {
+        grid-column: 1 / -1;
+        padding: 0;
+        border: 0;
+    }
+
+    .cx-table td {
+        padding: 0;
+        border: 0;
+        font-size: 12px;
+        color: var(--color-text-grey);
+    }
+
+    .cx-table td::before {
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .cx-table td:nth-of-type(1)::before {
+        content: "Корпусов на плате";
+    }
+
+    .cx-table td:nth-of-type(2)::before {
+        content: "Выводов на корпус";
+    }
+
+    .cx-table td.cx-fixed {
+        font-size: 14px;
+        color: inherit;
+    }
+
+    .cx-table td.cx-fixed::before {
+        font-size: 12px;
+        color: var(--color-text-grey);
+    }
+
+    .cx-table-wrap {
+        overflow: visible;
+    }
+
+    /* номер этапа — в строку с заголовком */
+    .cx-stage {
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 12px;
+        row-gap: 0;
+    }
+
+    .cx-stage__body {
+        display: contents;
+    }
+
+    .cx-stage__body > * {
+        grid-column: 1 / -1;
+    }
+
+    .cx-stage .cx-stage__num {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: center;
+        font-size: 40px;
+        line-height: 1;
+        -webkit-text-stroke-width: 1.5px;
+    }
+
+    .cx-stage__body > .cx-stage__title {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: center;
+        margin: 0;
+    }
 }
