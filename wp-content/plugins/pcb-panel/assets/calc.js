@@ -237,9 +237,9 @@
     else if (r.engineer) body = '<div class="cs-client"><span class="cs-client__l">Ориентировочная стоимость партии</span><span class="cs-client__p">Расчёт инженером</span><span class="cs-client__v">' + esc(r.warn.join(', ')) + '</span><span class="cs-client__v">Срок: ' + esc(r.term) + '</span></div>';
     else {
       body = '<div class="cs-client"><span class="cs-client__l">Ориентировочная стоимость партии</span><span class="cs-client__p num">' + siteRub(r.lo) + ' – ' + siteRub(r.hi) + '</span>' +
-        '<span class="cs-client__v num">≈ ' + siteRub(r.per) + ' за плату · ' + fmt.format(r.qty) + ' шт' + (r.vat.show ? ' · <b>в т. ч. НДС ' + fmt2.format(r.vat.pct) + ' %</b>' : '') + '</span>' +
+        '<span class="cs-client__v num">≈ ' + siteRub(r.per) + (r.set ? ' за комплект · ' + fmt.format(r.qty) + ' компл.' : ' за плату · ' + fmt.format(r.qty) + ' шт') + (r.vat.show ? ' · <b>в т. ч. НДС ' + fmt2.format(r.vat.pct) + ' %</b>' : '') + '</span>' +
         '<span class="cs-client__v">Срок: ' + esc(r.term) + '</span><ul>' + r.lines.map(function (l) {
-          return '<li><span>' + esc(l.name) + '</span><span>' + (l.text ? esc(l.text) : '≈ ' + siteRub(l.v)) + '</span></li>';
+          return '<li' + (l.soft ? ' class="cs-soft"' : '') + '><span>' + esc(l.name) + '</span><span>' + (l.text ? esc(l.text) : '≈ ' + siteRub(l.v)) + '</span></li>';
         }).join('') + '</ul></div>';
     }
     $('#cs-client').innerHTML = '<h2>Так увидит клиент</h2><p class="cs-hint">' + esc(e.n + ' — ' + e.d) + '. На сайте цена всегда в рублях; наценка и расходы на платёж разнесены по строкам.</p>' + body;

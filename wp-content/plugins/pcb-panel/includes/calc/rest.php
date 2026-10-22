@@ -10,6 +10,8 @@
  *     POST calc/etalon {number}      — эталон из заявки; POST calc/etalon-delete {id}.
  *   Сайт (без входа): POST calc/quote {данные калькулятора} → оценка. Файлы проекта сюда не попадают —
  *   только параметры, которые клиент видит в полях калькулятора. Ничего не сохраняется.
+ *   Комплект — одним запросом: { set: { sets, boards: [ { name, n, data } ] } } → { set: true, lo, hi, per, total,
+ *   ship, saving, lines, boards: [ { name, n, qty, ok, engineer, warn, lo, hi, per, goods, lines } ], … } (README §9.5).
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -189,12 +191,18 @@ add_action( 'rest_api_init', function () {
 			if ( ! is_array( $calc ) || empty( $calc['qty'] ) ) {
 				return pcb_calc_err( 'В этой заявке нет данных калькулятора.' );
 			}
+			// комплект — эталоном целиком (платы «не в заказе» отбрасываются); «посчитана отдельно» — одна плата
+			$isSet = empty( $calc['solo'] ) && ! empty( $calc['set']['boards'] );
+			$in    = pcb_calc_input_clean( $isSet ? array( 'set' => array( 'sets' => $calc['set']['sets'] ?? $calc['qty'], 'boards' => $calc['set']['boards'] ) ) : $calc );
+			if ( $isSet && ! $in['set']['boards'] ) {
+				return pcb_calc_err( 'В комплекте этой заявки нет плат в заказе.' );
+			}
 			$list = pcb_calc_etalons();
 			if ( count( $list ) >= 12 ) {
 				return pcb_calc_err( 'Эталонов уже 12 — удалите лишний.' );
 			}
 			$number = (string) get_post_meta( $id, '_pcb_number', true );
-			$list[] = array( 'id' => 'r' . $id . '-' . wp_generate_password( 4, false ), 'n' => 'Заявка ' . $number, 'from' => $number, 'in' => pcb_calc_input_clean( $calc ) );
+			$list[] = array( 'id' => 'r' . $id . '-' . wp_generate_password( 4, false ), 'n' => 'Заявка ' . $number . ( $isSet ? ', комплект' : '' ), 'from' => $number, 'in' => $in );
 			pcb_calc_etalons_save( $list );
 			return $state();
 		},
@@ -241,8 +249,9 @@ add_action( 'rest_api_init', function () {
 } );
 
 // Калькулятор темы узнаёт, что считать нужно на сервере, — только после первой публикации.
+// set: true — сервер считает комплект одним запросом (доставка, таможня, минимум, округление — один раз).
 add_action( 'wp_enqueue_scripts', function () {
 	if ( wp_script_is( 'theme-calculator', 'enqueued' ) && pcb_calc_site_on() ) {
-		wp_add_inline_script( 'theme-calculator', 'window.PCBCalcServer=' . wp_json_encode( array( 'url' => esc_url_raw( rest_url( 'pcb-panel/v1/calc/quote' ) ) ) ) . ';', 'before' );
+		wp_add_inline_script( 'theme-calculator', 'window.PCBCalcServer=' . wp_json_encode( array( 'url' => esc_url_raw( rest_url( 'pcb-panel/v1/calc/quote' ) ), 'set' => true ) ) . ';', 'before' );
 	}
 }, 20 );

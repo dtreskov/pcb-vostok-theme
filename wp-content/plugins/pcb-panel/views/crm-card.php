@@ -61,7 +61,9 @@ unset( $related[ $id ] );
 krsort( $related );
 $open_important = count( array_filter( $notes, function ( $r ) { return 'important' === $r['old_value']; } ) );
 
-$calc_rows = pcb_crm_calc_rows( (array) $m( 'calc' ) );
+$calc_secs = pcb_crm_calc_sections( (array) $m( 'calc' ) );
+$calc_rows = array_merge( array(), ...array_map( function ( $s ) { return $s['rows']; }, $calc_secs ?: array( array( 'rows' => array() ) ) ) );
+$calc_brds = array_values( array_filter( $calc_secs, function ( $s ) { return null !== $s['title']; } ) );
 $desc      = (string) $post->post_content;
 // до 0.8.1 форма дописывала расчёт калькулятора текстом в описание — показываем его отдельно, свёрнутым
 $desc_calc = '';
@@ -192,19 +194,34 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 		</details>
 
 		<?php if ( $calc_rows ) : ?>
-			<details class="crm-box crm-fold"<?php echo count( $calc_rows ) <= 8 ? ' open' : ''; ?>>
+			<details class="crm-box crm-fold"<?php echo $calc_brds || count( $calc_rows ) <= 8 ? ' open' : ''; ?>>
 				<?php $restore = pcb_crm_calc_restore( $id ); ?>
-				<summary><h2>Данные калькулятора</h2><span class="crm-sub"><?php echo (int) count( $calc_rows ); ?> параметров</span>
+				<summary><h2>Данные калькулятора</h2><span class="crm-sub"><?php echo $calc_brds ? esc_html( 'комплект, плат: ' . count( $calc_brds ) ) : (int) count( $calc_rows ) . ' параметров'; ?></span>
 					<?php if ( $restore ) : ?>
 						<button class="pp-btn pp-btn--sm pp-btn--ghost crm-calc-open" type="button" data-calc-open="<?php echo esc_url( pcb_crm_calc_page_url() ); ?>" data-payload="<?php echo esc_attr( wp_json_encode( $restore, JSON_UNESCAPED_UNICODE ) ); ?>"
 							title="<?php echo esc_attr( 'Откроется в новой вкладке с параметрами' . ( $restore['files'] ? ' и файлами (' . count( $restore['files'] ) . ')' : '' ) . ' из заявки. Правки там в заявку не сохраняются.' ); ?>">Показать в калькуляторе</button>
 					<?php endif; ?>
 				</summary>
-				<dl class="crm-dl crm-dl--wide">
-					<?php foreach ( $calc_rows as $row ) : ?>
-						<dt<?php echo 0 === strpos( $row[0], '· ' ) ? ' class="crm-dl__sub"' : ''; ?>><?php echo esc_html( ltrim( $row[0], '· ' ) ); ?></dt><dd><?php echo esc_html( $row[1] ); ?></dd>
-					<?php endforeach; ?>
-				</dl>
+				<?php
+				$dl = function ( array $rows ) {
+					echo '<dl class="crm-dl crm-dl--wide">';
+					foreach ( $rows as $row ) {
+						echo '<dt' . ( 0 === strpos( $row[0], '· ' ) ? ' class="crm-dl__sub"' : '' ) . '>' . esc_html( ltrim( $row[0], '· ' ) ) . '</dt><dd>' . esc_html( $row[1] ) . '</dd>';
+					}
+					echo '</dl>';
+				};
+				// комплект: общие строки, затем каждая плата — свой спойлер (README §3.9)
+				foreach ( $calc_secs as $sec ) :
+					if ( null === $sec['title'] ) {
+						$dl( $sec['rows'] );
+						continue;
+					}
+					?>
+					<details class="crm-calc-board<?php echo $sec['off'] ? ' is-off' : ''; ?>"<?php echo $sec['off'] ? ' inert' : ''; ?>>
+						<summary><b><?php echo esc_html( $sec['title'] ); ?></b><span class="crm-sub"><?php echo esc_html( $sec['meta'] ); ?></span><?php if ( ! empty( $sec['price'] ) ) : ?><span class="crm-calc-board__p"><?php echo esc_html( $sec['price'] ); ?></span><?php endif; ?></summary>
+						<?php $dl( $sec['rows'] ); ?>
+					</details>
+				<?php endforeach; ?>
 			</details>
 		<?php endif; ?>
 

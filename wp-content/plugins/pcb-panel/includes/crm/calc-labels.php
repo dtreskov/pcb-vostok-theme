@@ -254,41 +254,43 @@ function pcb_crm_calc_money( $n ) {
 }
 
 /**
- * Строки для карточки и письма: array( array( название, значение ), … ) в порядке калькулятора.
- * «· » в начале названия — вложенная строка. Несколько плат — §3.9 README: комплект (set) — блок по каждой
- * плате, доставка одной партией, оценка за комплект; «отдельно» (solo) — одна плата из N.
+ * Разделы для карточки: array( array( 'title' => null|«Плата «x»», 'meta' => …, 'off' => bool, 'rows' => [[название, значение]] ) ).
+ * Раздел без title — общие строки; у комплекта (set, README §3.9) каждая плата — свой раздел (в карточке — спойлер),
+ * доставка одной партией и оценка за комплект — после плат. «· » в начале названия строки — вложенная строка.
  */
-function pcb_crm_calc_rows( array $calc ) {
+function pcb_crm_calc_sections( array $calc ) {
 	$d     = pcb_crm_calc_dict();
-	$rows  = array();
 	$fmt   = 'pcb_crm_calc_money';
 	$name  = function ( $k ) use ( $d ) { return $d['fields'][ $k ] ?? $k; };
 	$plur  = function ( $n, $a, $b, $c ) { $m = $n % 10; $h = $n % 100; return ( 1 === $m && 11 !== $h ) ? $a : ( ( $m >= 2 && $m <= 4 && ( $h < 12 || $h > 14 ) ) ? $b : $c ); };
 	$set   = ( isset( $calc['set'] ) && is_array( $calc['set'] ) && ! empty( $calc['set']['boards'] ) ) ? $calc['set'] : null;
 	$multi = ! empty( $calc['boards'] ) && count( (array) $calc['boards'] ) > 1;
+	$out   = array();
+	$rows  = array();
 
 	if ( $set ) {
 		$sets = (int) ( $set['sets'] ?? ( $calc['qty'] ?? 0 ) );
 		$all  = (array) $set['boards'];
 		$on   = array_filter( $all, function ( $b ) { return ! empty( $b['on'] ); } );
-		$rows[] = array( 'Комплект', $sets . ' ' . $plur( $sets, 'комплект', 'комплекта', 'комплектов' ) . ', плат в заказе ' . count( $on ) . ' из ' . count( $all ) );
+		$out[] = array( 'title' => null, 'rows' => array( array( 'Комплект', $sets . ' ' . $plur( $sets, 'комплект', 'комплекта', 'комплектов' ) . ', плат в заказе ' . count( $on ) . ' из ' . count( $all ) ) ) );
 		foreach ( $all as $b ) {
 			$title = 'Плата «' . ( $b['name'] ?? '' ) . '»';
 			if ( empty( $b['on'] ) ) {
-				$rows[] = array( $title, 'не в заказе' );
+				$out[] = array( 'title' => $title, 'meta' => 'не в заказе', 'off' => true, 'rows' => array() );
 				continue;
 			}
-			$n      = (int) ( $b['n'] ?? 0 );
-			$rows[] = array( $title, $n . ' в комплекте, всего ' . ( $n * $sets ) . ' шт' );
-			$rows   = array_merge( $rows, pcb_crm_calc_board_rows( (array) ( $b['data'] ?? array() ), true, array( 'qty' ) ) );
-			$e      = $b['estimate'] ?? null;
+			$n     = (int) ( $b['n'] ?? 0 );
+			$br    = pcb_crm_calc_board_rows( (array) ( $b['data'] ?? array() ), false, array( 'qty' ) );
+			$e     = $b['estimate'] ?? null;
+			$price = '';
 			if ( 'engineer' === $e ) {
-				$rows[] = array( '· Оценка платы', 'расчёт инженером' );
+				$br[]  = array( 'Оценка платы', 'расчёт инженером' );
+				$price = 'расчёт инженером';
 			} elseif ( is_array( $e ) && ( ! empty( $e['lo'] ) || ! empty( $e['goods'] ) ) ) {
-				$rows[] = array( '· Оценка платы без доставки', ! empty( $e['lo'] )
-					? $fmt( $e['lo'] ) . ' – ' . $fmt( $e['hi'] ?? 0 ) . ' ₽'
-					: '≈ ' . $fmt( $e['goods'] ) . ' ₽' );
+				$price = ! empty( $e['lo'] ) ? $fmt( $e['lo'] ) . ' – ' . $fmt( $e['hi'] ?? 0 ) . ' ₽' : '≈ ' . $fmt( $e['goods'] ) . ' ₽';
+				$br[]  = array( 'Оценка платы без доставки', $price );
 			}
+			$out[] = array( 'title' => $title, 'meta' => $n . ' в комплекте, всего ' . ( $n * $sets ) . ' шт', 'price' => $price, 'off' => false, 'rows' => $br );
 		}
 		if ( isset( $set['ship'] ) ) {
 			$rows[] = array( 'Доставка и таможня одной партией', '≈ ' . $fmt( $set['ship'] ) . ' ₽' . ( ! empty( $set['saving'] ) ? ' (экономия против заказа плат по отдельности ≈ ' . $fmt( $set['saving'] ) . ' ₽)' : '' ) );
@@ -340,6 +342,28 @@ function pcb_crm_calc_rows( array $calc ) {
 			continue;
 		}
 		$rows[] = array( $name( $k ), is_array( $v ) ? wp_json_encode( $v, JSON_UNESCAPED_UNICODE ) : (string) $v );
+	}
+	if ( $rows ) {
+		$out[] = array( 'title' => null, 'rows' => $rows );
+	}
+	return $out;
+}
+
+/**
+ * Строки для письма: array( array( название, значение ), … ) в порядке калькулятора — разделы подряд,
+ * плата комплекта — строкой «Плата «x» — N в комплекте…», её поля — вложенными («· »), монтаж — на том же уровне.
+ */
+function pcb_crm_calc_rows( array $calc ) {
+	$rows = array();
+	foreach ( pcb_crm_calc_sections( $calc ) as $sec ) {
+		if ( null === $sec['title'] ) {
+			$rows = array_merge( $rows, $sec['rows'] );
+			continue;
+		}
+		$rows[] = array( $sec['title'], $sec['meta'] );
+		foreach ( $sec['rows'] as $r ) {
+			$rows[] = array( 0 === strpos( $r[0], '· ' ) ? $r[0] : '· ' . $r[0], $r[1] );
+		}
 	}
 	return $rows;
 }

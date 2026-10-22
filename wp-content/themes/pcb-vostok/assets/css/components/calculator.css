@@ -592,7 +592,7 @@
 
 /* Пояснение под полем: значение из файла не совпало со списком / подставлено по умолчанию */
 .cx-fnote {
-    margin: -2px 0 0;
+    margin: 0;
     font-size: 12px;
     line-height: 1.35;
     color: #7A5A12;
@@ -1662,7 +1662,7 @@
 }
 
 .cx-grid {
-    align-items: end;
+    align-items: start; /* пояснения — под полем; подписи и поля ряда на одной линии */
 }
 
 .cx-confirm--row {
@@ -2871,3 +2871,936 @@
 .cx-drop .cx-drop__hint br {
     display: none;
 }
+
+/* =================================
+   Блок 3: единица в поле («корп.», «выв.») и «~» у оценочных значений
+   (calculator.js → markEst: по пасте Gerber, по названиям посадочных мест, среднее по группе)
+   ================================= */
+.cx-num {
+    position: relative;
+    display: block;
+}
+
+.cx-num[data-unit] input {
+    padding-right: 54px;
+}
+
+.cx-num[data-unit]::after {
+    content: attr(data-unit);
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: var(--color-text-grey);
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.cx-num.is-est::before,
+.cx-tilde {
+    color: var(--color-copper-dark);
+    font-weight: 700;
+}
+
+.cx-num.is-est::before {
+    content: "~";
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-55%);
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.cx-num.is-est input {
+    padding-left: 26px;
+}
+
+.cx-asm__hint {
+    margin-top: 10px !important;
+    color: var(--color-text-grey);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* =================================
+   Сброс: под итогом, во всплывающей строке «Вернуть», в подсказке «?»
+   ================================= */
+.cx-sum__reset {
+    display: block;
+    margin: 10px 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #8FA9A0;
+    font: inherit;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.cx-sum__reset:hover {
+    color: var(--color-white);
+}
+
+.cx.is-fresh .cx-sum__reset {
+    display: none;
+}
+
+.cx-toast {
+    position: fixed;
+    z-index: 120;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-sizing: border-box;
+    max-width: calc(100% - 32px);
+    padding: 10px 10px 10px 18px;
+    border-radius: var(--radius-pill);
+    background: var(--color-primary-dark);
+    color: var(--color-white);
+    font-family: var(--font-family);
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 8px 28px rgba(11, 44, 34, .28);
+    opacity: 0;
+    transform: translate(-50%, 8px);
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.cx-toast.is-on {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.cx-toast[hidden] {
+    display: none;
+}
+
+.cx-toast__undo {
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-copper-dark);
+    color: var(--color-white);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cx-toast__close {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #8FA9A0;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* =================================
+   Подсказка «?» в левом нижнем углу
+   ================================= */
+.cx-help {
+    position: fixed;
+    z-index: 90; /* под баннером cookie (110) */
+    left: 24px;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+.cx-help__btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1.5px solid var(--color-separator);
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-copper-dark);
+    font: inherit;
+    font-size: 20px;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(32, 36, 34, .12);
+    cursor: pointer;
+    opacity: .9;
+    transition: opacity var(--transition-fast), border-color var(--transition-fast);
+}
+
+.cx-help__btn:hover,
+.cx-help.is-open .cx-help__btn {
+    opacity: 1;
+    border-color: var(--color-copper);
+}
+
+.cx-help__btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(192, 112, 58, .3);
+}
+
+.cx-help__panel {
+    position: absolute;
+    left: 0;
+    bottom: 56px;
+    box-sizing: border-box;
+    width: 460px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    padding: 18px 20px 20px;
+    border: 1px solid var(--color-separator);
+    border-radius: var(--radius-card);
+    background: var(--color-white);
+    color: var(--color-text-black);
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 12px 40px rgba(32, 36, 34, .16);
+}
+
+.cx-help__panel[hidden] {
+    display: none;
+}
+
+.cx-help__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cx-help__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.cx-help__close {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    margin: -4px -6px 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-text-grey);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.cx-help__steps {
+    margin: 12px 0 0;
+    padding-left: 20px;
+}
+
+.cx-help__steps li + li {
+    margin-top: 8px;
+}
+
+.cx-help__steps li::marker {
+    color: var(--color-copper);
+    font-weight: 700;
+}
+
+.cx-help__steps a {
+    color: var(--color-text-black);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--color-copper);
+    text-underline-offset: 3px;
+}
+
+.cx-help__sub {
+    margin: 16px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-separator);
+    color: var(--color-text-grey);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.cx-help__tips {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    font-size: 13.5px;
+}
+
+.cx-help__tips li + li {
+    margin-top: 6px;
+}
+
+.cx-help__tips li::marker {
+    color: var(--color-copper);
+}
+
+.cx-help__tips b {
+    font-weight: 600;
+}
+
+
+
+/* итог прилипает к низу экрана — подсказку и всплывающую строку поднимаем над ним */
+@media (max-width: 1199px) {
+    .cx-help {
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .cx-toast {
+        bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .cx.is-sum-open .cx-help,
+    .cx.is-toast .cx-help {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .cx-help {
+        left: 12px;
+    }
+
+    .cx-help__btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .cx-toast {
+        width: calc(100% - 24px);
+        border-radius: var(--radius-card);
+    }
+
+    .cx-toast__msg {
+        flex: 1 1 auto;
+    }
+}
+
+/* Подзаголовок этапа — во всю ширину рабочей колонки (было 60ch) */
+.cx-stage__lead {
+    max-width: none;
+}
+
+/* Единица в полях этапа 2: «шт», «мм» — короче, чем «корп.» */
+.cx-num[data-unit="шт"] input,
+.cx-num[data-unit="мм"] input,
+.cx .cx-field.is-set .cx-num .cx-qty-total {
+    padding-right: 40px;
+}
+
+.cx-dims .cx-num {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* =================================
+   Сворачиваемые этапы — как этапы цикла на главной (section-stage.css)
+   calculator.js → stages: кнопка .cx-stage__toggle, сводка .cx-stage__sum
+   ================================= */
+.cx-stage--fold .cx-stage__num,
+.cx-stage--fold .cx-stage__title,
+.cx-stage--fold .cx-stage__lead,
+.cx-stage--fold .cx-stage__sum {
+    cursor: pointer;
+}
+
+.cx-stage--fold .cx-stage__body > .cx-stage__title,
+.cx-stage--fold .cx-stage__body > .cx-stage__lead,
+.cx-stage--fold .cx-stage__body > .cx-stage__sum {
+    padding-right: 72px; /* не заезжать под круглую кнопку */
+}
+
+.cx-stage__toggle {
+    position: absolute;
+    z-index: 3;
+    top: calc(var(--cx-pad) - 6px);
+    right: 0;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    box-sizing: border-box;
+    border: 1.5px solid var(--color-separator);
+    border-radius: 50%;
+    background:
+        var(--color-white)
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" fill="none" stroke="%23A85C28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+        center / 18px no-repeat;
+    cursor: pointer;
+    transition: transform var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.cx-stage.is-collapsed .cx-stage__toggle {
+    transform: rotate(180deg);
+}
+
+.cx-stage__toggle:focus-visible {
+    outline: 2px solid var(--color-copper);
+    outline-offset: 2px;
+}
+
+.cx-stage--fold:has(.cx-stage__toggle:hover, .cx-stage__num:hover, .cx-stage__title:hover, .cx-stage__lead:hover, .cx-stage__sum:hover) .cx-stage__toggle {
+    border-color: var(--color-copper);
+    background-color: var(--color-copper-light);
+}
+
+.cx-stage--fold:has(.cx-stage__toggle:hover, .cx-stage__num:hover, .cx-stage__title:hover, .cx-stage__lead:hover, .cx-stage__sum:hover) .cx-stage__num {
+    color: var(--color-copper-light);
+}
+
+/* свёрнут: остаются номер, заголовок и сводка (или подзаголовок, если сводки нет) */
+.cx-stage.is-collapsed .cx-stage__body > :not(.cx-stage__title):not(.cx-stage__lead):not(.cx-stage__sum) {
+    display: none !important;
+}
+
+.cx-stage.is-collapsed.has-sum .cx-stage__lead {
+    display: none;
+}
+
+.cx-stage__sum {
+    margin-top: 6px !important;
+    color: var(--color-text-grey);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.cx-stage__sum[hidden] {
+    display: none;
+}
+
+
+@media (max-width: 767px) {
+    .cx-stage__toggle {
+        width: 40px;
+        height: 40px;
+        top: calc(var(--cx-pad) - 4px);
+    }
+
+    .cx-stage--fold .cx-stage__body > .cx-stage__title {
+        padding-right: 52px;
+    }
+
+    .cx-stage--fold .cx-stage__body > .cx-stage__lead,
+    .cx-stage--fold .cx-stage__body > .cx-stage__sum {
+        padding-right: 0; /* на телефоне кнопка — в строке заголовка */
+    }
+}
+
+/* =================================
+   Итог не выше экрана: сверху сумма, снизу кнопка, прокручивается середина
+   ================================= */
+@media (min-width: 1200px) {
+    .cx-sum {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - var(--anchor-offset) - 32px);
+    }
+
+    .cx-sum__inner {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .cx-sum__inner > * {
+        flex: 0 0 auto;
+    }
+
+    .cx-sum__inner > .cx-sum__scroll {
+        flex: 0 1 auto;
+        min-height: 72px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        margin-right: -10px;
+        padding-right: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(157, 184, 171, .45) transparent;
+        /* тени у краёв, когда есть что прокручивать */
+        background:
+            linear-gradient(var(--color-primary-dark) 30%, rgba(11, 44, 34, 0)) top / 100% 28px no-repeat local,
+            linear-gradient(rgba(11, 44, 34, 0), var(--color-primary-dark) 70%) bottom / 100% 28px no-repeat local,
+            radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, .45), transparent) top / 100% 12px no-repeat scroll,
+            radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, .45), transparent) bottom / 100% 12px no-repeat scroll;
+    }
+}
+
+/* =================================
+   Сводка свёрнутого этапа (calculator.js → stages.fill)
+   ================================= */
+.cx-fold {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px 28px;
+    color: var(--color-text-black);
+}
+
+.cx-fold:empty {
+    display: none;
+}
+
+.cx-fold__body {
+    flex: 1 1 320px;
+    min-width: 0;
+}
+
+.cx-fold__body > * + * {
+    margin-top: 10px !important;
+}
+
+/* стоимость этапа — в строке заголовка, левее круглой кнопки (на телефоне — под сводкой) */
+.cx-fold__cost {
+    position: absolute;
+    top: calc(var(--cx-pad) + 4px);
+    right: 60px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.cx-fold__cost-l {
+    display: none; /* на десктопе ясно из заголовка этапа */
+}
+
+.cx-stage.is-collapsed.has-cost .cx-stage__body > .cx-stage__title {
+    padding-right: 200px; /* место под стоимость: длинный заголовок переносится, а не наезжает */
+}
+
+.cx-fold__cost b {
+    color: var(--color-primary);
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.cx-fold__board,
+.cx-fold__note {
+    margin: 0;
+    color: var(--color-text-grey);
+    font-size: 13px;
+}
+
+.cx-fold__board {
+    font-weight: 600;
+}
+
+.cx-fold__mode {
+    margin: 0;
+    font-size: 15px;
+    color: var(--color-text-grey);
+}
+
+.cx-fold__mode b {
+    color: var(--color-text-black);
+    font-weight: 600;
+}
+
+.cx-btabs--fold {
+    margin-top: 12px !important;
+}
+
+/* этап 1: карточки */
+.cx-fcards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cx-fcard {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    column-gap: 6px;
+    min-width: 112px;
+    max-width: 240px;
+    padding: 8px 14px 9px;
+    border: 1px solid var(--color-separator);
+    border-radius: 10px;
+    background: var(--color-white);
+    color: var(--color-text-black);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.cx-fcard:hover {
+    border-color: var(--color-copper);
+    box-shadow: 0 4px 12px rgba(32, 36, 34, .08);
+}
+
+.cx-fcard b {
+    white-space: nowrap;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.cx-fcard span {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.cx-fcard small {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    color: var(--color-text-grey);
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cx-fcard.is-ok b {
+    color: var(--color-primary);
+}
+
+.cx-fcard.is-need {
+    border-color: var(--color-gold);
+    background: var(--color-gold-light);
+}
+
+.cx-fcard.is-need b,
+.cx-fcard.is-need span {
+    color: #7A5A12;
+}
+
+.cx-fcard.is-conf {
+    border-color: var(--color-copper);
+    background: var(--color-copper-light);
+}
+
+.cx-fcard.is-conf b,
+.cx-fcard.is-conf span {
+    color: var(--color-copper-dark);
+}
+
+/* этап 2: спецификация */
+.cx-spec {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+}
+
+.cx-spec__row {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 0;
+    border: 0;
+    border-bottom: 1px dashed var(--color-separator);
+    background: none;
+    color: var(--color-text-black);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.cx-spec__row span {
+    color: var(--color-text-grey);
+    font-size: 13px;
+}
+
+.cx-spec__row b {
+    overflow: hidden;
+    font-weight: 500;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cx-spec__row:hover b {
+    color: var(--color-copper-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.cx-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    align-self: center;
+}
+
+.cx-dot--need {
+    background: var(--color-gold);
+}
+
+.cx-dot--conf {
+    background: var(--color-copper);
+}
+
+/* этап 3: чипы групп и доли паяных соединений */
+.cx-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 11px;
+    border: 1px solid var(--color-separator);
+    border-radius: var(--radius-pill);
+    background: var(--color-white);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.cx-chip i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+}
+
+.cx-jbar {
+    display: flex;
+    gap: 2px;
+    height: 8px;
+    max-width: 520px;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.cx-jbar i {
+    display: block;
+    min-width: 4px;
+}
+
+@media (max-width: 767px) {
+    .cx-spec {
+        grid-template-columns: 1fr;
+    }
+
+    .cx-fold__cost {
+        position: static;
+    }
+
+    .cx-fold__cost-l {
+        display: inline;
+        color: var(--color-text-grey);
+        font-size: 13px;
+    }
+
+    .cx-stage.is-collapsed.has-cost .cx-stage__body > .cx-stage__title {
+        padding-right: 52px;
+    }
+
+    .cx-fcard {
+        grid-template-columns: 1fr;
+    }
+
+    .cx-fcard {
+        min-width: 0;
+        flex: 1 1 140px;
+    }
+}
+
+/* =================================
+   Итог внизу на широком экране (calculator.js → .is-docked)
+   ================================= */
+.cx-sum__dock,
+.cx-sum__bar {
+    display: none;
+}
+
+@media (min-width: 1200px) {
+    .cx-sum__dock {
+        display: grid;
+        place-items: center;
+        position: absolute;
+        z-index: 1;
+        top: 16px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid rgba(157, 184, 171, .35);
+        border-radius: 50%;
+        background: transparent;
+        color: #9DB8AB;
+        cursor: pointer;
+        transition: color var(--transition-fast), border-color var(--transition-fast);
+    }
+
+    .cx-sum__dock:hover {
+        color: var(--color-white);
+        border-color: #9DB8AB;
+    }
+
+    .cx-sum__dock svg,
+    .cx-sum__undock svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .cx-sum__label {
+        padding-right: 40px;
+    }
+
+    /* перенесён вниз: этапы во всю ширину, итог — полоса */
+    .cx.is-docked .cx-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cx.is-docked #calc-board > .cx-stage__body > .cx-grid,
+    .cx.is-docked #calc-more .cx-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .cx.is-docked #calc-assembly .cx-asm[data-mode="quick"] .cx-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .cx.is-docked .cx-sum {
+        top: auto;
+        bottom: 0;
+        z-index: 50;
+        display: block;
+        max-height: none;
+        margin: 0 calc(50% - 50vw) !important;
+        border-radius: var(--radius-card) var(--radius-card) 0 0;
+    }
+
+    .cx.is-docked .cx-sum__dock {
+        display: none;
+    }
+
+    .cx.is-docked .cx-sum__inner {
+        display: none;
+    }
+
+    .cx.is-docked .cx-sum.is-open .cx-sum__inner {
+        display: flex;
+        position: absolute;
+        bottom: calc(100% - 3px);
+        right: max(var(--content-spacing), calc((100vw - var(--content-size)) / 2 + var(--content-spacing)));
+        width: 400px;
+        max-height: min(70vh, 640px);
+        box-sizing: border-box;
+        background: var(--color-primary-dark);
+        border-top: 3px solid var(--color-gold);
+        border-radius: var(--radius-card) var(--radius-card) 0 0;
+        box-shadow: 0 -12px 32px rgba(11, 44, 34, .25);
+    }
+
+    .cx.is-docked .cx-sum__bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-sizing: border-box;
+        width: var(--content-size);
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 10px var(--content-spacing);
+    }
+
+    .cx-sum__bar-total {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin: 0;
+        color: #9DB8AB;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cx-sum__bar-total b {
+        margin-left: 8px;
+        color: var(--color-white);
+        font-size: 22px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .cx-sum__bar-total small {
+        margin-left: 10px;
+        font-size: 13.5px;
+    }
+
+    .cx-sum__bar-more {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--color-gold);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .cx-sum__bar-more::after {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-left: 2px solid currentColor;
+        border-top: 2px solid currentColor;
+        transform: translateY(2px) rotate(45deg);
+        transition: transform var(--transition-fast);
+    }
+
+    .cx-sum__bar-more.is-open::after {
+        transform: translateY(-2px) rotate(225deg);
+    }
+
+    .cx .cx-sum__bar-cta {
+        flex: none;
+        width: auto;
+        margin: 0;
+        padding-inline: 24px;
+    }
+
+    .cx-sum__undock {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid rgba(157, 184, 171, .35);
+        border-radius: 50%;
+        background: transparent;
+        color: #9DB8AB;
+        cursor: pointer;
+    }
+
+    .cx-sum__undock:hover {
+        color: var(--color-white);
+        border-color: #9DB8AB;
+    }
+
+    .cx.is-docked .cx-help {
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    }
+
+    body:has(.cx.is-docked) .cx-toast {
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+}
+

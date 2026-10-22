@@ -236,9 +236,28 @@ function pcb_calc_input_keys() {
 	return array( 'qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel' );
 }
 
-/** Очистка входа: только известные поля, строки — короткие, числа — в разумных пределах. */
+/**
+ * Очистка входа: только известные поля, строки — короткие, числа — в разумных пределах.
+ * Комплект: { set: { sets, boards: [ { name, n, data | in } ] } } → { set: { sets, boards: [ { name, n, in } ] } }
+ * (data — как в запросе сайта и в заявке, in — как в эталоне). Тираж платы считается в расчёте: комплекты × n.
+ */
 function pcb_calc_input_clean( $in ) {
-	$in  = is_array( $in ) ? $in : array();
+	$in = is_array( $in ) ? $in : array();
+	if ( isset( $in['set'] ) && is_array( $in['set'] ) ) {
+		$s   = $in['set'];
+		$out = array( 'sets' => max( 0, min( 1000000, (int) ( $s['sets'] ?? 0 ) ) ), 'boards' => array() );
+		foreach ( array_slice( (array) ( $s['boards'] ?? array() ), 0, PCB_CALC_MAX_BOARDS ) as $b ) {
+			if ( ! is_array( $b ) || ( isset( $b['on'] ) && ! $b['on'] ) ) {
+				continue; // плата не в заказе
+			}
+			$out['boards'][] = array(
+				'name' => mb_substr( sanitize_text_field( (string) ( $b['name'] ?? '' ) ), 0, 80 ) ?: 'Плата ' . ( count( $out['boards'] ) + 1 ),
+				'n'    => max( 1, min( 1000, (int) ( $b['n'] ?? 1 ) ) ),
+				'in'   => pcb_calc_input_clean( (array) ( $b['data'] ?? $b['in'] ?? array() ) ),
+			);
+		}
+		return array( 'set' => $out );
+	}
 	$out = array();
 	foreach ( pcb_calc_input_keys() as $k ) {
 		$v         = isset( $in[ $k ] ) && is_scalar( $in[ $k ] ) ? (string) $in[ $k ] : '';
@@ -265,6 +284,14 @@ function pcb_calc_input_clean( $in ) {
 
 /** Короткое описание заказа: «4 слоя · 80×55 мм · 250 шт · ENIG · монтаж 2 стороны». */
 function pcb_calc_input_desc( array $in ) {
+	if ( isset( $in['set'] ) ) { // комплект: «Комплект × 20: «main» 4 слоя, 100×80 мм × 1; «power» …»
+		$n = (int) $in['set']['sets'];
+		return 'Комплект × ' . number_format( $n, 0, ',', ' ' ) . ': ' . implode( '; ', array_map( function ( $b ) {
+			$d = explode( ' · ', pcb_calc_input_desc( $b['in'] ) );
+			unset( $d[2] ); // тираж — общий
+			return '«' . $b['name'] . '» ' . implode( ', ', $d ) . ( $b['n'] > 1 ? ' × ' . $b['n'] : '' );
+		}, $in['set']['boards'] ) );
+	}
 	$P   = pcb_calc_params();
 	$num = function ( $x ) {
 		return str_replace( '.', ',', rtrim( rtrim( number_format( (float) $x, 2, '.', '' ), '0' ), '.' ) );

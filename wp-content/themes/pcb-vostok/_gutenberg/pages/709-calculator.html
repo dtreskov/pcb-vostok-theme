@@ -23,7 +23,7 @@
       <svg class="cx-drop__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"/><path d="M12 11v6"/><path d="M9.5 13.5l2.5 -2.5l2.5 2.5"/></svg>
       <div class="cx-drop__txt">
         <p class="cx-drop__title"><span class="cx-drop__t1">Перетащите файлы или папку проекта сюда или</span><span class="cx-drop__t2">Добавить ещё файлы —</span> <span class="cx-link">выберите на компьютере</span></p>
-        <p class="cx-drop__hint" id="calc-drop-hint">Подойдёт любая выгрузка для производства: ZIP-архив, папка или отдельные файлы.<br>Больше всего данных — в IPC-2581 и ODB++, но подойдут и Gerber со сверловкой, и текстовые ТЗ (.txt).</p>
+        <p class="cx-drop__hint" id="calc-drop-hint">Подойдёт любая выгрузка для производства: архив ZIP, RAR или 7z, папка или отдельные файлы. <br>Больше всего данных — в IPC-2581 и ODB++, но подойдут и Gerber со сверловкой, и текстовые ТЗ.</p>
       </div>
       <input type="file" id="calc-file" multiple hidden>
     </div>
@@ -33,7 +33,7 @@
       <div class="cx-files__head" id="calc-files-head" data-state="busy">
         <span class="cx-files__badge" aria-hidden="true"><span class="cx-spin"></span></span>
         <p class="cx-files__status" id="calc-file-status"></p>
-        <button type="button" class="cx-mini cx-mini--quiet" id="calc-reset">Очистить всё</button>
+        <button type="button" class="cx-mini cx-mini--quiet" id="calc-reset">Сбросить всё</button>
       </div>
       <ul class="cx-files__list" id="calc-file-list"></ul>
     </div>
@@ -57,7 +57,7 @@
           <p><b>Заполнят почти всё</b> — <b>IPC-2581</b> (.xml, .cvg) и <b>ODB++</b> (.tgz, .zip): габариты, слои, медь, отверстия, дорожку, компоненты и стороны монтажа. В IPC-2581 бывают ещё покрытие и цвета, в ODB++ их нет, а толщину и материал САПР часто оставляет по умолчанию — сверьте их с полями.</p>
           <p><b>Заполнят часть</b> — <b>Gerber со сверловкой</b>: габариты, слои, отверстия, дорожку и грубую оценку монтажа; <b>.gbrjob</b>: толщину, медь, покрытие и цвета; <b>требования к плате</b> (.txt) — текст для фабрики вида «Толщина: 1,6 мм»: всё, что в нём указано.</p>
           <p><b>Дополнят</b> — <b>Pick&amp;Place</b> (.csv, .txt, .pos): точное число компонентов и стороны монтажа.</p>
-          <p>Файлы можно добавлять по одному или все сразу — архивом или папкой: нужное калькулятор найдёт сам, в том числе во вложенных архивах, а PDF, таблицы и исходники САПР пропустит. Если в проекте несколько плат, он разделит файлы по платам и посчитает комплект. Если данные в файлах расходятся, мы отметим это у поля. RAR и 7z калькулятор не читает — перепакуйте в ZIP.</p>
+          <p>Файлы можно добавлять по одному или все сразу — архивом (ZIP, RAR, 7z, TGZ) или папкой: нужное калькулятор найдёт сам, в том числе во вложенных архивах, а PDF, таблицы и исходники САПР пропустит. Если в проекте несколько плат, он разделит файлы по платам и посчитает комплект. Если данные в файлах расходятся, мы отметим это у поля.</p>
         </div>
       </details>
       <details class="cx-faq__item" name="calc-faq">
@@ -118,7 +118,7 @@
       <details class="cx-faq__item" name="calc-faq">
         <summary>Демо-проект</summary>
         <div class="cx-faq__body">
-          <p>Загрузим пример — четырёхслойную плату 80 × 55 мм. Увидите, как калькулятор заполняет поля и что отмечает для проверки. Если вы уже загрузили свои файлы, демо-проект их заменит — перед этим спросим.</p>
+          <p>Загрузим пример — «Контроллер освещения»: комплект из трёх плат в разных форматах — IPC-2581, ODB++ с текстовым ТЗ и Gerber с Pick&amp;Place. Увидите, как калькулятор делит файлы по платам, заполняет поля, отмечает расхождения между источниками и считает комплект. Если вы уже загрузили свои файлы, демо-проект их заменит — перед этим спросим.</p>
           <button type="button" class="cx-btn cx-btn--sm" id="calc-demo-ipc">Попробовать на демо-проекте</button>
           <div class="cx-demo-warn" id="calc-demo-warn" role="alert" hidden>
             <p id="calc-demo-warn-text"></p>
@@ -144,15 +144,15 @@
 
     <div class="cx-grid">
       <div class="cx-field">
-        <label for="f-qty">Тираж, шт <span class="cx-badge" data-for="qty"></span></label>
-        <input id="f-qty" type="number" min="2" step="1" value="10" data-key="qty">
+        <label for="f-qty">Тираж <span class="cx-badge" data-for="qty"></span></label>
+        <span class="cx-num" data-unit="шт"><input id="f-qty" type="number" min="2" step="1" value="10" data-key="qty"></span>
       </div>
       <div class="cx-field">
-        <label for="f-len">Габариты платы, мм <span class="cx-badge" data-for="size"></span></label>
+        <label for="f-len">Габариты платы <span class="cx-badge" data-for="size"></span></label>
         <div class="cx-dims">
-          <input id="f-len" type="text" inputmode="decimal" autocomplete="off" placeholder="длина" data-key="len" aria-label="Длина, мм">
+          <span class="cx-num" data-unit="мм"><input id="f-len" type="text" inputmode="decimal" autocomplete="off" placeholder="длина" data-key="len" aria-label="Длина, мм"></span>
           <span aria-hidden="true">×</span>
-          <input id="f-wid" type="text" inputmode="decimal" autocomplete="off" placeholder="ширина" data-key="wid" aria-label="Ширина, мм">
+          <span class="cx-num" data-unit="мм"><input id="f-wid" type="text" inputmode="decimal" autocomplete="off" placeholder="ширина" data-key="wid" aria-label="Ширина, мм"></span>
         </div>
       </div>
       <div class="cx-field">
@@ -162,24 +162,24 @@
         </select>
       </div>
       <div class="cx-field">
-        <label for="f-thick">Толщина платы, мм <span class="cx-badge" data-for="thick"></span></label>
+        <label for="f-thick">Толщина платы <span class="cx-badge" data-for="thick"></span></label>
         <select id="f-thick" data-key="thick">
           <option value="" disabled hidden>— выберите —</option>
-          <option value="0.4">0,4</option><option value="0.6">0,6</option><option value="0.8">0,8</option><option value="1.0">1,0</option><option value="1.2">1,2</option><option value="1.6" selected>1,6</option><option value="2.0">2,0</option><option value="2.4">2,4</option><option value="3.2">3,2</option>
+          <option value="0.4">0,4 мм</option><option value="0.6">0,6 мм</option><option value="0.8">0,8 мм</option><option value="1.0">1,0 мм</option><option value="1.2">1,2 мм</option><option value="1.6" selected>1,6 мм</option><option value="2.0">2,0 мм</option><option value="2.4">2,4 мм</option><option value="3.2">3,2 мм</option>
         </select>
       </div>
       <div class="cx-field">
-        <label for="f-cuout">Медь наружных слоёв, мкм <span class="cx-badge" data-for="cuout"></span></label>
+        <label for="f-cuout">Медь наружных слоёв <span class="cx-badge" data-for="cuout"></span></label>
         <select id="f-cuout" data-key="cuout">
           <option value="" disabled hidden>— выберите —</option>
-          <option value="18">18</option><option value="35" selected>35</option><option value="70">70</option><option value="105">105</option>
+          <option value="18">18 мкм</option><option value="35" selected>35 мкм</option><option value="70">70 мкм</option><option value="105">105 мкм</option>
         </select>
       </div>
       <div class="cx-field">
-        <label for="f-cuin">Медь внутренних слоёв, мкм <span class="cx-badge" data-for="cuin"></span></label>
+        <label for="f-cuin">Медь внутренних слоёв <span class="cx-badge" data-for="cuin"></span></label>
         <select id="f-cuin" data-key="cuin" disabled>
           <option value="" disabled hidden>— выберите —</option>
-          <option value="18">18</option><option value="35" selected>35</option><option value="70">70</option>
+          <option value="18">18 мкм</option><option value="35" selected>35 мкм</option><option value="70">70 мкм</option>
         </select>
       </div>
       <div class="cx-field">
@@ -227,12 +227,12 @@
       <div class="cx-more__body">
         <div class="cx-grid">
           <div class="cx-field">
-            <label for="f-track">Мин. ширина дорожки, мм <span class="cx-badge" data-for="track"></span></label>
-            <input id="f-track" type="text" inputmode="decimal" autocomplete="off" placeholder="например, 0,15" data-key="track">
+            <label for="f-track">Мин. ширина дорожки <span class="cx-badge" data-for="track"></span></label>
+            <span class="cx-num" data-unit="мм"><input id="f-track" type="text" inputmode="decimal" autocomplete="off" placeholder="например, 0,15" data-key="track"></span>
           </div>
           <div class="cx-field">
-            <label for="f-hole">Мин. отверстие, мм <span class="cx-badge" data-for="hole"></span></label>
-            <input id="f-hole" type="text" inputmode="decimal" autocomplete="off" placeholder="например, 0,3" data-key="hole">
+            <label for="f-hole">Мин. отверстие <span class="cx-badge" data-for="hole"></span></label>
+            <span class="cx-num" data-unit="мм"><input id="f-hole" type="text" inputmode="decimal" autocomplete="off" placeholder="например, 0,3" data-key="hole"></span>
           </div>
           <div class="cx-field">
             <label for="f-sides">Расположение компонентов <span class="cx-badge" data-for="sides"></span></label>
@@ -293,21 +293,22 @@
       <div class="cx-grid">
         <div class="cx-field">
           <label for="q-smd">Простые SMD <span class="cx-badge" data-for="q_smd"></span></label>
-          <input id="q-smd" type="number" min="0" step="1" value="0" data-key="q_smd">
+          <span class="cx-num" data-unit="корп."><input id="q-smd" type="number" min="0" step="1" value="0" data-key="q_smd"></span>
         </div>
         <div class="cx-field">
-          <label for="q-dip">DIP, выводов <span class="cx-badge" data-for="q_dip"></span></label>
-          <input id="q-dip" type="number" min="0" step="1" value="0" data-key="q_dip">
+          <label for="q-dip">DIP, всего выводов <span class="cx-badge" data-for="q_dip"></span></label>
+          <span class="cx-num" data-unit="выв."><input id="q-dip" type="number" min="0" step="1" value="0" data-key="q_dip"></span>
         </div>
         <div class="cx-field">
-          <label for="q-bga">BGA-корпуса <span class="cx-badge" data-for="q_bga"></span></label>
-          <input id="q-bga" type="number" min="0" step="1" value="0" data-key="q_bga">
+          <label for="q-bga">BGA <span class="cx-badge" data-for="q_bga"></span></label>
+          <span class="cx-num" data-unit="корп."><input id="q-bga" type="number" min="0" step="1" value="0" data-key="q_bga"></span>
         </div>
         <div class="cx-field">
           <label for="q-qfn">QFN, QFP и др. <span class="cx-badge" data-for="q_qfn"></span></label>
-          <input id="q-qfn" type="number" min="0" step="1" value="0" data-key="q_qfn">
+          <span class="cx-num" data-unit="корп."><input id="q-qfn" type="number" min="0" step="1" value="0" data-key="q_qfn"></span>
         </div>
       </div>
+      <p class="cx-asm__hint">Корпуса — на одну плату. У DIP считаем выводы: их паяют по одному. Выводы QFN, QFP и BGA в быстрой оценке — типовые, точнее — в подробной.</p>
     </div>
 
     <div class="cx-asm" data-mode="detail" hidden>
@@ -315,16 +316,16 @@
         <table class="cx-table">
           <thead><tr><th scope="col">Группа корпусов</th><th scope="col">Корпусов на плате</th><th scope="col">Выводов на корпус</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Чип-пассив 0201</th><td><input type="number" min="0" value="0" data-key="d_0201" aria-label="0201, шт"></td><td class="cx-fixed">2</td></tr>
-            <tr><th scope="row">Чип-пассив 0402</th><td><input type="number" min="0" value="0" data-key="d_0402" aria-label="0402, шт"></td><td class="cx-fixed">2</td></tr>
-            <tr><th scope="row">Чип-пассив 0603 и крупнее</th><td><input type="number" min="0" value="0" data-key="d_0603" aria-label="0603+, шт"></td><td class="cx-fixed">2</td></tr>
-            <tr><th scope="row">SOT, SOD</th><td><input type="number" min="0" value="0" data-key="d_sot" aria-label="SOT, шт"></td><td class="cx-fixed">3</td></tr>
-            <tr><th scope="row">SOIC, TSSOP</th><td><input type="number" min="0" value="0" data-key="d_soic" aria-label="SOIC, шт"></td><td><input type="number" min="0" value="0" data-key="p_soic" aria-label="SOIC, выводов"></td></tr>
-            <tr><th scope="row">QFP, шаг ≤ 0,5 мм</th><td><input type="number" min="0" value="0" data-key="d_qfp" aria-label="QFP, шт"></td><td><input type="number" min="0" value="0" data-key="p_qfp" aria-label="QFP, выводов"></td></tr>
-            <tr><th scope="row">QFN, DFN, LGA</th><td><input type="number" min="0" value="0" data-key="d_qfn" aria-label="QFN, шт"></td><td><input type="number" min="0" value="0" data-key="p_qfn" aria-label="QFN, выводов"></td></tr>
-            <tr><th scope="row">BGA</th><td><input type="number" min="0" value="0" data-key="d_bga" aria-label="BGA, шт"></td><td><input type="number" min="0" value="0" data-key="p_bga" aria-label="BGA, шариков"></td></tr>
-            <tr><th scope="row">DIP-компоненты</th><td><input type="number" min="0" value="0" data-key="d_tht" aria-label="DIP, корпусов"></td><td><input type="number" min="0" value="0" data-key="p_tht" aria-label="DIP, выводов"></td></tr>
-            <tr><th scope="row">Разъёмы, запрессовка</th><td><input type="number" min="0" value="0" data-key="d_conn" aria-label="Разъёмы, шт"></td><td class="cx-fixed">—</td></tr>
+            <tr><th scope="row">Чип-пассив 0201</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_0201" aria-label="0201, шт"></span></td><td class="cx-fixed">2</td></tr>
+            <tr><th scope="row">Чип-пассив 0402</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_0402" aria-label="0402, шт"></span></td><td class="cx-fixed">2</td></tr>
+            <tr><th scope="row">Чип-пассив 0603 и крупнее</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_0603" aria-label="0603+, шт"></span></td><td class="cx-fixed">2</td></tr>
+            <tr><th scope="row">SOT, SOD</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_sot" aria-label="SOT, шт"></span></td><td class="cx-fixed">3</td></tr>
+            <tr><th scope="row">SOIC, TSSOP</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_soic" aria-label="SOIC, шт"></span></td><td><span class="cx-num"><input type="number" min="0" value="0" data-key="p_soic" aria-label="SOIC, выводов"></span></td></tr>
+            <tr><th scope="row">QFP, шаг ≤ 0,5 мм</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_qfp" aria-label="QFP, шт"></span></td><td><span class="cx-num"><input type="number" min="0" value="0" data-key="p_qfp" aria-label="QFP, выводов"></span></td></tr>
+            <tr><th scope="row">QFN, DFN, LGA</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_qfn" aria-label="QFN, шт"></span></td><td><span class="cx-num"><input type="number" min="0" value="0" data-key="p_qfn" aria-label="QFN, выводов"></span></td></tr>
+            <tr><th scope="row">BGA</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_bga" aria-label="BGA, шт"></span></td><td><span class="cx-num"><input type="number" min="0" value="0" data-key="p_bga" aria-label="BGA, шариков"></span></td></tr>
+            <tr><th scope="row">DIP-компоненты</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_tht" aria-label="DIP, корпусов"></span></td><td><span class="cx-num"><input type="number" min="0" value="0" data-key="p_tht" aria-label="DIP, выводов"></span></td></tr>
+            <tr><th scope="row">Разъёмы, запрессовка</th><td><span class="cx-num"><input type="number" min="0" value="0" data-key="d_conn" aria-label="Разъёмы, шт"></span></td><td class="cx-fixed">—</td></tr>
           </tbody>
         </table>
       </div>
@@ -536,11 +537,13 @@
   <button type="button" class="cx-sum__toggle" id="calc-summary-toggle" aria-expanded="false">
     <span>Ориентировочно</span><b id="calc-total-mini">—</b>
   </button>
+  <button type="button" class="cx-sum__dock" aria-label="Перенести итог вниз" title="Перенести вниз"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 20h14"/></svg></button>
   <div class="cx-sum__inner">
     <p class="cx-sum__label">Ориентировочная стоимость партии</p>
     <p class="cx-sum__total" id="calc-total">—</p>
     <p class="cx-sum__per" id="calc-per"></p>
     <p class="cx-sum__state" id="calc-state"></p>
+    <div class="cx-sum__scroll">
     <ul class="cx-break" id="calc-break"></ul>
     <div class="cx-warn" id="calc-warn" hidden></div>
     <p class="cx-term" id="calc-term"></p>
@@ -552,12 +555,46 @@
       <p>Показываем диапазон: точная цена — после аудита файлов.</p>
       <p class="cx-draft">Ставки демонстрационные — формулу соберём отдельно.</p>
     </details>
+    </div>
     <button type="button" class="cx-btn cx-btn--full" id="calc-cta">Отправить на точный расчёт</button>
     <p class="cx-disc">Оценка не является офертой. Окончательную цену определяем после аудита файлов.</p>
+    <button type="button" class="cx-sum__reset" data-calc-reset>Сбросить расчёт</button>
+  </div>
+  <div class="cx-sum__bar">
+    <p class="cx-sum__bar-total"><span>Ориентировочно</span> <b id="calc-bar-total">—</b> <small id="calc-bar-per"></small></p>
+    <button type="button" class="cx-sum__bar-more" aria-expanded="false">Подробнее</button>
+    <button type="button" class="cx-btn cx-sum__bar-cta">Отправить на точный расчёт</button>
+    <button type="button" class="cx-sum__undock" aria-label="Вернуть итог в колонку справа" title="Вернуть справа"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h11"/><path d="M10.5 7.5L15 12l-4.5 4.5"/><path d="M20 5v14"/></svg></button>
   </div>
 </aside>
 <!-- /wp:html --></div>
 <!-- /wp:group -->
+
+<!-- wp:html -->
+<div class="cx-help" id="calc-help">
+  <button type="button" class="cx-help__btn" id="calc-help-btn" aria-expanded="false" aria-controls="calc-help-panel" aria-label="Как работать с калькулятором"><span aria-hidden="true">?</span></button>
+  <div class="cx-help__panel" id="calc-help-panel" role="dialog" aria-labelledby="calc-help-title" hidden>
+    <div class="cx-help__head">
+      <p class="cx-help__title" id="calc-help-title">Как работать с калькулятором</p>
+      <button type="button" class="cx-help__close" aria-label="Закрыть">×</button>
+    </div>
+    <ol class="cx-help__steps">
+      <li><a href="#calc-files">Загрузите файлы проекта</a> — архив, папку или отдельные файлы. Параметры заполнятся сами. Несколько плат в проекте калькулятор посчитает комплектом, а любую из них — отдельно. Нет файлов — введите параметры вручную.</li>
+      <li><a href="#calc-board">Проверьте отмеченные поля</a>: «заполните», «проверьте», «расхождение». Если файлы расходятся, калькулятор выберет значение сам и пояснит выбор, но последнее слово — за вами: любое поле можно исправить.</li>
+      <li><a href="#calc-assembly">Оцените монтаж</a>. Считаем только работу: подготовку линии и пайку — её цена зависит от числа выводов и типа корпусов. Компоненты закупаем по вашему BOM, их стоимость в оценку не входит. Быстрая оценка — по группам корпусов, подробная — по каждому типу.</li>
+      <li><a href="#request">Отправьте на точный расчёт</a> — инженер проверит файлы и назовёт окончательную цену.</li>
+    </ol>
+    <p class="cx-help__sub">Полезно знать</p>
+    <ul class="cx-help__tips">
+      <li><b>Этапы сворачиваются</b> — клик по заголовку. В свёрнутом этапе видна сводка.</li>
+      <li><b>Итог можно убрать вниз</b> — кнопка со стрелкой в его углу, на широком экране. На телефоне итог всегда внизу и раскрывается нажатием.</li>
+      <li><b>Сброс</b> — кнопка «Сбросить расчёт» под итогом. × у файла убирает его вместе с полями из него, ваши правки остаются.</li>
+      <li><b>Расчёт сохраняется</b> в этом браузере: можно закрыть страницу и вернуться позже.</li>
+      <li><b>Хотите сначала посмотреть?</b> «Демо-проект» в этапе 1 загрузит пример так, будто файлы приложили вы, — поля заполнятся сами.</li>
+    </ul>
+  </div>
+</div>
+<!-- /wp:html -->
 
 </div>
 <!-- /wp:group -->

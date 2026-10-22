@@ -302,6 +302,17 @@
 .crm-fold > summary .crm-calc-open { margin-left: auto; margin-right: var(--space-sm); }
 
 /* старые заявки: текст расчёта, который форма до 0.8.1 дописывала в описание */
+.crm-calc-board { margin: var(--space-sm) 0; border: 1px solid var(--color-separator); border-radius: 8px; }
+.crm-calc-board > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--space-sm); padding: 8px 12px; cursor: pointer; list-style: none; }
+.crm-calc-board > summary::-webkit-details-marker { display: none; }
+.crm-calc-board > summary::before { content: '▸'; color: var(--color-text-grey); width: 10px; }
+.crm-calc-board[open] > summary::before { content: '▾'; }
+.crm-calc-board > summary b { font-weight: 600; }
+.crm-calc-board__p { margin-left: auto; font-weight: 600; white-space: nowrap; }
+.crm-calc-board > .crm-dl { padding: 0 12px 10px; }
+.crm-calc-board.is-off > summary { cursor: default; color: var(--color-text-grey); }
+.crm-calc-board.is-off > summary::before { content: '·'; }
+.crm-calc-board + .crm-dl { margin-top: var(--space-md); }
 .crm-legacy-calc { margin-top: var(--space-md); border-top: 1px dashed var(--color-separator); padding-top: var(--space-sm); }
 .crm-legacy-calc > summary { cursor: pointer; color: var(--color-text-grey); font-size: 13.5px; }
 .crm-legacy-calc[open] > summary { margin-bottom: var(--space-sm); }
