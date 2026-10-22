@@ -143,6 +143,7 @@
     background: var(--color-section-alt); color: var(--color-text-grey); font-size: 12px;
 }
 .crm-tag--sent { background: var(--color-primary-light); color: var(--color-text-primary); }
+.crm-tag--demo { background: var(--color-gold-light); color: #6B5418; }
 .crm-tag--important { background: var(--color-copper-dark); color: var(--color-white); font-weight: 600; margin-bottom: 4px; }
 .crm-flag {
     display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 4px;

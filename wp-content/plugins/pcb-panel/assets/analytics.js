@@ -64,7 +64,7 @@
   function tiles(D) {
     var s = D.sum, n = D.n, ym = s.visits != null;
     var t = [
-      ['Заявки', fmt(s.req), delta(s.req, s.preq, n), 'главная — ' + s.reqHome + ', калькулятор — ' + s.reqCalc, src('full')],
+      ['Заявки', fmt(s.req), delta(s.req, s.preq, n), 'главная — ' + s.reqHome + ', калькулятор — ' + s.reqCalc + (s.reqDemo ? ', из них с демо-проектом — ' + s.reqDemo : ''), src('full')],
       ['Визиты в Метрике', fmt(s.visits), delta(s.visits, s.pvisits, n), ym ? (s.share ? '≈ ' + fmt(s.est) + ' с учётом отказов от cookie' : 'доля согласий пока неизвестна') : 'Метрика не подключена', src('ym')],
       ['Конверсия в заявку', s.conv == null ? '—' : pct(s.conv, 1), delta(s.conv, s.pconv, n), ym ? 'заявки к оценке всех визитов' : 'нужны данные Метрики', src('est')],
       ['Расчёты в калькуляторе', fmt(s.calcs), delta(s.calcs, s.pcalcs, n), 'дошли до заявки — ' + s.calcToReq + (s.calcs ? ' (' + pct(Math.min(1, s.calcToReq / s.calcs)) + ')' : ''), src('own')],

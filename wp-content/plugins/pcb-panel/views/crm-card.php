@@ -90,6 +90,7 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 			Код для клиента <b class="crm-code crm-code--lg"><?php echo esc_html( $m( 'code' ) ); ?></b>
 			· <?php echo esc_html( get_the_date( 'd.m.Y H:i', $id ) ); ?>
 			· <?php echo 'calc' === $m( 'source' ) ? 'с калькулятора' : 'с главной'; ?>
+			<?php if ( pcb_crm_is_demo( $id ) ) : ?><span class="crm-tag crm-tag--demo" title="Клиент отправил заявку с демо-проектом калькулятора — файлы и расчёт не его">Демо-проект</span><?php endif; ?>
 		</p>
 	</div>
 	<div class="crm-head-actions">

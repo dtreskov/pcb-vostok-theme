@@ -111,7 +111,7 @@ $link = function ( $over = array() ) use ( $status, $q ) {
 					<td><?php echo esc_html( pcb_rq_service_label( $m( 'service' ) ) ); ?></td>
 					<td><span class="crm-status crm-status--<?php echo esc_attr( $st ); ?>"><?php echo esc_html( pcb_rq_status_label( $st ) ); ?></span></td>
 					<td><?php echo (int) count( (array) $m( 'files' ) ); ?></td>
-					<td><?php echo 'calc' === $m( 'source' ) ? 'Калькулятор' : 'Главная'; ?></td>
+					<td><?php echo 'calc' === $m( 'source' ) ? 'Калькулятор' : 'Главная'; ?><?php if ( pcb_crm_is_demo( $id ) ) : ?> <span class="crm-tag crm-tag--demo" title="Заявка с демо-проектом калькулятора">демо</span><?php endif; ?></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>

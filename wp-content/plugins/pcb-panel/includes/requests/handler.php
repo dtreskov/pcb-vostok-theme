@@ -551,6 +551,9 @@ function pcb_rq_clean_calc_data( array $in, $top ) {
 	if ( ! empty( $in['solo'] ) ) {
 		$out['solo'] = true;
 	}
+	if ( ! empty( $in['demo'] ) ) {
+		$out['demo'] = true; // все файлы расчёта — демо-проект калькулятора (README §3.9)
+	}
 	if ( isset( $in['boards'] ) && is_array( $in['boards'] ) ) {
 		$out['boards'] = array();
 		foreach ( array_slice( $in['boards'], 0, 20 ) as $b ) {

@@ -28,7 +28,7 @@ function pcb_events_whitelist() {
 	return array(
 		'consent'  => array( 'accept', 'necessary' ),
 		'calc'     => '/^(all|layers:(1|2|4|6|8-12|14\+)|qty:(1-10|11-50|51-200|201-1000|1000\+)|finish:(hasl|enig|iag|enepig|flash|hard|other)|mat:(fr4|fr4tg|alu|pi|hf)|size:(0-50|50-100|100-200|200\+))$/',
-		'calc_err' => array( 'zip', 'rar', 'format', 'ipc', 'xml' ),
+		'calc_err' => array( 'zip', 'tar', 'rar', 'odb', 'format', 'ipc', 'xml' ),
 		'form_err' => array( 'captcha', 'files', 'empty', 'rate', 'save' ),
 	);
 }

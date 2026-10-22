@@ -94,6 +94,7 @@ function pcb_an_requests( $from, $to ) {
 			'source'  => get_post_meta( $id, '_pcb_source', true ) === 'calc' ? 'calc' : 'home',
 			'service' => (string) get_post_meta( $id, '_pcb_service', true ),
 			'calc'    => (array) get_post_meta( $id, '_pcb_calc', true ),
+			'demo'    => pcb_crm_is_demo( $id ),
 			'mail'    => (array) get_post_meta( $id, '_pcb_mail', true ),
 		);
 	}
@@ -137,7 +138,9 @@ function pcb_analytics_payload( $n ) {
 	}
 	$home = 0;
 	$calc = 0;
+	$demo = 0; // с демо-проектом калькулятора: в числе заявок, но отдельной припиской; в «спрос» не идут
 	foreach ( $reqs as $q ) {
+		$demo += $q['demo'] ? 1 : 0;
 		$k = 'calc' === $q['source'] ? 'reqCalc' : 'reqHome';
 		if ( isset( $days[ $q['day'] ] ) ) {
 			$days[ $q['day'] ][ $k ]++;
@@ -162,7 +165,7 @@ function pcb_analytics_payload( $n ) {
 	$inReq  = array();
 	foreach ( $reqs as $q ) {
 		$c = $q['calc'];
-		if ( ! $c ) {
+		if ( ! $c || $q['demo'] ) {
 			continue;
 		}
 		$vals = array(
@@ -314,6 +317,7 @@ function pcb_analytics_payload( $n ) {
 			'preq'      => $preq,
 			'reqHome'   => $home,
 			'reqCalc'   => $calc,
+			'reqDemo'   => $demo,
 			'visits'    => $m['visits'],
 			'pvisits'   => $m['pvisits'],
 			'est'       => $est,
@@ -446,7 +450,7 @@ function pcb_an_tech( $reqs, $from, $to ) {
 	$rows[] = array( 'name' => 'Отказы при отправке формы', 'sub' => $sub ? implode( ', ', $sub ) : 'капча, файлы, пустые заявки', 'val' => $sum, 'st' => ! empty( $fe['save'] ) ? 'bad' : ( $sum ? 'warn' : 'ok' ), 'stl' => ! empty( $fe['save'] ) ? 'Разобрать' : ( $sum ? 'Проверить' : 'В порядке' ) );
 
 	$ce  = pcb_events_sum( 'calc_err', $from, $to );
-	$cl  = array( 'zip' => 'повреждённый ZIP', 'rar' => 'RAR / 7z', 'format' => 'неподдерживаемый формат', 'ipc' => 'не IPC-2581', 'xml' => 'не читается XML' );
+	$cl  = array( 'zip' => 'повреждённый ZIP', 'tar' => 'повреждённый TGZ / TAR', 'rar' => 'RAR / 7z не распаковался', 'odb' => 'не читается ODB++', 'format' => 'неподдерживаемый формат', 'ipc' => 'не IPC-2581', 'xml' => 'не читается XML' );
 	$sum = array_sum( $ce );
 	$sub = array();
 	foreach ( $cl as $k => $l ) {
@@ -454,7 +458,7 @@ function pcb_an_tech( $reqs, $from, $to ) {
 			$sub[] = $l . ' — ' . $ce[ $k ];
 		}
 	}
-	$rows[] = array( 'name' => 'Файлы, которые калькулятор не разобрал', 'sub' => $sub ? implode( ', ', $sub ) : 'ZIP, RAR, IPC-2581', 'val' => $sum, 'st' => $sum ? 'warn' : 'ok', 'stl' => $sum ? 'Проверить' : 'В порядке' );
+	$rows[] = array( 'name' => 'Файлы, которые калькулятор не разобрал', 'sub' => $sub ? implode( ', ', $sub ) : 'ZIP, RAR / 7z, TGZ, IPC-2581, ODB++', 'val' => $sum, 'st' => $sum ? 'warn' : 'ok', 'stl' => $sum ? 'Проверить' : 'В порядке' );
 
 	$tok = pcb_ya_token();
 	$ys   = (array) get_option( 'pcb_ya_status', array() );

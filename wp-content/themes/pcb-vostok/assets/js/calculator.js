@@ -2284,6 +2284,8 @@
         d.term = r.term; d.warn = r.warn;
       }
       d.files = store.filter(function (it) { return it.status === 'ok'; }).map(function (it) { return it.name; });
+      // все файлы расчёта — демо-проект → признак для панели (метка «Демо-проект», отдельно в аналитике; README панели §3.9)
+      if (d.files.length && d.files.every(function (n) { return demoNames[n]; })) d.demo = true;
       if (isMulti()) {
         d.board = boardsInfo.filter(function (b) { return b.current; }).map(function (b) { return b.name; })[0];
         d.boards = boardsInfo.map(function (b) { return { name: b.name, size: b.size, layers: b.layers, comps: b.comps }; });

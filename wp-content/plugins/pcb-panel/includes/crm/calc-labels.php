@@ -248,6 +248,12 @@ function pcb_crm_calc_board_rows( array $calc, $sub = false, array $skip = array
 	return $rows;
 }
 
+/** Заявка отправлена с демо-проектом калькулятора (признак demo в _pcb_calc). */
+function pcb_crm_is_demo( $id ) {
+	$c = get_post_meta( $id, '_pcb_calc', true );
+	return is_array( $c ) && ! empty( $c['demo'] );
+}
+
 /** «12 300 – 15 800 ₽» */
 function pcb_crm_calc_money( $n ) {
 	return number_format( (float) $n, 0, ',', ' ' );
@@ -267,6 +273,9 @@ function pcb_crm_calc_sections( array $calc ) {
 	$multi = ! empty( $calc['boards'] ) && count( (array) $calc['boards'] ) > 1;
 	$out   = array();
 	$rows  = array();
+	if ( ! empty( $calc['demo'] ) ) {
+		$out[] = array( 'title' => null, 'rows' => array( array( 'Демо-проект', 'расчёт по демо-проекту калькулятора, не по файлам клиента' ) ) );
+	}
 
 	if ( $set ) {
 		$sets = (int) ( $set['sets'] ?? ( $calc['qty'] ?? 0 ) );
@@ -336,7 +345,7 @@ function pcb_crm_calc_sections( array $calc ) {
 
 	// всё, что калькулятор начнёт передавать позже, — как есть, чтобы ничего не потерялось
 	$done = array_flip( array( 'qty', 'len', 'wid', 'layers', 'thick', 'cuout', 'cuin', 'mat', 'finish', 'mask', 'silk', 'track', 'hole', 'sides', 'panel',
-		'finish_pending', 'special', 'asm', 'asm_values', 'asm_est', 'estimate', 'warn', 'term', 'files', 'calc_version', 'set', 'boards', 'board', 'solo' ) );
+		'finish_pending', 'special', 'asm', 'asm_values', 'asm_est', 'estimate', 'warn', 'term', 'files', 'calc_version', 'set', 'boards', 'board', 'solo', 'demo' ) );
 	foreach ( $calc as $k => $v ) {
 		if ( isset( $done[ $k ] ) || '' === $v || null === $v || array() === $v ) {
 			continue;
