@@ -36,6 +36,8 @@ if ( 'crm-reply' === $view ) {
 	$title = 'Заявка ' . pcb_rq_label( $GLOBALS['pcb_panel_request_id'] );
 } elseif ( 'crm-journal' === $view ) {
 	$title = 'Журнал действий';
+} elseif ( 'crm-settings' === $view ) {
+	$title = 'Реакция на заявку';
 } elseif ( $current ) {
 	$title = $all[ $current ]['title'];
 } elseif ( 'forbidden' === $view ) {

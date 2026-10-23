@@ -1,5 +1,5 @@
 <?php
-/** Подразделы CRM: заявки, клиенты, очередь «Проверить», журнал. $crm_nav — текущий. */
+/** Подразделы CRM: заявки, клиенты, очередь «Проверить», «Реакция на заявку», журнал. $crm_nav — текущий. */
 defined( 'ABSPATH' ) || exit;
 $crm_nav = $crm_nav ?? 'requests';
 $queue_n = pcb_cl_queue_count();
@@ -7,6 +7,7 @@ $items   = array(
 	'requests' => array( 'Заявки', pcb_panel_url( 'crm' ) ),
 	'clients'  => array( 'Клиенты', pcb_panel_url( 'crm' ) . 'clients/' ),
 	'queue'    => array( 'Проверить', pcb_panel_url( 'crm' ) . 'clients/queue/' ),
+	'settings' => array( 'Реакция на заявку', pcb_panel_url( 'crm' ) . 'settings/' ),
 );
 if ( current_user_can( 'pcb_panel_log_view' ) ) {
 	$items['journal'] = array( 'Журнал', pcb_panel_url( 'crm' ) . 'journal/' );

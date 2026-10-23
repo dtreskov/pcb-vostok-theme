@@ -60,6 +60,7 @@ function pcb_crm_log_actions() {
 		'contact'          => 'Исправлены контакты',
 		'calc_publish'     => 'Калькулятор: опубликована версия',
 		'calc_restore'     => 'Калькулятор: старая версия взята в черновик',
+		'calc_csv'         => 'Калькулятор: в черновик загружен CSV',
 		'file_added'       => 'Добавлен файл',
 		'email'            => 'Письмо клиенту',
 		'note_important'   => 'Заметка отмечена как важная',
@@ -72,6 +73,7 @@ function pcb_crm_log_actions() {
 		'cl_link'          => 'Привязка',
 		'cl_merge'         => 'Объединение',
 		'cl_skip'          => 'Отмечено «это разные»',
+		'tags'             => 'Метки',
 	);
 }
 
@@ -139,6 +141,8 @@ function pcb_crm_log_text( array $row ) {
 		case 'calc_publish':
 			$c = json_decode( $new, true );
 			return 'Калькулятор: опубликована версия ' . (int) ( $c['v'] ?? 0 ) . ( ! empty( $c['note'] ) ? ' — ' . $c['note'] : '' );
+		case 'calc_csv':
+			return 'Калькулятор: в черновик загружен CSV' . ( '' !== $new ? ' «' . $new . '»' : '' ) . ', изменено значений: ' . (int) $old;
 		case 'calc_restore':
 			return 'Калькулятор: версия ' . $new . ' взята в черновик';
 		case 'created':
@@ -148,6 +152,9 @@ function pcb_crm_log_text( array $row ) {
 			return $what . ( is_array( $mail ) ? ': ' . ( $mail['subject'] ?? '' ) . ( ! empty( $mail['files'] ) ? ' · вложений: ' . count( $mail['files'] ) : '' ) : '' );
 		case 'cl_field':
 			$c = json_decode( $new, true );
+			if ( is_array( $c ) && isset( $c['text'] ) ) {
+				return (string) $c['text']; // готовая строка («Копии: добавлен …»)
+			}
 			if ( is_array( $c ) ) {
 				$v = function ( $x ) { return '' !== (string) $x ? '«' . $x . '»' : 'пусто'; };
 				return ( $c['label'] ?? $c['field'] ?? '' ) . ': ' . $v( $c['old'] ?? '' ) . ' → ' . $v( $c['new'] ?? '' );
@@ -161,6 +168,8 @@ function pcb_crm_log_text( array $row ) {
 		case 'cl_merge':
 		case 'cl_skip':
 			return $what . ( '' !== $new ? ': ' . $new : '' );
+		case 'tags':
+			return pcb_tags_log_text( $new );
 		case 'user_name':
 			return $what . ': «' . $old . '» → «' . $new . '»';
 		case 'note_important':

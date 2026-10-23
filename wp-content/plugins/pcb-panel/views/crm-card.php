@@ -94,6 +94,7 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 		</p>
 	</div>
 	<div class="crm-head-actions">
+		<?php echo pcb_tags_html( 'request', $id, pcb_tags_get( 'request', $id ), $can_edit, 'card' ); // phpcs:ignore -- экранировано ?>
 		<span class="crm-status crm-status--<?php echo esc_attr( $status ); ?>"><?php echo esc_html( pcb_rq_status_label( $status ) ); ?></span>
 		<?php if ( $can_edit ) : ?>
 			<a class="pp-btn" href="<?php echo esc_url( $reply_url ); ?>" data-crm-window>Ответить</a>
@@ -334,7 +335,8 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 			<summary><h2>Служебное</h2></summary>
 			<dl class="crm-dl">
 				<dt>Письмо менеджерам</dt><dd><?php echo esc_html( $mail['notify'] ?? '—' ); ?></dd>
-				<dt>Письмо клиенту</dt><dd><?php echo esc_html( $mail['client'] ?? '—' ); ?></dd>
+				<?php if ( ! empty( $mail['copies'] ) ) : ?><dt>Копии менеджерам</dt><dd><?php echo esc_html( $mail['copies'] ); ?></dd><?php endif; ?>
+				<dt>Письмо клиенту</dt><dd><?php echo esc_html( 'off' === ( $mail['client'] ?? '' ) ? 'автоответ выключен' : ( $mail['client'] ?? '—' ) ); ?></dd>
 				<dt>Капча</dt><dd><?php echo esc_html( $m( 'captcha' ) ?: '—' ); ?></dd>
 				<dt>Страница</dt><dd><?php echo esc_html( $m( 'page' ) ?: '—' ); ?></dd>
 				<dt>Переход с</dt><dd><?php echo esc_html( $m( 'referrer' ) ?: '—' ); ?></dd>
@@ -474,3 +476,4 @@ $who       = function ( $uid, $time ) { return pcb_crm_user_html( $uid ) . ' · 
 
 <script>window.PCBCrm = <?php echo wp_json_encode( array( 'rest' => esc_url_raw( rest_url( 'pcb-panel/v1/requests/' ) ), 'api' => esc_url_raw( rest_url( 'pcb-panel/v1/' ) ), 'nonce' => wp_create_nonce( 'wp_rest' ) ) ); ?>;</script>
 <script src="<?php echo esc_url( PCB_PANEL_URL . 'assets/crm.js?ver=' . PCB_PANEL_VERSION ); ?>"></script>
+<?php echo $can_edit ? pcb_tags_script( array( 'request' ) ) : ''; // phpcs:ignore ?>

@@ -401,6 +401,7 @@ function pcb_cl_merge_company( $src, $dst ) {
 		update_post_meta( $rid, '_pcb_company_id', $dst );
 	}
 	$wpdb->update( pcb_cl_table( 'companies' ), array( 'merged_into' => $dst ), array( 'id' => $src ) );
+	pcb_tags_merge( 'company', $src, $dst );
 	pcb_cl_log( 'company:' . $dst, 'cl_merge', (string) $src, 'влита «' . $a['name'] . '»' . ( $fill ? ', дополнены поля: ' . implode( ', ', array_map( function ( $k ) { return pcb_cl_company_fields()[ $k ][0]; }, array_keys( $fill ) ) ) : '' ) );
 	pcb_cl_log( 'company:' . $src, 'cl_merge', (string) $dst, 'влита в «' . $b['name'] . '»' );
 	return $dst;
@@ -434,6 +435,7 @@ function pcb_cl_merge_contact( $src, $dst ) {
 		update_post_meta( $rid, '_pcb_company_id', $company );
 	}
 	$wpdb->update( pcb_cl_table( 'contacts' ), array( 'merged_into' => $dst ), array( 'id' => $src ) );
+	pcb_tags_merge( 'contact', $src, $dst );
 	pcb_cl_log( 'contact:' . $dst, 'cl_merge', (string) $src, 'влит «' . ( $a['name'] ?: '#' . $src ) . '»' );
 	pcb_cl_log( 'contact:' . $src, 'cl_merge', (string) $dst, 'влит в «' . ( $b['name'] ?: '#' . $dst ) . '»' );
 	return $dst;

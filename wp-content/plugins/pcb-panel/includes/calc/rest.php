@@ -8,6 +8,7 @@
  *     POST calc/restore {v}          — взять старую версию в черновик;
  *     POST calc/rates                — обновить курсы ЦБ сейчас;
  *     POST calc/etalon {number}      — эталон из заявки; POST calc/etalon-delete {id}.
+ *     POST calc/csv-check (файл), POST calc/csv-apply {token} — загрузка CSV в черновик (csv.php, README §9.6).
  *   Сайт (без входа): POST calc/quote {данные калькулятора} → оценка. Файлы проекта сюда не попадают —
  *   только параметры, которые клиент видит в полях калькулятора. Ничего не сохраняется.
  *   Комплект — одним запросом: { set: { sets, boards: [ { name, n, data } ] } } → { set: true, lo, hi, per, total,
@@ -90,6 +91,7 @@ function pcb_calc_bootstrap() {
 		'rates'    => pcb_calc_rates(),
 		'versions' => pcb_calc_versions_view(),
 		'preview'  => pcb_calc_preview( $draft['params'] ),
+		'csv'      => pcb_calc_csv_url( '__SRC__' ),
 	);
 }
 

@@ -275,7 +275,8 @@
       var dl = v.deltas && v.deltas.length ? 'Эталоны: от ' + fmt2.format(v.deltas[0]) + ' % до ' + fmt2.format(v.deltas[1]) + ' %. ' : '';
       return '<li><span class="v">v' + v.v + '</span><span>' + esc(v.note || 'Без комментария') + '</span><span class="w">' + esc(v.time + ' · ' + v.user) + '</span><span class="c">' +
         (v.changes.length ? 'Изменено: ' + v.changes.map(esc).join('; ') + '. ' : '') + dl +
-        (B.canEdit && v.v !== B.pub.v ? '<button type="button" data-restore="' + v.v + '">Взять в черновик</button>' : (v.v === B.pub.v ? '<b>сейчас на сайте</b>' : '')) + '</span></li>';
+        (B.canEdit && v.v !== B.pub.v ? '<button type="button" data-restore="' + v.v + '">Взять в черновик</button>' : (v.v === B.pub.v ? '<b>сейчас на сайте</b>' : '')) +
+        (B.csv ? ' · <a href="' + esc(B.csv.replace('__SRC__', v.v)) + '">CSV</a>' : '') + '</span></li>';
     }).join('') : '<li><span class="v">—</span><span>Версий пока нет. Сайт считает по старой формуле темы, пока вы не опубликуете первую.</span></li>';
   }
   function render(keepEditor) {
@@ -337,6 +338,60 @@
       applyState(s); toast('Опубликовано: версия ' + s.pub.v + ' на сайте');
     }).catch(function (er) { btn.disabled = false; toast(er.message, true); });
   };
+  /* ---------- CSV: загрузка в черновик (README §9.6) ---------- */
+  var csvToken = '';
+  function csvPct(p) { return p === null || p === undefined ? '' : (p > 0 ? '+' : '') + fmt2.format(p) + ' %'; }
+  function drawCsv(j) {
+    var box = $('#cs-csv'), n = j.changes.length;
+    var h = '<h3>' + (n ? 'Файл «' + esc(j.file) + '»: изменится значений — ' + n : 'Файл «' + esc(j.file) + '» совпадает с черновиком') + '</h3>' +
+      '<p class="cs-hint">Строк с параметрами: ' + j.lines + '. Сравнение — с текущим черновиком; на сайт попадёт только после публикации.</p>';
+    if (n) {
+      h += '<div class="cs-csvtab"><table><thead><tr><th>Параметр</th><th>Было</th><th>Стало</th><th></th></tr></thead><tbody>' +
+        j.changes.map(function (c) {
+          var big = c.pct !== null && Math.abs(c.pct) >= 50;
+          return '<tr><td>' + esc(c.name) + '<span class="cs-csvstep">' + esc(G[c.g] ? G[c.g].l + ' · ' + G[c.g].t : '') + '</span></td><td class="num">' + esc(c.old) + '</td><td class="num"><b>' + esc(c.new) + '</b></td><td class="num' + (big ? ' cs-csvbig' : '') + '">' + csvPct(c.pct) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    if (j.range.length) {
+      h += '<div class="cs-csvbad"><b>Вне допустимого (' + j.range.length + ').</b> В черновик попадут, но опубликовать не получится, пока не исправите:<ul>' +
+        j.range.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul></div>';
+    }
+    if (j.warn.length) {
+      h += '<details class="cs-csvwarn"' + (n ? '' : ' open') + '><summary>Пропущено строк: ' + (j.warn.length + j.more) + '</summary><ul>' +
+        j.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + (j.more ? '<li>…и ещё ' + j.more + '</li>' : '') + '</ul></details>';
+    }
+    if (n && j.etalons.length) {
+      h += '<div class="cs-csvtab"><table><thead><tr><th>Эталон</th><th>Черновик сейчас</th><th>После загрузки</th><th></th></tr></thead><tbody>' +
+        j.etalons.map(function (e) {
+          var big = e.pct !== null && Math.abs(e.pct) > 15;
+          return '<tr><td>' + esc(e.n) + '</td><td class="num">' + (e.now ? siteRub(e.now) : 'инженер') + '</td><td class="num">' + (e.next ? siteRub(e.next) : 'инженер') + '</td><td class="num' + (big ? ' cs-csvbig' : '') + '">' + csvPct(e.pct) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    h += '<div class="cs-acts"><button class="pp-btn pp-btn--ghost" type="button" id="cs-csv-cancel">Отмена</button>' +
+      '<button class="pp-btn" type="button" id="cs-csv-apply"' + (n ? '' : ' disabled') + '>Применить к черновику</button></div>';
+    box.innerHTML = h; box.hidden = false;
+    $('#cs-csv-cancel').onclick = function () { box.hidden = true; csvToken = ''; };
+    $('#cs-csv-apply').onclick = function () {
+      var btn = this; btn.disabled = true; clearTimeout(timer); timer = 0;
+      api('csv-apply', { token: csvToken }).then(function (s) {
+        box.hidden = true; csvToken = ''; applyState(s); toast('CSV в черновике: изменено значений — ' + n + '. Проверьте эталоны и опубликуйте');
+      }).catch(function (er) { btn.disabled = false; toast(er.message, true); if (er.status === 409 || er.status === 410) box.hidden = true; });
+    };
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  if ($('#cs-csv-file')) $('#cs-csv-file').addEventListener('change', function () {
+    var inp = this, f = inp.files && inp.files[0];
+    if (!f) return;
+    if (saving || timer) { toast('Дождитесь сохранения черновика и загрузите файл ещё раз', true); inp.value = ''; return; }
+    var fd = new FormData(); fd.append('file', f);
+    toast('Проверяем файл…');
+    fetch(B.api + 'csv-check', { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': B.nonce }, body: fd })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.message || 'Ошибка ' + r.status); return j; }); })
+      .then(function (j) { csvToken = j.token; $('#cs-toast').hidden = true; $('#cs-confirm').hidden = true; drawCsv(j); })
+      .catch(function (er) { toast(er.message, true); })
+      .then(function () { inp.value = ''; });
+  });
+
   if ($('#cs-rates-refresh')) $('#cs-rates-refresh').onclick = function () {
     var btn = this; btn.disabled = true;
     api('rates').then(function (s) { btn.disabled = false; applyState(s); toast('Курсы ЦБ обновлены'); }).catch(function (er) { btn.disabled = false; toast(er.message, true); });

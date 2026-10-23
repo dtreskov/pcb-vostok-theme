@@ -104,6 +104,10 @@ function pcb_panel_render_item( $slug, $item ) {
 		$GLOBALS['pcb_panel_client'] = $row;
 		pcb_panel_render( 'crm-' . $item, 200, 'crm' );
 	}
+	// «Реакция на заявку»: смотрят все с CRM, правят — с pcb_crm_edit (проверка — в REST)
+	if ( 'settings' === $item ) {
+		pcb_panel_render( '' === (string) get_query_var( 'pcb_panel_sub' ) ? 'crm-settings' : 'notfound', '' === (string) get_query_var( 'pcb_panel_sub' ) ? 200 : 404, 'crm' );
+	}
 	if ( 'journal' === $item ) {
 		if ( ! current_user_can( 'pcb_panel_log_view' ) ) {
 			pcb_panel_render( 'forbidden', 403 );

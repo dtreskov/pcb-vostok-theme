@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PCB Восток — панель управления
  * Description: Закрытый раздел сайта /panel: CRM, аналитика, SEO, калькулятор. Вход — через учётные записи WordPress.
- * Version:     0.8.5
+ * Version:     0.9.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Text Domain: pcb-panel
@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PCB_PANEL_VERSION', '0.8.5' );
+define( 'PCB_PANEL_VERSION', '0.9.0' );
 define( 'PCB_PANEL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PCB_PANEL_URL', plugin_dir_url( __FILE__ ) );
 define( 'PCB_PANEL_SLUG', 'panel' ); // адрес раздела: /panel
@@ -23,10 +23,14 @@ require_once PCB_PANEL_DIR . 'includes/rest.php';
 require_once PCB_PANEL_DIR . 'includes/requests/handler.php';
 require_once PCB_PANEL_DIR . 'includes/requests/storage.php';
 require_once PCB_PANEL_DIR . 'includes/requests/admin.php';
+require_once PCB_PANEL_DIR . 'includes/requests/reaction.php'; // «Реакция на заявку» (0.9.0) — README §3.6
 require_once PCB_PANEL_DIR . 'includes/crm/log.php';
 require_once PCB_PANEL_DIR . 'includes/crm/actions.php';
 require_once PCB_PANEL_DIR . 'includes/crm/calc-labels.php';
 require_once PCB_PANEL_DIR . 'includes/crm/normalize.php';
+require_once PCB_PANEL_DIR . 'includes/crm/table.php'; // общая таблица списков (0.9.0) — README §6.2
+require_once PCB_PANEL_DIR . 'includes/crm/lists.php';
+require_once PCB_PANEL_DIR . 'includes/crm/tags.php'; // метки заявок и клиентов (0.9.0) — README §6.3
 // база клиентов (0.6.0): компании, контакты, сопоставление заявок — см. README.md, §6.1
 require_once PCB_PANEL_DIR . 'includes/clients/schema.php';
 require_once PCB_PANEL_DIR . 'includes/clients/requisites.php';
@@ -49,6 +53,7 @@ require_once PCB_PANEL_DIR . 'includes/calc/model.php';
 require_once PCB_PANEL_DIR . 'includes/calc/engine.php';
 require_once PCB_PANEL_DIR . 'includes/calc/store.php';
 require_once PCB_PANEL_DIR . 'includes/calc/rest.php';
+require_once PCB_PANEL_DIR . 'includes/calc/csv.php'; // выгрузка и загрузка CSV (0.9.0) — README §9.6
 
 register_activation_hook( __FILE__, 'pcb_panel_activate' );
 register_deactivation_hook( __FILE__, 'pcb_panel_deactivate' );
@@ -58,6 +63,7 @@ function pcb_panel_activate() {
 	pcb_events_install();
 	pcb_crm_log_install();
 	pcb_cl_install();
+	pcb_tags_install();
 	pcb_rq_register();
 	pcb_panel_register_rewrites();
 	flush_rewrite_rules();

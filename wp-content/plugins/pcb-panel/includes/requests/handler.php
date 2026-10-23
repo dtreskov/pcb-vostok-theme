@@ -325,6 +325,7 @@ function pcb_rq_submit( WP_REST_Request $req ) {
 	// результат отправки писем хранится в заявке — видно в карточке, если почта не настроена
 	update_post_meta( $post_id, '_pcb_mail', array(
 		'notify' => pcb_rq_notify( (int) $post_id ),
+		'copies' => $GLOBALS['pcb_rq_copies_result'] ?? '',
 		'client' => pcb_rq_autoreply( (int) $post_id ),
 	) );
 
@@ -643,23 +644,20 @@ function pcb_rq_notify( $id ) {
 	}
 	$lines[] = 'Открыть заявку: ' . pcb_rq_panel_url( $id );
 
-	$to = array_filter( array_map( 'trim', explode( ',', pcb_rq_const( 'PCB_REQUEST_NOTIFY', 'info@pcb-vostok.ru' ) ) ) );
-	return pcb_rq_send( $to, 'Новая заявка ' . $m( 'number' ) . ' (' . $m( 'code' ) . ') · ' . $service, implode( "\n", $lines ), pcb_rq_headers( $m( 'email' ) ) );
+	// основной ящик — полное письмо; копии менеджерам — без данных клиента (reaction.php, README §3.6)
+	$subject = 'Новая заявка ' . $m( 'number' ) . ' (' . $m( 'code' ) . ') · ' . $service;
+	$body    = implode( "\n", $lines );
+	$res     = pcb_rq_send( pcb_rq_notify_main(), $subject, $body, pcb_rq_headers( $m( 'email' ) ) );
+	$GLOBALS['pcb_rq_copies_result'] = pcb_rq_notify_copies( $id, $subject, $body, $m( 'email' ) );
+	return $res;
 }
 
+/** Автоответ клиенту — текст из «Реакции на заявку»; выключен — 'off'. Reply-To — первый адрес основного ящика. */
 function pcb_rq_autoreply( $id ) {
-	$email  = get_post_meta( $id, '_pcb_email', true );
-	$name   = get_post_meta( $id, '_pcb_name', true );
-	$code   = get_post_meta( $id, '_pcb_code', true );
-	$notify = trim( explode( ',', pcb_rq_const( 'PCB_REQUEST_NOTIFY', 'info@pcb-vostok.ru' ) )[0] );
-	$body   = implode( "\n", array(
-		( '' !== $name ? 'Здравствуйте, ' . $name . '!' : 'Здравствуйте!' ),
-		'',
-		'Мы получили вашу заявку № ' . $code . '. Изучим файлы и свяжемся с вами.',
-		'Если нужно что-то добавить — просто ответьте на это письмо.',
-		'',
-		'PCB Восток',
-		home_url( '/' ),
-	) );
-	return pcb_rq_send( $email, 'Заявка № ' . $code . ' получена — PCB Восток', $body, pcb_rq_headers( $notify ) );
+	$o = pcb_rq_reaction();
+	if ( ! $o['auto_on'] ) {
+		return 'off';
+	}
+	$v = pcb_rq_fill_vars( $id );
+	return pcb_rq_send( get_post_meta( $id, '_pcb_email', true ), pcb_rq_fill( $o['auto_subject'], $v ), pcb_rq_fill( $o['auto_body'], $v ), pcb_rq_headers( pcb_rq_notify_main()[0] ?? pcb_rq_mail_from() ) );
 }

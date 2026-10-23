@@ -47,7 +47,7 @@ add_action( 'manage_pcb_request_posts_custom_column', function ( $col, $id ) {
 			break;
 		case 'pcb_mail':
 			$mail = (array) get_post_meta( $id, '_pcb_mail', true );
-			$ok   = 'ok' === ( $mail['notify'] ?? '' ) && 'ok' === ( $mail['client'] ?? '' );
+			$ok   = 'ok' === ( $mail['notify'] ?? '' ) && in_array( $mail['client'] ?? '', array( 'ok', 'off' ), true ) && in_array( $mail['copies'] ?? '', array( '', 'ok' ), true );
 			echo $ok ? 'отправлены' : '<span style="color:#b32d2e">не ушли — откройте заявку</span>';
 			break;
 	}
@@ -152,9 +152,10 @@ function pcb_rq_mail_page() {
 	if ( ! current_user_can( 'edit_pcb_requests' ) ) {
 		return;
 	}
-	$notify = pcb_rq_const( 'PCB_REQUEST_NOTIFY', 'info@pcb-vostok.ru' );
+	$notify = implode( ', ', pcb_rq_notify_main() );
 	$rows   = array(
-		'Кому слать заявки (PCB_REQUEST_NOTIFY)' => $notify . ( defined( 'PCB_REQUEST_NOTIFY' ) ? '' : ' — по умолчанию, константа не задана' ),
+		'Кому слать заявки'                      => $notify . ( pcb_rq_emails( pcb_rq_reaction()['main'] ) ? ' — задано в панели («Реакция на заявку»)' : ( defined( 'PCB_REQUEST_NOTIFY' ) ? ' — PCB_REQUEST_NOTIFY' : ' — по умолчанию, константа не задана' ) ),
+		'Копии менеджерам'                       => (string) count( pcb_rq_reaction()['copies'] ) . ' адрес(ов) — настраиваются в панели',
 		'Отправитель (From)'                     => pcb_rq_mail_from(),
 		'Способ отправки'                        => '' !== pcb_rq_const( 'PCB_SMTP_HOST' ) ? 'SMTP' : 'PHP mail() — PCB_SMTP_HOST не задан',
 		'PCB_SMTP_HOST'                          => pcb_rq_const( 'PCB_SMTP_HOST', '—' ),

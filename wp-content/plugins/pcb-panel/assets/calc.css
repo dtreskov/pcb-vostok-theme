@@ -182,3 +182,24 @@
 .cs-toast.is-error{background:var(--bad)}
 @media (prefers-reduced-motion:no-preference){.cs-fx__t,.cs-et{transition:background .15s,border-color .15s,box-shadow .15s}}
 .cs :focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+
+/* CSV: выгрузка и загрузка в черновик (0.9.0, README §9.6) */
+.cs-csvacts{display:flex;gap:14px;align-items:center;font-size:13.5px}
+.cs .cs-link{color:var(--green);text-decoration:underline;text-underline-offset:2px;cursor:pointer;white-space:nowrap}
+.cs .cs-link:hover{color:var(--copper)}
+.cs-csv{background:var(--surface);border-color:var(--green)}
+.cs-csv .cs-hint{margin:0!important}
+.cs-csvtab{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.cs-csvtab table{width:100%;border-collapse:collapse;font-size:13px}
+.cs-csvtab th,.cs-csvtab td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cs-csvtab th{position:sticky;top:0;background:var(--surface);font-weight:600;color:var(--grey);font-size:12.5px}
+.cs-csvtab td.num{text-align:right;white-space:nowrap}
+.cs-csvtab tr:last-child td{border-bottom:0}
+.cs-csvstep{display:block;font-size:11.5px;color:var(--grey)}
+.cs-csvbig{color:var(--bad);font-weight:600}
+.cs-csvbad{padding:10px 12px;border-radius:6px;background:var(--bad-l);color:var(--bad);font-size:13px}
+.cs-csvbad ul,.cs-csvwarn ul{margin:6px 0 0;padding-left:1.2em;display:grid;gap:2px}
+.cs-csvwarn{font-size:13px;color:var(--grey)}
+.cs-csvwarn summary{cursor:pointer;color:var(--ink)}
+@media (max-width:767px){.cs-csvacts{width:100%}}
+.cs-csvtab th:not(:first-child){text-align:right}

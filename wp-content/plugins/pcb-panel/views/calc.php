@@ -39,6 +39,12 @@ $boot = pcb_calc_bootstrap();
 	<div class="cs-draft">
 		<span class="cs-draft__ver" id="cs-ver"></span>
 		<span class="cs-pill" id="cs-pill"></span>
+		<div class="cs-csvacts">
+			<a class="cs-link" href="<?php echo esc_url( pcb_calc_csv_url( 'draft' ) ); ?>" title="Параметры черновика — одна строка на значение; открывается в Excel">Скачать CSV</a>
+			<?php if ( $boot['canEdit'] ) : ?>
+				<label class="cs-link" title="Проверим, что изменится, и только потом применим к черновику">Загрузить CSV…<input type="file" id="cs-csv-file" accept=".csv,.txt,.tsv,text/csv" hidden></label>
+			<?php endif; ?>
+		</div>
 		<?php if ( $boot['canEdit'] ) : ?>
 			<div class="cs-acts">
 				<button class="pp-btn pp-btn--ghost" type="button" id="cs-reset" disabled>Сбросить черновик</button>
@@ -46,6 +52,9 @@ $boot = pcb_calc_bootstrap();
 			</div>
 		<?php endif; ?>
 	</div>
+	<?php if ( $boot['canEdit'] ) : ?>
+		<div class="cs-confirm cs-csv" id="cs-csv" hidden aria-live="polite"></div>
+	<?php endif; ?>
 	<div class="cs-confirm" id="cs-confirm" hidden>
 		<h3 id="cs-confirm-h"></h3>
 		<ul id="cs-confirm-list"></ul>
@@ -97,7 +106,7 @@ $boot = pcb_calc_bootstrap();
 
 	<section id="cs-view-history" class="cs-box" hidden>
 		<h2>Версии формулы</h2>
-		<p class="cs-hint">Каждая заявка с сайта запоминает номер версии, по которой клиент увидел оценку. Старую версию можно взять в черновик и опубликовать снова.</p>
+		<p class="cs-hint">Каждая заявка с сайта запоминает номер версии, по которой клиент увидел оценку. Старую версию можно взять в черновик и опубликовать снова или скачать в CSV.</p>
 		<ul class="cs-hist" id="cs-hist"></ul>
 	</section>
 </div>

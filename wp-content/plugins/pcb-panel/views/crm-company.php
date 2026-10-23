@@ -26,6 +26,7 @@ include __DIR__ . '/_crm-nav.php';
 		<?php if ( ! $is_new ) : ?>
 			<p><?php echo esc_html( trim( ( $row['inn'] ? 'ИНН ' . $row['inn'] : 'ИНН не указан' ) . ( $row['kpp'] ? ' · КПП ' . $row['kpp'] : '' ) ) ); ?>
 				<?php echo $row['verified'] ? '<span class="crm-tag crm-tag--sent">реквизиты проверены</span>' : '<span class="crm-tag">не проверено</span>'; ?></p>
+			<?php echo pcb_tags_html( 'company', $id, pcb_tags_get( 'company', $id ), $can_edit, 'card' ); // phpcs:ignore -- экранировано ?>
 		<?php endif; ?>
 	</div>
 </div>
@@ -138,3 +139,4 @@ include __DIR__ . '/_crm-nav.php';
 <p class="crm-msg" role="status" hidden></p>
 <script>window.PCBCrm = <?php echo wp_json_encode( array( 'rest' => esc_url_raw( rest_url( 'pcb-panel/v1/requests/' ) ), 'api' => esc_url_raw( rest_url( 'pcb-panel/v1/' ) ), 'nonce' => wp_create_nonce( 'wp_rest' ) ) ); ?>;</script>
 <script src="<?php echo esc_url( PCB_PANEL_URL . 'assets/crm.js?ver=' . PCB_PANEL_VERSION ); ?>"></script>
+<?php echo ! $is_new && $can_edit ? pcb_tags_script( array( 'company' ) ) : ''; // phpcs:ignore ?>

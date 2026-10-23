@@ -26,6 +26,7 @@
 .crm-search input:focus { outline: none; border-color: var(--color-primary); }
 
 .crm-num { font-weight: 600; text-decoration: none; }
+.crm-table .crm-num { white-space: nowrap; }
 .crm-code { display: block; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; letter-spacing: .04em; color: var(--color-text-grey); }
 .crm-code--lg { display: inline; font-size: 15px; color: var(--color-text-primary-dark); }
 .crm-table tr.is-unseen td:first-child { box-shadow: inset 3px 0 0 var(--color-copper); }
@@ -325,3 +326,157 @@
 }
 .crm-link--danger { color: #A12C2C !important; }
 .crm-meta .crm-link + .crm-link { margin-left: var(--space-sm); }
+
+/* ---------- 0.9.0: общая таблица списков (README §6.2) ---------- */
+
+.pp-list-tools { align-items: center; }
+.pp-list-tools__right { display: flex; align-items: center; gap: var(--space-sm); margin-left: auto; }
+.pp-filter__n {
+    display: inline-block; min-width: 18px; margin-left: 6px; padding: 2px 5px; border-radius: var(--radius-pill);
+    background: var(--color-section-alt); font-size: 11.5px; line-height: 1; text-align: center; color: var(--color-text-grey);
+}
+.pp-filter.is-on .pp-filter__n { background: var(--color-primary-light); color: var(--color-text-primary); }
+
+/* «Фильтры» — выпадающая панель */
+.pp-fpanel { position: relative; }
+.pp-fpanel__btn { display: inline-flex; align-items: center; gap: 6px; list-style: none; cursor: pointer; }
+.pp-fpanel__btn::-webkit-details-marker { display: none; }
+.pp-fpanel__btn::after {
+    content: ''; width: 6px; height: 6px; margin: -3px 0 0 2px;
+    border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg);
+}
+.pp-fpanel[open] .pp-fpanel__btn { border-color: var(--color-primary); color: var(--color-text-primary); }
+.pp-fpanel__box {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 15; width: 320px; max-width: calc(100vw - 32px);
+    display: grid; gap: var(--space-md); padding: var(--space-lg);
+    background: var(--color-white); border: 1px solid var(--color-separator); border-radius: var(--radius-card);
+    box-shadow: 0 12px 32px rgba(18, 38, 30, .14);
+}
+.pp-fpanel__row { display: grid; gap: 4px; font-size: 13px; color: var(--color-text-grey); }
+.pp-fpanel__row select, .pp-fpanel__row input[type=date] {
+    box-sizing: border-box; height: 34px; width: 100%; padding: 0 10px;
+    border: 1px solid var(--color-separator); border-radius: 8px; background: var(--color-white);
+    font: 400 14px/1 var(--font-family); color: inherit;
+}
+.pp-fpanel__row--check { display: flex; align-items: center; gap: var(--space-sm); font-size: 14px; color: inherit; cursor: pointer; }
+.pp-fpanel__row--check input { width: 16px; height: 16px; accent-color: var(--color-primary); }
+.pp-fpanel__dates { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.pp-fpanel__dates[hidden] { display: none; }
+.pp-fpanel .crm-form__acts { margin-top: 0; }
+
+/* чипы выбранных фильтров */
+.pp-chips { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin: calc(var(--space-md) * -0.5) 0 var(--space-lg); }
+.pp-chip {
+    display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px 0 12px;
+    border-radius: var(--radius-pill); background: var(--color-primary-light); color: var(--color-text-primary);
+    font-size: 13px; font-weight: 500; text-decoration: none;
+}
+.pp-chip span { font-size: 15px; line-height: 1; opacity: .7; }
+.pp-chip:hover span { opacity: 1; }
+.pp-chip--reset { background: none; padding: 0 4px; color: var(--color-text-copper-dark); text-decoration: underline; text-underline-offset: 2px; }
+
+/* сортировка в заголовке */
+.pp-sort { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-decoration: none; white-space: nowrap; }
+.pp-sort:hover { color: var(--color-text-primary); }
+.pp-sort__arr { font-size: 12px; opacity: .35; }
+.pp-th.is-sorted { color: var(--color-text-primary); }
+.pp-th.is-sorted .pp-sort__arr { opacity: 1; }
+
+/* строка открывается кликом */
+.pp-row[data-href] { cursor: pointer; }
+.pp-row[data-href]:hover td { background: var(--color-section-alt); }
+.pp-row[data-href] a { position: relative; }
+
+/* дата в две строки */
+.pp-dt { display: block; white-space: nowrap; }
+.pp-dt__time { display: block; margin-top: 2px; font-size: 12.5px; color: var(--color-text-grey); white-space: nowrap; }
+.pp-dt__time .crm-user { color: inherit; }
+.pp-pages__gap { align-self: center; padding: 0 4px; color: var(--color-text-grey); }
+.pp-total { margin: var(--space-md) 0 0; font-size: 13px; color: var(--color-text-grey); }
+
+.crm-cat { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--color-section-alt); color: var(--color-text-grey); }
+.crm-cat--created { background: var(--color-copper-light); color: var(--color-text-copper-dark); }
+.crm-cat--changed, .crm-cat--added { background: var(--color-primary-light); color: var(--color-text-primary); }
+.crm-cat--deleted { background: #F6E1DE; color: #8E2B20; }
+.crm-cat--sent, .crm-cat--calc { background: var(--color-gold-light); color: #6B5418; }
+
+@media (max-width: 767px) {
+    .pp-list-tools__right { width: 100%; margin-left: 0; }
+    .pp-list-tools__right .crm-search { flex: 1; }
+}
+
+/* ---------- 0.9.0: метки (README §6.3) ---------- */
+
+.pp-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 24px; }
+.pp-tags--card { margin-top: var(--space-sm); }
+.crm-head-actions .pp-tags--card { margin-top: 0; }
+.pp-tag {
+    display: inline-flex; align-items: center; gap: 2px; max-width: 220px; height: 22px; padding: 0 8px;
+    border: 1px solid var(--color-separator); border-radius: 6px; background: var(--color-white); color: var(--color-text-primary-dark);
+    font-size: 12.5px; font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pp-tag__x {
+    margin: 0 -4px 0 2px; padding: 0 3px; border: 0; background: none; cursor: pointer;
+    font: 600 14px/1 var(--font-family); color: inherit; opacity: .55;
+}
+.pp-tag__x:hover { opacity: 1; }
+.pp-tags__add {
+    height: 22px; min-width: 22px; padding: 0 6px; border: 1px dashed var(--color-separator); border-radius: 6px;
+    background: none; cursor: pointer; font: 500 12.5px/1 var(--font-family); color: var(--color-text-grey);
+}
+.pp-tags__add:hover, .pp-tags__add:focus-visible { border-color: var(--color-copper); color: var(--color-text-copper-dark); }
+.pp-tags__input {
+    box-sizing: border-box; height: 24px; width: 120px; padding: 0 8px;
+    border: 1px solid var(--color-primary); border-radius: 6px; background: var(--color-white);
+    font: 400 13px/1 var(--font-family);
+}
+.pp-tags__input:focus { outline: none; }
+.pp-tags.is-busy { opacity: .6; pointer-events: none; }
+
+/* в списке: «+» — при наведении на строку или ячейку, пустая ячейка не занимает места */
+.crm-th-tags { width: 1%; }
+.crm-td-tags { min-width: 90px; max-width: 220px; }
+.crm-td-tags[data-no-row] { cursor: text; }
+.pp-tags--list .pp-tags__add { opacity: 0; }
+.pp-row:hover .pp-tags--list .pp-tags__add, .pp-tags--list .pp-tags__add:focus-visible { opacity: 1; }
+@media (hover: none) { .pp-tags--list .pp-tags__add { opacity: 1; } }
+
+/* ---------- 0.9.0: «Реакция на заявку» (README §3.6) ---------- */
+
+.crm-react .crm-form { display: grid; gap: var(--space-md); }
+.crm-react .crm-box__head { margin-bottom: 0; }
+.crm-react .rq-sep { padding-top: var(--space-md); border-top: 1px solid var(--color-separator); }
+.crm-switch { display: inline-flex !important; grid-auto-flow: column; align-items: center; gap: 6px !important; font-size: 13.5px !important; color: inherit !important; cursor: pointer; }
+.crm-switch input { width: 16px; height: 16px; accent-color: var(--color-primary); }
+.rq-auto { display: grid; gap: var(--space-md); }
+.rq-auto.is-off label.crm-field { opacity: .55; }
+.crm-react textarea { font: 400 14px/1.5 var(--font-family); }
+.rq-var {
+    margin: 2px 2px 0 0; padding: 1px 6px; border: 1px solid var(--color-separator); border-radius: 6px; background: var(--color-white);
+    font: 500 12.5px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--color-text-primary); cursor: pointer;
+}
+.rq-var:hover { border-color: var(--color-primary); }
+.rq-warn { color: #8E2B20 !important; }
+.rq-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm); }
+.rq-test { display: inline-flex; gap: var(--space-sm); align-items: center; }
+.rq-test input { width: 220px; }
+.rq-test .pp-btn { white-space: nowrap; }
+.rq-copies > .crm-link { justify-self: start; }
+.rq-copies { display: grid; gap: 6px; }
+.rq-copies__h { font-size: 13px; font-weight: 500; color: var(--color-text-grey); }
+.rq-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+.rq-item { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.rq-item input[type=email] { flex: 1 1 220px; }
+.crm-form .rq-full { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: inherit; cursor: pointer; white-space: nowrap; }
+.rq-full input { accent-color: var(--color-primary); }
+.rq-full:has(input:disabled) { opacity: .45; cursor: not-allowed; }
+.rq-del { border: 0; background: none; padding: 0 4px; font-size: 18px; line-height: 1; color: var(--color-text-grey); cursor: pointer; }
+.rq-del:hover { color: #A12C2C; }
+.rq-mail { border: 1px solid var(--color-separator); border-radius: 8px; overflow: hidden; }
+.rq-mail.is-off { opacity: .45; }
+.rq-mail__head { padding: 10px 14px; background: var(--color-section-alt); font-size: 13.5px; }
+.rq-mail__head > span:first-child { color: var(--color-text-grey); }
+.rq-mail__head .crm-sub { margin-top: 4px; }
+.rq-mail__body { margin: 0; padding: 14px; white-space: pre-wrap; overflow-wrap: anywhere; font: 400 14px/1.55 var(--font-family); background: var(--color-white); }
+.rq-fails { list-style: none; margin: var(--space-sm) 0 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+@media (max-width: 767px) { .rq-test, .rq-test input { width: 100%; } }

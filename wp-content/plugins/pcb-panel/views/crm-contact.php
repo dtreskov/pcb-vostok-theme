@@ -22,6 +22,7 @@ include __DIR__ . '/_crm-nav.php';
 		<h1><?php echo esc_html( $row['name'] ?: 'Контакт без имени' ); ?></h1>
 		<p><?php echo esc_html( $row['post'] ?: 'Должность не указана' ); ?> ·
 			<?php echo $company ? '<a href="' . esc_url( pcb_cl_url( 'company', $company['id'] ) ) . '">' . esc_html( $company['name'] ) . '</a>' : 'без компании'; ?></p>
+		<?php echo pcb_tags_html( 'contact', $id, pcb_tags_get( 'contact', $id ), $can_edit, 'card' ); // phpcs:ignore -- экранировано ?>
 	</div>
 </div>
 
@@ -115,3 +116,4 @@ include __DIR__ . '/_crm-nav.php';
 <p class="crm-msg" role="status" hidden></p>
 <script>window.PCBCrm = <?php echo wp_json_encode( array( 'rest' => esc_url_raw( rest_url( 'pcb-panel/v1/requests/' ) ), 'api' => esc_url_raw( rest_url( 'pcb-panel/v1/' ) ), 'nonce' => wp_create_nonce( 'wp_rest' ) ) ); ?>;</script>
 <script src="<?php echo esc_url( PCB_PANEL_URL . 'assets/crm.js?ver=' . PCB_PANEL_VERSION ); ?>"></script>
+<?php echo $can_edit ? pcb_tags_script( array( 'contact' ) ) : ''; // phpcs:ignore ?>
