@@ -210,7 +210,9 @@ function pcb_calc_board( array $p, array $in, $name = '' ) {
 		'axiY'     => $axiY,
 		't'        => $t,
 		'kg'       => $kg,
-		'ours'     => $p['audit'] + $p['pmi'] + $p['pmiBoard'] * $qty + $p['otk'],
+		'pmiOn'    => $asmOn, // ПМИ — только у плат с монтажом (F-1.29)
+		'pmiR'     => $asmOn ? $p['pmi'] + $p['pmiBoard'] * $qty : 0,
+		'ours'     => $p['audit'] + ( $asmOn ? $p['pmi'] + $p['pmiBoard'] * $qty : 0 ) + $p['otk'],
 	) );
 }
 
@@ -308,8 +310,13 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 	$cval  = $pcbR + $asmR + $ship;
 	$duty  = $cval * $p['duty'] / 100;
 	$ivat  = ( $cval + $duty ) * $p['importVat'] / 100;
-	$cust  = $duty + $p['customsFee'] + $p['broker'] + ( $p['vatDeduct'] ? 0 : $ivat );
+	$cfee  = pcb_calc_customs_fee( $p, $cval );
+	$cust  = $duty + $cfee + $p['broker'] + ( $p['vatDeduct'] ? 0 : $ivat );
 	$ours  = $sum( 'ours' );
+	$anyPmi = false;
+	foreach ( $B as $b ) {
+		$anyPmi = $anyPmi || ! empty( $b['pmiOn'] );
+	}
 
 	// --- 7. наценка, 8. НДС и вид цены
 	$basePcb = $pcbR + $ship + $cust + $ours;
@@ -352,7 +359,9 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 		$parts['axi'] = $b['axiY'] * $rate * $mA;
 		$scale = array_sum( $parts ) > 0 ? $gross / array_sum( $parts ) : 0; // доплата до минимума, НДС и округление — пропорционально
 		$res['lines'] = pcb_calc_board_lines( $b, $parts, $scale, $zero );
-		$res['lines'][] = array( 'name' => 'Проверка по ПМИ', 'text' => 'входит', 'incl' => true );
+		if ( $anyPmi ) {
+			$res['lines'][] = array( 'name' => 'Проверка по ПМИ', 'text' => 'входит', 'incl' => true );
+		}
 		$res['lines'][] = array( 'name' => 'Приёмка ОТК на фабрике', 'text' => 'входит', 'incl' => true );
 		$res['lines'][] = array( 'name' => 'Доставка и таможня', 'v' => $zero ? 0 : round( $parts['ship'] * $scale ) );
 		$qtyOut = (int) $b['qty'];
@@ -381,7 +390,7 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 			$sB     = max( $p['shipMin'], $b['kg'] * $p['tariff'][ $tKey ] );
 			$cvB    = $b['pcbR'] + $b['asmR'] + $sB;
 			$dB     = $cvB * $p['duty'] / 100;
-			$apart += $sB + $dB + $p['customsFee'] + $p['broker'] + ( $p['vatDeduct'] ? 0 : ( $cvB + $dB ) * $p['importVat'] / 100 );
+			$apart += $sB + $dB + pcb_calc_customs_fee( $p, $cvB ) + $p['broker'] + ( $p['vatDeduct'] ? 0 : ( $cvB + $dB ) * $p['importVat'] / 100 );
 		}
 		$saving = max( 0, ( $apart - ( $ship + $cust ) ) * $mP * ( 1 + $vat ) );
 		$boards = array();
@@ -406,7 +415,9 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 		if ( ! $zero && $saving > 1 && count( $B ) > 1 ) {
 			$res['lines'][] = array( 'name' => 'Экономия против заказа плат по отдельности', 'text' => '≈ ' . number_format( round( $saving ), 0, ',', ' ' ) . ' ₽', 'soft' => true );
 		}
-		$res['lines'][] = array( 'name' => 'Проверка по ПМИ', 'text' => 'входит', 'incl' => true );
+		if ( $anyPmi ) {
+			$res['lines'][] = array( 'name' => 'Проверка по ПМИ', 'text' => 'входит', 'incl' => true );
+		}
 		$res['lines'][] = array( 'name' => 'Приёмка ОТК на фабрике', 'text' => 'входит', 'incl' => true );
 		$res['set']    = true;
 		$res['sets']   = (int) $sets;
@@ -476,13 +487,13 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 		'f' => array( $N( 'Вес партии', $kg, 'кг' ), '×', $M( 'Тариф, ' . mb_strtolower( $P['shipMode']['opts'][ $tKey ] ), $p['tariff'][ $tKey ], 'RUB', '/кг' ) ),
 		'note' => $wnote,
 		'warn' => $ship > $shipT + 0.5 ? array( 'min' => $p['shipMin'], 'by' => $shipT ) : null );
-	$f5 = array( $Pp( 'Пошлина', $p['duty'] ), '×', $M( 'Таможенная стоимость', $cval ), '+', $M( 'Сбор', $p['customsFee'] ), '+', $M( 'Брокер', $p['broker'] ) );
+	$f5 = array( $Pp( 'Пошлина', $p['duty'] ), '×', $M( 'Таможенная стоимость', $cval ), '+', $M( 'Сбор', $cfee ), '+', $M( 'Брокер', $p['broker'] ) );
 	if ( ! $p['vatDeduct'] ) {
 		$f5[] = '+';
 		$f5[] = $M( 'НДС на ввоз', $ivat );
 	}
 	$blocks[] = array( 'g' => 'customs', 'n' => 'Таможня', 'm' => $cust, 'f' => $f5,
-		'note' => 'Таможенная стоимость — платы и монтаж с расходами на платёж плюс доставка.' . ( $isSet ? ' Одна декларация на комплект: сбор и брокер — один раз.' : '' ), 'ivat' => $p['vatDeduct'] ? $ivat : null );
+		'note' => 'Таможенная стоимость — платы и монтаж с расходами на платёж плюс доставка. Сбор — по шкале от таможенной стоимости: ' . pcb_calc_customs_fee_row( $cval ) . '.' . ( $isSet ? ' Одна декларация на комплект: сбор и брокер — один раз.' : '' ), 'ivat' => $p['vatDeduct'] ? $ivat : null );
 	if ( $isSet ) {
 		$f6 = array();
 		foreach ( $B as $i => $b ) {
@@ -492,10 +503,13 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 			$f6[] = $M( 'Плата' . $q( $b ), $b['ours'] );
 		}
 		$blocks[] = array( 'g' => 'ours', 'n' => 'Наши услуги', 'm' => $ours, 'f' => $f6,
-			'note' => 'На каждую плату комплекта: аудит файлов ' . pcb_calc_n( $p['audit'] ) . ' ₽ + ПМИ за партию ' . pcb_calc_n( $p['pmi'] ) . ' ₽ + ПМИ ' . pcb_calc_n( $p['pmiBoard'] ) . ' ₽ × штук + приёмка ОТК ' . pcb_calc_n( $p['otk'] ) . ' ₽.' );
+			'note' => 'На каждую плату комплекта: аудит файлов ' . pcb_calc_n( $p['audit'] ) . ' ₽ + приёмка ОТК ' . pcb_calc_n( $p['otk'] ) . ' ₽; у плат с монтажом ещё ПМИ за партию ' . pcb_calc_n( $p['pmi'] ) . ' ₽ + ПМИ ' . pcb_calc_n( $p['pmiBoard'] ) . ' ₽ × штук. Голые платы по ПМИ не проверяются.' );
 	} else {
 		$blocks[] = array( 'g' => 'ours', 'n' => 'Наши услуги', 'm' => $ours,
-			'f' => array( $M( 'Аудит файлов', $p['audit'] ), '+', $M( 'ПМИ за партию', $p['pmi'] ), '+', $M( 'ПМИ за плату', $p['pmiBoard'] ), '×', $N( 'Плат', $B[0]['qty'] ), '+', $M( 'Приёмка ОТК', $p['otk'] ) ) );
+			'f'    => $B[0]['pmiOn']
+				? array( $M( 'Аудит файлов', $p['audit'] ), '+', $M( 'ПМИ за партию', $p['pmi'] ), '+', $M( 'ПМИ за плату', $p['pmiBoard'] ), '×', $N( 'Плат', $B[0]['qty'] ), '+', $M( 'Приёмка ОТК', $p['otk'] ) )
+				: array( $M( 'Аудит файлов', $p['audit'] ), '+', $M( 'Приёмка ОТК', $p['otk'] ) ),
+			'note' => $B[0]['pmiOn'] ? null : 'Без монтажа проверки по ПМИ нет — испытывать нечего.' );
 	}
 	$f7 = array( $M( 'Платы с расходами', $basePcb ), '×', $Pp( 'Наценка на платы', $p['mPcb'] ) );
 	if ( $asmR > 0 ) {
@@ -565,6 +579,28 @@ function pcb_calc_block_asm( array $p, array $b, $cbr, $suffix ) {
 		'note' => 'Корпусов на плате: ' . pcb_calc_n( $b['comps'] ) . ( 'quick' === $b['mode'] ? ' (быстрая оценка — пайки по средним значениям).' : '.' ) );
 }
 
+/** Таможенный сбор по шкале: первая строка, верхняя граница которой не меньше таможенной стоимости. */
+function pcb_calc_customs_fee( array $p, $cval ) {
+	$t = (array) $p['customsFee'];
+	foreach ( $t as $lim => $fee ) {
+		if ( 'inf' === (string) $lim || $cval <= (float) $lim ) {
+			return (float) $fee;
+		}
+	}
+	return (float) end( $t );
+}
+
+/** Подпись строки шкалы сбора для разбора в панели. */
+function pcb_calc_customs_fee_row( $cval ) {
+	$rows = pcb_calc_params()['customsFee']['rows'];
+	foreach ( $rows as $lim => $label ) {
+		if ( 'inf' === (string) $lim || $cval <= (float) $lim ) {
+			return $label;
+		}
+	}
+	return end( $rows );
+}
+
 /** Число для подписей: 11,42 · 2,5 · 16. */
 function pcb_calc_n( $x ) {
 	$s = number_format( (float) $x, 2, ',', ' ' );
@@ -608,7 +644,7 @@ function pcb_calc_sensitivity( array $p, array $in, array $fx ) {
 		}
 	};
 	$try( 'Курс юаня', $p, array( 'cny' => $fx['cny'] * 1.1, 'usd' => $fx['usd'] ) );
-	foreach ( array( 'setup', 'asmSide', 'stencil', 'feeder', 'axi', 'bank', 'agent', 'buffer', 'shipMin', 'pack', 'duty', 'customsFee', 'broker', 'pmi', 'pmiBoard', 'otk', 'audit', 'mPcb', 'mAsm' ) as $k ) {
+	foreach ( array( 'setup', 'asmSide', 'stencil', 'feeder', 'axi', 'bank', 'agent', 'buffer', 'shipMin', 'pack', 'duty', 'broker', 'pmi', 'pmiBoard', 'otk', 'audit', 'mPcb', 'mAsm' ) as $k ) {
 		if ( (float) $p[ $k ] <= 0 ) {
 			continue;
 		}
