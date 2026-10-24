@@ -6,13 +6,14 @@
  * pcb_calc_run( $p, $in, $fx ):
  *   $p  — значения параметров (pcb_calc_clean), $in — вход с сайта (pcb_calc_input_clean): одна плата
  *         или комплект { set: { sets, boards: [ { name, n, in } ] } },
- *   $fx — курсы для расчёта: array( 'cny' => ₽ за ¥, 'usd' => ₽ за $ ).
+ *   $fx — курсы для расчёта: array( 'cny' => ₽ за ¥, 'usd' => ₽ за $, 'vol' => разброс курса юаня, % ).
  * Возвращает итог для сайта (ok, lines, lo, hi, per, vat …) и разбор для панели (x: terms — общая формула,
  * blocks — по блокам).
  *
  * Устройство: pcb_calc_board() — всё, что считается на одну плату (фабрика, монтаж, вес, наши услуги);
- * pcb_calc_sum() — общее на заказ: курс, доставка по суммарному весу, таможня, наценка, минимальная сумма,
- * НДС, округление. У одной платы заказ — она сама; у комплекта общее считается один раз (README §9.5).
+ * pcb_calc_sum() — общее на заказ: курс, финансирование, доставка по суммарному весу, таможня, наценка,
+ * минимальная сумма, НДС, округление, вилка. У одной платы заказ — она сама; у комплекта общее считается
+ * один раз (README §9.5).
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -22,10 +23,6 @@ const PCB_CALC_MAX_BOARDS = 20;
 /** Оценка числа позиций (катушек) по числу корпусов на плате. */
 function pcb_calc_feeders( $n ) {
 	return $n > 0 ? min( $n, (int) round( 6 + $n * 0.2 ) ) : 0;
-}
-
-function pcb_calc_vol_key( $area ) {
-	return $area < 2 ? 'lt2' : ( $area < 10 ? 'lt10' : ( $area < 50 ? 'lt50' : ( $area < 200 ? 'lt200' : 'ge200' ) ) );
 }
 
 /** Комплект или одна плата. */
@@ -42,6 +39,17 @@ function pcb_calc_run( array $p, array $in, array $fx ) {
 		return array( 'ok' => false, 'engineer' => false, 'warn' => array(), 'lines' => array(), 'notes' => array(), 'reason' => $b['reason'] );
 	}
 	return pcb_calc_sum( $p, array( $b ), $fx, null, $b['engineer'], $b['warn'], $b['notes'] );
+}
+
+/** Значение кривой параметра $k (строка $row) в точке $x. */
+function pcb_calc_cv( array $p, $k, $row, $x ) {
+	$d = pcb_calc_params()[ $k ];
+	return pcb_calc_curve( $p[ $k ], $row, $x, ! empty( $d['log'] ) );
+}
+
+/** Надбавка опции фабрики: ¥/дм² × площадь, но не меньше минимума; 0, если опция бесплатна. */
+function pcb_calc_opt_add( array $o, $area ) {
+	return ( $o['dm2'] > 0 || $o['min'] > 0 ) ? max( (float) $o['min'], (float) $o['dm2'] * $area ) : 0.0;
 }
 
 /* ---------------- одна плата ---------------- */
@@ -98,7 +106,8 @@ function pcb_calc_board( array $p, array $in, $name = '' ) {
 	if ( 'pi' === $mat ) { $eng( 'полиимидное основание' ); }
 	if ( 'hf' === $mat ) { $eng( 'ВЧ / СВЧ-материал' ); }
 	if ( $layers > $p['maxLayers'] ) { $eng( 'более ' . pcb_calc_layer_word( (int) $p['maxLayers'] ) ); }
-	if ( in_array( 'imp', $spec, true ) ) { $eng( 'контроль импеданса' ); }
+	$imp = in_array( 'imp', $spec, true );
+	if ( $imp && $p['impEng'] ) { $eng( 'контроль импеданса' ); }
 	if ( in_array( 'blind', $spec, true ) ) { $eng( 'слепые / скрытые отверстия' ); }
 	if ( in_array( 'vip', $spec, true ) ) { $eng( 'via-in-pad' ); }
 	if ( in_array( 'gold', $spec, true ) ) { $eng( 'золочёные ламели' ); }
@@ -109,42 +118,16 @@ function pcb_calc_board( array $p, array $in, $name = '' ) {
 	if ( $hole > 0 && $hole < $p['minHole'] ) { $eng( 'отверстие ' . $fmm( $hole ) . ' мм — микроотверстия' ); }
 	$mode = (string) ( $in['asm'] ?? 'none' );
 	if ( 'detail' === $mode && $a( 'd_0201' ) > 0 ) { $eng( 'чип-компоненты 0201 — по согласованию' ); }
-	$rateL = $p['dm2'][ (string) $layers ] ?? null;
-	if ( null === $rateL ) { $eng( 'нет ставки для ' . pcb_calc_layer_word( $layers ) ); $rateL = 0; }
+	$lk = (string) $layers;
+	if ( ! isset( $p['mrate']['y'][ $lk ] ) ) { $eng( 'нет ставки для ' . pcb_calc_layer_word( $layers ) ); $lk = '2'; }
 
-	// --- 1. платы, ¥
-	$area   = $len * $wid / 10000 * $qty; // дм² на партию
-	$setupY = $p['setup'] + $p['setupLayer'] * max( 0, $layers - 2 );
-	$pend   = ! empty( $in['finish_pending'] );
-	$fin    = $pend ? 'hasl' : $s( 'finish' );
-	$thickK = $s( 'thick' );
-	$sides  = '2' === $s( 'sides' ) ? 2 : 1;
-	$vk     = pcb_calc_vol_key( $area );
-	$mults  = array(
-		array( 'Толщина ' . ( $P['thick']['rows'][ $thickK ] ?? $thickK . ' мм' ), $p['thick'][ $thickK ] ?? 1 ),
-		array( 'Медь ' . $s( 'cuout' ) . ' мкм', $p['cu'][ $s( 'cuout' ) ] ?? 1 ),
-		array( 'Внутр. медь 70 мкм', $layers >= 4 && '70' === $s( 'cuin' ) ? $p['cuin70'] : 1 ),
-		array( 'Покрытие ' . ( $P['finish']['rows'][ $fin ] ?? $fin ), $p['finish'][ $fin ] ?? 1 ),
-		array( 'Материал ' . ( $P['mat']['rows'][ $mat ] ?? $mat ), $p['mat'][ $mat ] ?? 1 ),
-		array( 'Маска: ' . mb_strtolower( $P['mask']['rows'][ $s( 'mask' ) ] ?? $s( 'mask' ) ), $p['mask'][ $s( 'mask' ) ] ?? 1 ),
-		array( 'Две стороны', 2 === $sides ? $p['sides2'] : 1 ),
-		array( 'Объём партии', $p['vol'][ $vk ] ),
-	);
-	$k = 1;
-	foreach ( $mults as $m ) {
-		$k *= $m[1];
-	}
-	$pcbY = $area * $rateL * $k;
-	if ( $pend ) {
-		$b['notes'][] = 'Финишное покрытие не уточнено — в расчёте HASL.';
-	}
-
-	// --- 2. монтаж, ¥
-	$asmEmpty = false;
+	// --- монтаж: состав (нужен раньше площади — мелкие платы для монтажа идут в заготовке)
 	$joints   = 0;  // паек на плату
 	$perY     = 0;  // ¥ за пайки одной платы
 	$comps    = 0;  // корпусов на плате
+	$bga      = 0;
 	$axiOn    = false;
+	$asmEmpty = false;
 	$J        = $p['joint'];
 	if ( 'quick' === $mode ) {
 		$smd = $a( 'q_smd' ); $dip = $a( 'q_dip' ); $bga = $a( 'q_bga' ); $qfn = $a( 'q_qfn' );
@@ -167,6 +150,7 @@ function pcb_calc_board( array $p, array $in, $name = '' ) {
 		foreach ( array( 'd_0201', 'd_0402', 'd_0603', 'd_sot', 'd_soic', 'd_qfp', 'd_qfn', 'd_bga', 'd_tht', 'd_conn' ) as $kk ) {
 			$comps += $a( $kk );
 		}
+		$bga      = $a( 'd_bga' );
 		$axiOn    = $a( 'd_bga' ) > 0 || $a( 'd_qfn' ) > 0;
 		$asmEmpty = ! ( $comps > 0 );
 	} else {
@@ -176,28 +160,116 @@ function pcb_calc_board( array $p, array $in, $name = '' ) {
 		$joints += $pt[0];
 		$perY   += $pt[0] * $pt[1];
 	}
-	$asmOn   = 'none' !== $mode && ! $asmEmpty;
+	$asmOn = 'none' !== $mode && ! $asmEmpty;
+	$sides = '2' === $s( 'sides' ) ? 2 : 1;
+
+	// --- мультиплицирование: площадь по заготовке с техполями и зазорами
+	$panel = $s( 'panel' );
+	$small = $asmOn && $p['panMinSide'] > 0 && min( $len, $wid ) < $p['panMinSide'];
+	$usePan = $small || ( in_array( $panel, array( 'ours', 'own' ), true ) && $p['panArea'] );
+	$pan    = null;
+	$kPan   = 1.0;
+	if ( $usePan ) {
+		$L   = max( $len, $wid );
+		$W   = min( $len, $wid );
+		$gap = max( 0, (float) $p['panGap'] );
+		$T   = max( 1, (float) $p['panTarget'] );
+		$r   = max( 0, (float) $p['panRail'] );
+		$nx  = max( 1, (int) floor( $T / ( $L + $gap ) ) );
+		$ny  = max( 1, (int) floor( max( 0, $T - 2 * $r ) / ( $W + $gap ) ) );
+		$pL  = $nx * ( $L + $gap );
+		$pW  = $ny * ( $W + $gap ) + 2 * $r;
+		$kPan = $pL * $pW / ( $nx * $ny * $L * $W );
+		$pan  = array( 'nx' => $nx, 'ny' => $ny, 'pl' => $pL, 'pw' => $pW, 'k' => $kPan, 'why' => $small && ! in_array( $panel, array( 'ours', 'own' ), true ) ? 'small' : 'panel' );
+	}
+
+	// --- 1. платы, ¥: материал × множители опций + надбавки опций + плёнки + инженерный сбор + электротест
+	$area0  = $len * $wid / 10000 * $qty; // дм² плат
+	$area   = $area0 * $kPan;             // дм² с заготовкой
+	$rateL  = pcb_calc_cv( $p, 'mrate', $lk, $area );
+	$matMin = (float) ( $p['matMin'][ $lk ] ?? 0 );
+	$matRaw = $area * $rateL;
+	$base   = max( $matMin, $matRaw );
+	$pend   = ! empty( $in['finish_pending'] );
+	$fin    = $pend ? 'hasl' : $s( 'finish' );
+	$thickK = $s( 'thick' );
+	$opts   = array(
+		array( 'Толщина ' . ( $P['thick']['rows'][ $thickK ] ?? $thickK . ' мм' ), $p['thick'][ $thickK ] ?? null ),
+		array( 'Медь ' . $s( 'cuout' ) . ' мкм', $p['cu'][ $s( 'cuout' ) ] ?? null ),
+		array( 'Внутр. медь ' . $s( 'cuin' ) . ' мкм', $layers >= 4 ? ( $p['cuin'][ $s( 'cuin' ) ] ?? null ) : null ),
+		array( 'Покрытие ' . ( $P['finish']['rows'][ $fin ] ?? $fin ), $p['finish'][ $fin ] ?? null ),
+		array( 'Материал ' . ( $P['mat']['rows'][ $mat ] ?? $mat ), $p['mat'][ $mat ] ?? null ),
+		array( 'Маска: ' . mb_strtolower( $P['mask']['rows'][ $s( 'mask' ) ] ?? $s( 'mask' ) ), $p['mask'][ $s( 'mask' ) ] ?? null ),
+		array( 'Две стороны', 2 === $sides ? $p['extra']['sides2'] : null ),
+		array( 'Импеданс', $imp && ! $p['impEng'] ? $p['extra']['imp'] : null ),
+		array( 'Металлизация торцов', in_array( 'edge', $spec, true ) ? $p['extra']['edge'] : null ),
+		array( 'Тонкая дорожка', $track > 0 && $track < $p['fineTrack'] ? $p['extra']['fine'] : null ),
+	);
+	$mul  = 1.0;
+	$addY = 0.0;
+	$used = array(); // [подпись, множитель, надбавка ¥]
+	foreach ( $opts as $o ) {
+		if ( ! $o[1] ) {
+			continue;
+		}
+		$add  = pcb_calc_opt_add( $o[1], $area );
+		$mul *= (float) $o[1]['mul'];
+		$addY += $add;
+		if ( abs( $o[1]['mul'] - 1 ) > 1e-9 || $add > 0 ) {
+			$used[] = array( $o[0], (float) $o[1]['mul'], $add );
+		}
+	}
+	$filmY = (float) ( $p['film'][ $lk ] ?? 0 );
+	$engY  = max( 0, pcb_calc_cv( $p, 'eng', $lk, $area ) );
+	$etY   = max( 0, pcb_calc_cv( $p, 'etest', 'v', $area ) );
+	$setupY = $filmY + $engY + $etY;
+	$pcbY   = $base * $mul + $addY;
+	if ( $pend ) {
+		$b['notes'][] = 'Финишное покрытие не уточнено — в расчёте HASL.';
+	}
+
+	// --- 2. монтаж, ¥
 	$feeders = $asmOn ? pcb_calc_feeders( (int) $comps ) : 0;
-	$asmY    = $asmOn ? ( $p['asmSide'] + $p['stencil'] ) * $sides + $feeders * $p['feeder'] + $perY * $qty : 0;
+	$asmEngY = $asmOn ? max( 0, pcb_calc_cv( $p, 'asmEng', 'v', $qty ) ) : 0;
+	$fixY    = $asmOn ? max( 0, pcb_calc_cv( $p, 'fixture', 'v', $qty ) ) : 0;
+	$asmY    = $asmOn ? $asmEngY + $fixY + $p['stencil'] * $sides + $feeders * $p['feeder'] + $perY * $qty + $p['asmPack'] * $qty : 0;
 	$axiY    = $asmOn && $axiOn ? $p['axi'] : 0;
 	if ( $asmOn && ! empty( $in['asm_est'] ) ) {
 		$b['notes'][] = 'Монтаж посчитан ориентировочно — компоненты не учтены поштучно.';
 	}
 
-	// --- вес для доставки и наши услуги (₽) — на плату
+	// --- вес и объём для доставки
 	$t  = (float) ( $thickK ?: 1.6 );
-	$kg = $area * $t * $p['density'] / 100 * ( 1 + $p['pack'] / 100 ); // дм² × мм × г/см³: 1 дм² × 1 мм = 10 см³
+	$kg = $area * $t * $p['density'] / 100 * ( 1 + $p['pack'] / 100 ) + ( $asmOn ? $p['asmGram'] * $qty / 1000 : 0 ); // дм² × мм × г/см³: 1 дм² × 1 мм = 10 см³
+	$m3 = $kg / max( 1, (float) $p['packDens'][ $asmOn ? 'asm' : 'bare' ] );
+
+	// --- наши услуги, ₽: аудит, ОТК по выборке, ПМИ по уровню сложности (только с монтажом, F-1.29)
+	$lvl = $asmOn ? ( $bga > 0 || $comps >= $p['pmiHard'] ? 'hard' : ( $comps <= $p['pmiSimple'] ? 'simple' : 'mid' ) ) : null;
+	$pmiR = $lvl ? $p['pmiLvl'][ $lvl ]['batch'] + $p['pmiLvl'][ $lvl ]['board'] * $qty : 0;
+	$smp  = (int) min( $qty, pcb_calc_step( $p['otkSample'], $qty ) );
+	$otkR = $p['otk'] + $p['otkBoard'] * $smp * ( $asmOn ? $p['otkAsmK'] : 1 );
 
 	return array_merge( $b, array(
 		'ok'       => true,
 		'qty'      => $qty,
 		'layers'   => $layers,
+		'lk'       => $lk,
 		'area'     => $area,
+		'area0'    => $area0,
+		'pan'      => $pan,
+		'rateL'    => $rateL,
+		'matMin'   => $matMin,
+		'matRaw'   => $matRaw,
+		'base'     => $base,
+		'mul'      => $mul,
+		'addY'     => $addY,
+		'used'     => $used,
+		'filmY'    => $filmY,
+		'engY'     => $engY,
+		'etY'      => $etY,
 		'setupY'   => $setupY,
 		'pcbY'     => $pcbY,
 		'factY'    => $setupY + $pcbY,
-		'rateL'    => $rateL,
-		'mults'    => $mults,
 		'mode'     => $mode,
 		'asmOn'    => $asmOn,
 		'asmEmpty' => $asmEmpty,
@@ -206,13 +278,25 @@ function pcb_calc_board( array $p, array $in, $name = '' ) {
 		'perY'     => $perY,
 		'comps'    => $comps,
 		'feeders'  => $feeders,
+		'asmEngY'  => $asmEngY,
+		'fixY'     => $fixY,
 		'asmY'     => $asmY,
 		'axiY'     => $axiY,
 		't'        => $t,
 		'kg'       => $kg,
-		'pmiOn'    => $asmOn, // ПМИ — только у плат с монтажом (F-1.29)
-		'pmiR'     => $asmOn ? $p['pmi'] + $p['pmiBoard'] * $qty : 0,
-		'ours'     => $p['audit'] + ( $asmOn ? $p['pmi'] + $p['pmiBoard'] * $qty : 0 ) + $p['otk'],
+		'm3'       => $m3,
+		'pmiOn'    => (bool) $lvl,
+		'lvl'      => $lvl,
+		'pmiR'     => $pmiR,
+		'smp'      => $smp,
+		'otkR'     => $otkR,
+		'ours'     => $p['audit'] + $pmiR + $otkR,
+		'flags'    => array(
+			'quick'  => $asmOn && 'quick' === $mode,
+			'est'    => $asmOn && ! empty( $in['asm_est'] ),
+			'finish' => $pend,
+			'sample' => $area0 < $p['sampleArea'],
+		),
 	) );
 }
 
@@ -273,7 +357,7 @@ function pcb_calc_run_set( array $p, array $set, array $fx ) {
 /* ---------------- общее на заказ ---------------- */
 
 /**
- * Курс, доставка, таможня, наценка, НДС, округление — для одной платы ($sets = null) или комплекта.
+ * Курс, финансирование, доставка, таможня, наценка, НДС, округление, вилка — для одной платы ($sets = null) или комплекта.
  * $B — платы, которые входят в сумму; $engB — платы комплекта с расчётом инженером (только для ответа сайту).
  */
 function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $warn, array $notes, array $engB = array() ) {
@@ -284,43 +368,64 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 		return array_sum( array_map( function ( $b ) use ( $k ) { return $b[ $k ]; }, $B ) );
 	};
 
-	// --- 3. деньги
+	// --- 3. деньги: курс с надбавками
 	$cbr  = (float) $fx['cny'];
 	$rate = $cbr * ( 1 + $p['bank'] / 100 ) * ( 1 + $p['agent'] / 100 ) * ( 1 + $p['buffer'] / 100 );
 	foreach ( $B as &$b ) {
-		$b['pcbC'] = $b['factY'] * $cbr;
-		$b['asmC'] = ( $b['asmY'] + $b['axiY'] ) * $cbr;
 		$b['pcbR'] = $b['factY'] * $rate;
 		$b['asmR'] = ( $b['asmY'] + $b['axiY'] ) * $rate;
 	}
 	unset( $b );
-	$factY = $sum( 'factY' );
+	$factY  = $sum( 'factY' );
 	$asmAll = $sum( 'asmY' ) + $sum( 'axiY' );
-	$pcbC  = $factY * $cbr;
-	$asmC  = $asmAll * $cbr;
-	$pay   = ( $factY + $asmAll ) * ( $rate - $cbr );
-	$pcbR  = $factY * $rate;
-	$asmR  = $asmAll * $rate;
+	$pcbC   = $factY * $cbr;
+	$asmC   = $asmAll * $cbr;
+	$pay    = ( $factY + $asmAll ) * ( $rate - $cbr );
+	$pcbR   = $factY * $rate;
+	$asmR   = $asmAll * $rate;
 
-	// --- 4. доставка (вес всех плат — одной партией), 5. таможня (один раз), 6. наши услуги (на каждую плату)
-	$kg    = $sum( 'kg' );
-	$tKey  = $p['shipMode'];
-	$shipT = $kg * $p['tariff'][ $tKey ];
-	$ship  = max( $p['shipMin'], $shipT );
-	$cval  = $pcbR + $asmR + $ship;
-	$duty  = $cval * $p['duty'] / 100;
-	$ivat  = ( $cval + $duty ) * $p['importVat'] / 100;
-	$cfee  = pcb_calc_customs_fee( $p, $cval );
-	$cust  = $duty + $cfee + $p['broker'] + ( $p['vatDeduct'] ? 0 : $ivat );
-	$ours  = $sum( 'ours' );
+	// --- 4. доставка: оплачиваемый вес (больший из фактического и объёмного) × тариф по весу, страховка
+	$tKey   = $p['shipMode'];
+	$kg     = $sum( 'kg' );
+	$m3     = $sum( 'm3' );
+	$volKg  = $m3 * (float) $p['volK'][ $tKey ];
+	$charge = max( $kg, $volKg );
+	$tarR   = max( 0, pcb_calc_cv( $p, 'tariff', $tKey, $charge ) );
+	$shipT  = $charge * $tarR;
+	$shipB  = max( $p['shipMin'], $shipT );
+	$ins    = ( $pcbC + $asmC ) * $p['insure'] / 100;
+	$ship   = $shipB + $ins;
+
+	// --- 5. таможня: таможенная стоимость — цена фабрики по курсу ЦБ (без наших надбавок) + доставка до границы + страховка
+	$cval = $pcbC + $asmC + $shipB * $p['shipBorder'] / 100 + $ins;
+	$duty = $cval * $p['duty'] / 100;
+	$ivat = ( $cval + $duty ) * $p['importVat'] / 100;
+	$cfee = pcb_calc_step( $p['customsFee'], $cval );
+	$cust = $duty + $cfee + $p['broker'] + ( $p['vatDeduct'] ? 0 : $ivat );
+
+	// --- 6. наши услуги (на каждую плату)
+	$ours   = $sum( 'ours' );
 	$anyPmi = false;
 	foreach ( $B as $b ) {
 		$anyPmi = $anyPmi || ! empty( $b['pmiOn'] );
 	}
 
-	// --- 7. наценка, 8. НДС и вид цены
-	$basePcb = $pcbR + $ship + $cust + $ours;
-	$net0    = $basePcb * ( 1 + $p['mPcb'] / 100 ) + $asmR * ( 1 + $p['mAsm'] / 100 );
+	// --- 3б. финансирование: деньги, заплаченные раньше оплаты клиента
+	$fr   = $p['finRate'] / 100 / 365;
+	$pre  = 1 - min( 100, max( 0, $p['finPre'] ) ) / 100;
+	$finF = ( $pcbR + $asmR ) * $pre * $fr * $p['finDays'];
+	$finC = ( $duty + $cfee + $p['broker'] ) * $pre * $fr * $p['finDaysCust'];
+	$finV = $p['vatDeduct'] ? $ivat * $fr * $p['finDaysVat'] : 0;
+	$fin  = $finF + $finC + $finV;
+
+	// --- 7. наценка по кривой от себестоимости заказа, 8. НДС и вид цены
+	$cost    = $pcbR + $asmR + $ship + $cust + $ours + $fin;
+	$mPp     = max( 0, pcb_calc_cv( $p, 'margin', 'pcb', $cost ) );
+	$mAp     = max( 0, pcb_calc_cv( $p, 'margin', 'asm', $cost ) );
+	$mP      = 1 + $mPp / 100;
+	$mA      = 1 + $mAp / 100;
+	$basePcb = $pcbR + $ship + $cust + $ours + $fin;
+	$net0    = $basePcb * $mP + $asmR * $mA;
 	$vat     = $p['vat'] / 100;
 	$net     = max( $net0, $p['minOrder'] / ( 1 + $vat ) );
 	$top     = $net - $net0;
@@ -329,22 +434,48 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 	$gross   = round( $rawG / $r ) * $r;
 	$vatA    = $gross - $gross / ( 1 + $vat );
 	$netF    = $gross - $vatA;
-	$mrg     = $netF - $top - ( $pcbC + $asmC + $pay + $ship + $cust + $ours );
+	$mrg     = $netF - $top - ( $pcbC + $asmC + $pay + $ship + $cust + $ours + $fin );
 	if ( $top > 0.5 ) {
 		$res['notes'][] = 'Минимальная сумма заказа — ' . number_format( $p['minOrder'], 0, ',', ' ' ) . ' ₽, оценка доведена до неё.';
 	}
-	$mP   = 1 + $p['mPcb'] / 100;
-	$mA   = 1 + $p['mAsm'] / 100;
-	$pct  = function ( $x ) {
-		return $x / 100;
-	};
 	$zero = $res['engineer'];
 	$Rnd  = function ( $x ) use ( $r ) {
 		return round( $x / $r ) * $r;
 	};
 
+	// --- вилка: базовая строка + сработавшие условия, в пределах «не ниже / не выше»
+	$flags = array( 'quick' => false, 'est' => false, 'finish' => false, 'sample' => false );
+	foreach ( $B as $b ) {
+		foreach ( $flags as $fk => $on ) {
+			$flags[ $fk ] = $on || ! empty( $b['flags'][ $fk ] );
+		}
+	}
+	$flags['ship'] = $net0 > 0 && ( $ship + $cust ) * $mP / $net0 * 100 > $p['shipShare'];
+	$fxVol         = max( 0, (float) ( $fx['vol'] ?? 0 ) );
+	$band          = array( array( 'base', $p['band']['base']['lo'], $p['band']['base']['hi'] ) );
+	foreach ( array( 'quick', 'est', 'finish', 'sample', 'ship' ) as $fk ) {
+		if ( $flags[ $fk ] ) {
+			$band[] = array( $fk, $p['band'][ $fk ]['lo'], $p['band'][ $fk ]['hi'] );
+		}
+	}
+	if ( $fxVol > 0 ) {
+		$band[] = array( 'fx', $p['band']['fx']['lo'] * $fxVol, $p['band']['fx']['hi'] * $fxVol );
+	}
+	$loP = max( (float) $p['bandMin'], min( 0, array_sum( array_column( $band, 1 ) ) ) );
+	$hiP = min( (float) $p['bandMax'], max( 0, array_sum( array_column( $band, 2 ) ) ) );
+	$pct = function ( $x ) {
+		return $x / 100;
+	};
+
+	// финансирование — по платам пропорционально их расходам у фабрики (для строк сайта)
+	$facAll = $pcbR + $asmR;
+	foreach ( $B as &$b ) {
+		$b['finB'] = $facAll > 0 ? $fin * ( $b['pcbR'] + $b['asmR'] ) / $facAll : $fin / count( $B );
+	}
+	unset( $b );
+
 	if ( ! $isSet ) {
-		// --- итог для сайта: укрупнённые строки, наценка и расходы на платёж разнесены внутри
+		// --- итог для сайта: укрупнённые строки, наценка, расходы на платёж и финансирование разнесены внутри
 		$b     = $B[0];
 		$parts = array(
 			'prep' => $b['setupY'] * $rate,
@@ -352,8 +483,9 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 			'ship' => $ship + $cust,
 		);
 		$raw   = array_sum( $parts );
-		foreach ( $parts as $kk => $v ) { // наши услуги — «входит»: распределены по строкам плат
-			$parts[ $kk ] = ( $v + ( $raw > 0 ? $ours * $v / $raw : 0 ) ) * $mP;
+		$inc   = $ours + $fin; // «входит»: наши услуги и финансирование распределены по строкам плат
+		foreach ( $parts as $kk => $v ) {
+			$parts[ $kk ] = ( $v + ( $raw > 0 ? $inc * $v / $raw : 0 ) ) * $mP;
 		}
 		$parts['asm'] = $b['asmY'] * $rate * $mA;
 		$parts['axi'] = $b['axiY'] * $rate * $mA;
@@ -366,7 +498,7 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 		$res['lines'][] = array( 'name' => 'Доставка и таможня', 'v' => $zero ? 0 : round( $parts['ship'] * $scale ) );
 		$qtyOut = (int) $b['qty'];
 	} else {
-		// --- комплект: строки по платам (наши услуги — в строки своей платы), доставка и таможня — одной партией
+		// --- комплект: строки по платам (наши услуги и финансирование — в строки своей платы), доставка и таможня — одной партией
 		$shipPart = ( $ship + $cust ) * $mP;
 		$bp       = array();
 		$total    = $shipPart;
@@ -374,9 +506,10 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 			$prep = $b['setupY'] * $rate;
 			$pcb  = $b['pcbY'] * $rate;
 			$own  = $prep + $pcb;
+			$inc  = $b['ours'] + $b['finB'];
 			$bp[ $i ] = array(
-				'prep' => ( $prep + ( $own > 0 ? $b['ours'] * $prep / $own : 0 ) ) * $mP,
-				'pcb'  => ( $pcb + ( $own > 0 ? $b['ours'] * $pcb / $own : 0 ) ) * $mP,
+				'prep' => ( $prep + ( $own > 0 ? $inc * $prep / $own : 0 ) ) * $mP,
+				'pcb'  => ( $pcb + ( $own > 0 ? $inc * $pcb / $own : 0 ) ) * $mP,
 				'ship' => 0,
 				'asm'  => $b['asmY'] * $rate * $mA,
 				'axi'  => $b['axiY'] * $rate * $mA,
@@ -387,10 +520,12 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 		// экономия: доставка и таможня каждой платы отдельно (свой минимум, свой брокер и сбор) против общей партии
 		$apart = 0;
 		foreach ( $B as $b ) {
-			$sB     = max( $p['shipMin'], $b['kg'] * $p['tariff'][ $tKey ] );
-			$cvB    = $b['pcbR'] + $b['asmR'] + $sB;
+			$chB    = max( $b['kg'], $b['m3'] * (float) $p['volK'][ $tKey ] );
+			$sB     = max( $p['shipMin'], $chB * max( 0, pcb_calc_cv( $p, 'tariff', $tKey, $chB ) ) );
+			$insB   = ( $b['factY'] + $b['asmY'] + $b['axiY'] ) * $cbr * $p['insure'] / 100;
+			$cvB    = ( $b['factY'] + $b['asmY'] + $b['axiY'] ) * $cbr + $sB * $p['shipBorder'] / 100 + $insB;
 			$dB     = $cvB * $p['duty'] / 100;
-			$apart += $sB + $dB + pcb_calc_customs_fee( $p, $cvB ) + $p['broker'] + ( $p['vatDeduct'] ? 0 : ( $cvB + $dB ) * $p['importVat'] / 100 );
+			$apart += $sB + $insB + $dB + pcb_calc_step( $p['customsFee'], $cvB ) + $p['broker'] + ( $p['vatDeduct'] ? 0 : ( $cvB + $dB ) * $p['importVat'] / 100 );
 		}
 		$saving = max( 0, ( $apart - ( $ship + $cust ) ) * $mP * ( 1 + $vat ) );
 		$boards = array();
@@ -400,7 +535,7 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 			$boards[] = array(
 				'name' => $b['name'], 'n' => $b['n'], 'qty' => (int) $b['qty'], 'ok' => true, 'engineer' => false,
 				'warn' => $b['warn'], 'goods' => $zero ? 0 : round( $goods ),
-				'lo'   => $zero ? 0 : $Rnd( $goods * ( 1 + $pct( $p['lo'] ) ) ), 'hi' => $zero ? 0 : $Rnd( $goods * ( 1 + $pct( $p['hi'] ) ) ),
+				'lo'   => $zero ? 0 : $Rnd( $goods * ( 1 + $pct( $loP ) ) ), 'hi' => $zero ? 0 : $Rnd( $goods * ( 1 + $pct( $hiP ) ) ),
 				'per'  => $zero ? 0 : $goods / $b['qty'], 'lines' => $bl,
 			);
 			$res['lines'][] = array( 'board' => $b['name'], 'sub' => $zero ? null : $bl,
@@ -427,24 +562,32 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 		$qtyOut        = (int) $sets;
 	}
 
+	// --- срок и Китайский Новый год
+	$term = $res['engineer'] || $engB ? $p['termEng'] : $p['termStd'];
+	if ( pcb_calc_cny_hit( $p, $res['engineer'] || $engB ) ) {
+		$res['notes'][] = $p['cnyNote'];
+		$res['cny']     = true;
+	}
+
 	$res = array_merge( $res, array(
 		'ok'    => true,
 		'qty'   => $qtyOut,
 		'total' => $zero ? 0 : $gross,
-		'lo'    => $zero ? 0 : $Rnd( $gross * ( 1 + $pct( $p['lo'] ) ) ),
-		'hi'    => $zero ? 0 : $Rnd( $gross * ( 1 + $pct( $p['hi'] ) ) ),
+		'lo'    => $zero ? 0 : $Rnd( $gross * ( 1 + $pct( $loP ) ) ),
+		'hi'    => $zero ? 0 : $Rnd( $gross * ( 1 + $pct( $hiP ) ) ),
 		'per'   => $zero ? 0 : $gross / max( 1, $qtyOut ),
 		'vat'   => array( 'pct' => $p['vat'], 'sum' => $zero ? 0 : round( $vatA ), 'show' => (bool) $p['showVat'] ),
-		'term'  => $res['engineer'] || $engB ? $p['termEng'] : $p['termStd'],
+		'term'  => $term,
 	) );
 
 	// --- разбор для панели (суммы: m — [значение, валюта], числа — num, множители — x, проценты — p)
 	$res['x'] = array(
-		'gross' => $gross, 'raw' => $rawG, 'rate' => $rate, 'cbr' => $cbr,
+		'gross' => $gross, 'raw' => $rawG, 'rate' => $rate, 'cbr' => $cbr, 'mP' => $mPp, 'mA' => $mAp, 'cost' => $cost,
 		'terms' => array(
 			array( 'g' => 'factory', 'n' => 'Платы', 'm' => $pcbC ),
 			array( 'g' => 'asm', 'n' => 'Монтаж', 'm' => $asmC ),
 			array( 'g' => 'money', 'n' => 'Оплата фабрике', 'm' => $pay ),
+			array( 'g' => 'money', 'n' => 'Финансирование', 'm' => $fin, 'sub' => 'fin' ),
 			array( 'g' => 'ship', 'n' => 'Доставка', 'm' => $ship ),
 			array( 'g' => 'customs', 'n' => 'Таможня', 'm' => $cust ),
 			array( 'g' => 'ours', 'n' => 'Наши услуги', 'm' => $ours ),
@@ -463,7 +606,7 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 
 	$blocks = array();
 	foreach ( $B as $b ) {
-		$blocks[] = pcb_calc_block_factory( $b, $cbr, $q( $b ) );
+		$blocks[] = pcb_calc_block_factory( $p, $b, $cbr, $q( $b ) );
 	}
 	$anyAsm = false;
 	foreach ( $B as $b ) {
@@ -480,47 +623,66 @@ function pcb_calc_sum( array $p, array $B, array $fx, $sets, $engineer, array $w
 	$blocks[] = array( 'g' => 'money', 'n' => 'Оплата фабрике', 'm' => $pay,
 		'f' => array( '(', $M( 'Платы', $pcbC ), '+', $M( 'Монтаж', $asmC ), ')', '×', $Pp( 'Расходы на платёж', ( $rate / max( $cbr, 1e-9 ) - 1 ) * 100 ) ),
 		'note' => 'Надбавка банка ' . pcb_calc_n( $p['bank'] ) . ' %, комиссия за платёж ' . pcb_calc_n( $p['agent'] ) . ' %, запас на курс ' . pcb_calc_n( $p['buffer'] ) . ' % — проценты перемножаются: ' . pcb_calc_n( $cbr ) . ' → ' . pcb_calc_n( $rate ) . ' ₽ за ¥.' );
-	$wnote = $isSet
-		? 'Все платы комплекта едут одной партией: вес — сумма по платам, минимум за отправку — один раз.'
-		: 'Вес — площадь × толщина ' . pcb_calc_n( $B[0]['t'] ) . ' мм × плотность ' . pcb_calc_n( $p['density'] ) . ' г/см³ + упаковка ' . pcb_calc_n( $p['pack'] ) . ' %.';
+	$f3 = array( $M( 'Фабрика', $finF ), '+', $M( 'Таможня', $finC ) );
+	if ( $p['vatDeduct'] ) {
+		array_push( $f3, '+', $M( 'НДС на ввоз до вычета', $finV ) );
+	}
+	$blocks[] = array( 'g' => 'money', 'n' => 'Финансирование', 'm' => $fin, 'f' => $f3,
+		'note' => 'Деньги, заплаченные раньше оплаты клиента, × ' . pcb_calc_n( $p['finRate'] ) . ' % годовых × дни ÷ 365. Без предоплаты клиента (' . pcb_calc_n( $p['finPre'] ) . ' %): фабрика — ' . pcb_calc_n( $p['finDays'] ) . ' дн., таможня — ' . pcb_calc_n( $p['finDaysCust'] ) . ' дн.' . ( $p['vatDeduct'] ? '; НДС на ввоз ' . pcb_calc_n( round( $ivat ) ) . ' ₽ — ' . pcb_calc_n( $p['finDaysVat'] ) . ' дн. до вычета (весь, предоплата его не покрывает).' : '.' ) );
+	$wnote = ( $isSet ? 'Все платы комплекта едут одной партией. ' : '' ) . 'Фактический вес ' . pcb_calc_n( $kg ) . ' кг, объём ' . pcb_calc_n( round( $m3, 3 ) ) . ' м³ → объёмный вес ' . pcb_calc_n( $volKg ) . ' кг (× ' . pcb_calc_n( $p['volK'][ $tKey ] ) . ' кг/м³); берём больший. Тариф ' . pcb_calc_n( $tarR ) . ' ₽/кг — по кривой для этого веса.';
 	$blocks[] = array( 'g' => 'ship', 'n' => 'Доставка', 'm' => $ship,
-		'f' => array( $N( 'Вес партии', $kg, 'кг' ), '×', $M( 'Тариф, ' . mb_strtolower( $P['shipMode']['opts'][ $tKey ] ), $p['tariff'][ $tKey ], 'RUB', '/кг' ) ),
+		'f' => array( $N( 'Оплачиваемый вес', $charge, 'кг' ), '×', $M( 'Тариф, ' . mb_strtolower( $P['shipMode']['opts'][ $tKey ] ), $tarR, 'RUB', '/кг' ), '+', $M( 'Страховка ' . pcb_calc_n( $p['insure'] ) . ' %', $ins ) ),
 		'note' => $wnote,
-		'warn' => $ship > $shipT + 0.5 ? array( 'min' => $p['shipMin'], 'by' => $shipT ) : null );
+		'warn' => $shipB > $shipT + 0.5 ? array( 'min' => $p['shipMin'], 'by' => $shipT ) : null );
 	$f5 = array( $Pp( 'Пошлина', $p['duty'] ), '×', $M( 'Таможенная стоимость', $cval ), '+', $M( 'Сбор', $cfee ), '+', $M( 'Брокер', $p['broker'] ) );
 	if ( ! $p['vatDeduct'] ) {
 		$f5[] = '+';
 		$f5[] = $M( 'НДС на ввоз', $ivat );
 	}
 	$blocks[] = array( 'g' => 'customs', 'n' => 'Таможня', 'm' => $cust, 'f' => $f5,
-		'note' => 'Таможенная стоимость — платы и монтаж с расходами на платёж плюс доставка. Сбор — по шкале от таможенной стоимости: ' . pcb_calc_customs_fee_row( $cval ) . '.' . ( $isSet ? ' Одна декларация на комплект: сбор и брокер — один раз.' : '' ), 'ivat' => $p['vatDeduct'] ? $ivat : null );
-	if ( $isSet ) {
-		$f6 = array();
-		foreach ( $B as $i => $b ) {
-			if ( $i ) {
-				$f6[] = '+';
-			}
-			$f6[] = $M( 'Плата' . $q( $b ), $b['ours'] );
+		'note' => 'Таможенная стоимость — цена фабрики по курсу ЦБ (без надбавок банка и запаса на курс) + доставка × ' . pcb_calc_n( $p['shipBorder'] ) . ' % + страховка. Сбор — по шкале: ' . pcb_calc_customs_fee_row( $cval ) . '.' . ( $isSet ? ' Одна декларация на комплект: сбор и брокер — один раз.' : '' ), 'ivat' => $p['vatDeduct'] ? $ivat : null );
+	$f6 = array();
+	$n6 = array();
+	foreach ( $B as $i => $b ) {
+		if ( $i ) {
+			$f6[] = '+';
 		}
-		$blocks[] = array( 'g' => 'ours', 'n' => 'Наши услуги', 'm' => $ours, 'f' => $f6,
-			'note' => 'На каждую плату комплекта: аудит файлов ' . pcb_calc_n( $p['audit'] ) . ' ₽ + приёмка ОТК ' . pcb_calc_n( $p['otk'] ) . ' ₽; у плат с монтажом ещё ПМИ за партию ' . pcb_calc_n( $p['pmi'] ) . ' ₽ + ПМИ ' . pcb_calc_n( $p['pmiBoard'] ) . ' ₽ × штук. Голые платы по ПМИ не проверяются.' );
-	} else {
-		$blocks[] = array( 'g' => 'ours', 'n' => 'Наши услуги', 'm' => $ours,
-			'f'    => $B[0]['pmiOn']
-				? array( $M( 'Аудит файлов', $p['audit'] ), '+', $M( 'ПМИ за партию', $p['pmi'] ), '+', $M( 'ПМИ за плату', $p['pmiBoard'] ), '×', $N( 'Плат', $B[0]['qty'] ), '+', $M( 'Приёмка ОТК', $p['otk'] ) )
-				: array( $M( 'Аудит файлов', $p['audit'] ), '+', $M( 'Приёмка ОТК', $p['otk'] ) ),
-			'note' => $B[0]['pmiOn'] ? null : 'Без монтажа проверки по ПМИ нет — испытывать нечего.' );
+		if ( $isSet ) {
+			$f6[] = $M( 'Плата' . $q( $b ), $b['ours'] );
+		} else {
+			array_push( $f6, $M( 'Аудит', $p['audit'] ), '+', $M( 'ОТК: ' . $b['smp'] . ' шт в выборке', $b['otkR'] ) );
+			if ( $b['pmiOn'] ) {
+				array_push( $f6, '+', $M( 'ПМИ, ' . mb_strtolower( $P['pmiLvl']['rows'][ $b['lvl'] ] ), $b['pmiR'] ) );
+			}
+		}
+		$n6[] = ( $isSet ? '«' . $b['name'] . '»: ' : '' ) . 'ОТК — ' . pcb_calc_n( $p['otk'] ) . ' ₽ + ' . pcb_calc_n( $p['otkBoard'] ) . ' ₽ × ' . $b['smp'] . ' плат из ' . pcb_calc_n( $b['qty'] ) . ( $b['asmOn'] ? ' × ' . pcb_calc_n( $p['otkAsmK'] ) . ' (с монтажом)' : '' ) . '; ' .
+			( $b['pmiOn'] ? 'ПМИ — «' . mb_strtolower( $P['pmiLvl']['rows'][ $b['lvl'] ] ) . '» (' . pcb_calc_n( $b['comps'] ) . ' корп.): ' . pcb_calc_n( $p['pmiLvl'][ $b['lvl'] ]['batch'] ) . ' ₽ + ' . pcb_calc_n( $p['pmiLvl'][ $b['lvl'] ]['board'] ) . ' ₽ × ' . pcb_calc_n( $b['qty'] ) : 'без монтажа проверки по ПМИ нет — испытывать нечего' ) . '.';
 	}
-	$f7 = array( $M( 'Платы с расходами', $basePcb ), '×', $Pp( 'Наценка на платы', $p['mPcb'] ) );
+	$blocks[] = array( 'g' => 'ours', 'n' => 'Наши услуги', 'm' => $ours, 'f' => $f6, 'note' => implode( ' ', $n6 ) );
+	$f7 = array( $M( 'Платы с расходами', $basePcb ), '×', $Pp( 'Наценка на платы', $mPp ) );
 	if ( $asmR > 0 ) {
-		array_push( $f7, '+', $M( 'Монтаж с расходами', $asmR ), '×', $Pp( 'Наценка на монтаж', $p['mAsm'] ) );
+		array_push( $f7, '+', $M( 'Монтаж с расходами', $asmR ), '×', $Pp( 'Наценка на монтаж', $mAp ) );
 	}
 	$blocks[] = array( 'g' => 'margin', 'n' => 'Наценка', 'm' => $mrg, 'f' => $f7,
-		'note' => 'Платы с расходами — платы, их доля оплаты фабрике, доставка, таможня и наши услуги. Округление итога — тоже здесь.' );
+		'note' => 'Проценты — по кривой при себестоимости заказа ' . pcb_calc_n( round( $cost ) ) . ' ₽. Платы с расходами — платы, их доля оплаты фабрике, доставка, таможня, наши услуги и финансирование. Округление итога — тоже здесь.' );
+	$BL = $P['band']['rows'];
 	$blocks[] = array( 'g' => 'vat', 'n' => 'НДС', 'm' => $vatA, 'f' => array( $M( 'Цена без НДС', $netF ), '×', $Pp( 'НДС', $p['vat'] ) ),
-		'top' => $top > 0.5 ? $top : null, 'round' => $r, 'lo' => $res['lo'], 'hi' => $res['hi'] );
+		'top' => $top > 0.5 ? $top : null, 'round' => $r, 'lo' => $res['lo'], 'hi' => $res['hi'], 'loP' => $loP, 'hiP' => $hiP, 'fxVol' => $fxVol,
+		'band' => array_map( function ( $x ) use ( $BL ) { return array( 'n' => $BL[ $x[0] ], 'lo' => $x[1], 'hi' => $x[2] ); }, $band ) );
 	$res['x']['blocks'] = $blocks;
 	return $res;
+}
+
+/** Попадает ли срок заказа от сегодня на период Китайского Нового года. */
+function pcb_calc_cny_hit( array $p, $eng ) {
+	$from = strtotime( (string) $p['cnyFrom'] . ' 00:00:00 UTC' );
+	$to   = strtotime( (string) $p['cnyTo'] . ' 23:59:59 UTC' );
+	if ( ! $from || ! $to || $to < $from ) {
+		return false;
+	}
+	$now  = time();
+	$days = (float) $p['termDays'] * ( $eng ? 1.5 : 1 );
+	return $now <= $to && $now + $days * 86400 >= $from;
 }
 
 /** Строки «из чего складывается» одной платы: подготовка, производство, монтаж, рентген, компоненты. */
@@ -545,49 +707,58 @@ function pcb_calc_board_lines( array $b, array $parts, $scale, $zero ) {
 }
 
 /** Блок разбора «Платы» одной платы. */
-function pcb_calc_block_factory( array $b, $cbr, $suffix ) {
+function pcb_calc_block_factory( array $p, array $b, $cbr, $suffix ) {
 	$M  = function ( $n, $v, $cur = 'RUB', $per = '' ) { return array( 'n' => $n, 'm' => array( $v, $cur ), 'per' => $per ); };
 	$N  = function ( $n, $v, $u = '' ) { return array( 'n' => $n, 'num' => $v, 'u' => $u ); };
 	$X  = function ( $n, $v ) { return array( 'n' => $n, 'x' => $v ); };
 	$L  = $b['layers'];
-	$f1 = array( $M( 'Подготовка' . ( $L > 2 ? ', ' . pcb_calc_layer_word( $L ) : '' ), $b['setupY'], 'CNY' ), '+', $N( 'Площадь партии', $b['area'], 'дм²' ), '×', $M( 'Ставка, ' . pcb_calc_layer_word( $L ), $b['rateL'], 'CNY', '/дм²' ) );
-	$hidden = 0;
-	foreach ( $b['mults'] as $m ) {
-		if ( abs( $m[1] - 1 ) < 1e-9 ) {
-			$hidden++;
-			continue;
+	$byMin = $b['matMin'] > $b['matRaw'];
+	$f1 = $byMin
+		? array( $M( 'Минимум материала, ' . pcb_calc_layer_word( $L ), $b['matMin'], 'CNY' ) )
+		: array( $N( 'Площадь партии', $b['area'], 'дм²' ), '×', $M( 'Ставка, ' . pcb_calc_layer_word( $L ), $b['rateL'], 'CNY', '/дм²' ) );
+	foreach ( $b['used'] as $u ) {
+		if ( abs( $u[1] - 1 ) > 1e-9 ) {
+			$f1[] = '×';
+			$f1[] = $X( $u[0], $u[1] );
 		}
-		$f1[] = '×';
-		$f1[] = $X( $m[0], $m[1] );
 	}
-	return array( 'g' => 'factory', 'n' => 'Платы' . $suffix, 'm' => $b['factY'] * $cbr, 'f' => $f1,
-		'note' => ( $suffix ? pcb_calc_n( $b['qty'] ) . ' шт · ' : '' ) . 'Прайс фабрики в юанях, пересчитан по курсу ЦБ ' . pcb_calc_n( $cbr ) . ' ₽ за ¥.' . ( $hidden ? ' Множители, равные 1, не показаны.' : '' ) );
+	foreach ( $b['used'] as $u ) {
+		if ( $u[2] > 0 ) {
+			$f1[] = '+';
+			$f1[] = $M( $u[0], $u[2], 'CNY' );
+		}
+	}
+	array_push( $f1, '+', $M( 'Плёнки', $b['filmY'], 'CNY' ) );
+	if ( $b['engY'] > 0 ) {
+		array_push( $f1, '+', $M( 'Инженерный сбор', $b['engY'], 'CNY' ) );
+	}
+	if ( $b['etY'] > 0 ) {
+		array_push( $f1, '+', $M( 'Электротест', $b['etY'], 'CNY' ) );
+	}
+	$note = ( $suffix ? pcb_calc_n( $b['qty'] ) . ' шт · ' : '' ) . 'Прайс фабрики в юанях, пересчитан по курсу ЦБ ' . pcb_calc_n( $cbr ) . ' ₽ за ¥. ';
+	$note .= $byMin
+		? 'Материал по ставке — ' . pcb_calc_n( round( $b['matRaw'] ) ) . ' ¥, меньше минимума за заказ — берём минимум.'
+		: 'Ставка ' . pcb_calc_n( round( $b['rateL'], 2 ) ) . ' ¥/дм² — по кривой при площади ' . pcb_calc_n( round( $b['area'], 1 ) ) . ' дм².';
+	if ( $b['pan'] ) {
+		$pn    = $b['pan'];
+		$note .= ' Заготовка ' . $pn['nx'] . ' × ' . $pn['ny'] . ' плат, ' . pcb_calc_n( round( $pn['pl'] ) ) . ' × ' . pcb_calc_n( round( $pn['pw'] ) ) . ' мм (' . ( 'small' === $pn['why'] ? 'плата мельче порога для монтажа' : 'клиент выбрал поставку в панели' ) . '): площадь ×' . pcb_calc_n( round( $pn['k'], 2 ) ) . ' к площади плат.';
+	}
+	return array( 'g' => 'factory', 'n' => 'Платы' . $suffix, 'm' => $b['factY'] * $cbr, 'f' => $f1, 'note' => $note );
 }
 
 /** Блок разбора «Монтаж» одной платы. */
 function pcb_calc_block_asm( array $p, array $b, $cbr, $suffix ) {
 	$M  = function ( $n, $v, $cur = 'RUB', $per = '' ) { return array( 'n' => $n, 'm' => array( $v, $cur ), 'per' => $per ); };
 	$N  = function ( $n, $v, $u = '' ) { return array( 'n' => $n, 'num' => $v, 'u' => $u ); };
-	$f2 = array( '(', $M( 'Запуск', $p['asmSide'], 'CNY' ), '+', $M( 'Трафарет', $p['stencil'], 'CNY' ), ')', '×', $N( 'Сторон', $b['sides'] ),
+	$f2 = array( $M( 'Инженерный сбор', $b['asmEngY'], 'CNY' ), '+', $M( 'Оснастка', $b['fixY'], 'CNY' ), '+', $M( 'Трафарет', $p['stencil'], 'CNY' ), '×', $N( 'Сторон', $b['sides'] ),
 		'+', $N( 'Позиций', $b['feeders'] ), '×', $M( 'Катушка', $p['feeder'], 'CNY' ),
-		'+', $N( 'Паек на плату', $b['joints'] ), '×', $M( 'Средняя пайка', $b['joints'] > 0 ? $b['perY'] / $b['joints'] : 0, 'CNY' ), '×', $N( 'Плат', $b['qty'] ) );
+		'+', '(', $N( 'Паек на плату', $b['joints'] ), '×', $M( 'Средняя пайка', $b['joints'] > 0 ? $b['perY'] / $b['joints'] : 0, 'CNY' ), '+', $M( 'Упаковка', $p['asmPack'], 'CNY' ), ')', '×', $N( 'Плат', $b['qty'] ) );
 	if ( $b['axiY'] > 0 ) {
 		$f2[] = '+';
 		$f2[] = $M( 'Рентген', $b['axiY'], 'CNY' );
 	}
 	return array( 'g' => 'asm', 'n' => 'Монтаж' . $suffix, 'm' => ( $b['asmY'] + $b['axiY'] ) * $cbr, 'f' => $f2,
-		'note' => 'Корпусов на плате: ' . pcb_calc_n( $b['comps'] ) . ( 'quick' === $b['mode'] ? ' (быстрая оценка — пайки по средним значениям).' : '.' ) );
-}
-
-/** Таможенный сбор по шкале: первая строка, верхняя граница которой не меньше таможенной стоимости. */
-function pcb_calc_customs_fee( array $p, $cval ) {
-	$t = (array) $p['customsFee'];
-	foreach ( $t as $lim => $fee ) {
-		if ( 'inf' === (string) $lim || $cval <= (float) $lim ) {
-			return (float) $fee;
-		}
-	}
-	return (float) end( $t );
+		'note' => 'Корпусов на плате: ' . pcb_calc_n( $b['comps'] ) . ( 'quick' === $b['mode'] ? ' (быстрая оценка — пайки по средним значениям).' : '.' ) . ' Инженерный сбор и оснастка — по кривым от тиража.' );
 }
 
 /** Подпись строки шкалы сбора для разбора в панели. */
@@ -625,9 +796,19 @@ function pcb_calc_input_layers( array $in ) {
 	return array( (string) (int) ( $in['layers'] ?? 0 ) );
 }
 
+/** Кривая с Y, умноженными на $k (у строки $row или у всех). */
+function pcb_calc_curve_scale( array $c, $k, $row = null ) {
+	foreach ( $c['y'] as $rk => $ys ) {
+		if ( null === $row || (string) $rk === (string) $row ) {
+			$c['y'][ $rk ] = array_map( function ( $y ) use ( $k ) { return $y * $k; }, $ys );
+		}
+	}
+	return $c;
+}
+
 /**
  * Чувствительность: насколько изменится цена эталона, если параметр вырастет на 10 %.
- * Скалярные денежные и процентные параметры + используемые строки таблиц ставок и тарифа.
+ * Скалярные денежные и процентные параметры + используемые строки кривых ставок, тарифа и наценки.
  */
 function pcb_calc_sensitivity( array $p, array $in, array $fx ) {
 	$base = pcb_calc_run( $p, $in, $fx );
@@ -643,8 +824,8 @@ function pcb_calc_sensitivity( array $p, array $in, array $fx ) {
 			$out[] = array( $label, ( $r['x']['raw'] - $b0 ) / $b0 * 100 );
 		}
 	};
-	$try( 'Курс юаня', $p, array( 'cny' => $fx['cny'] * 1.1, 'usd' => $fx['usd'] ) );
-	foreach ( array( 'setup', 'asmSide', 'stencil', 'feeder', 'axi', 'bank', 'agent', 'buffer', 'shipMin', 'pack', 'duty', 'broker', 'pmi', 'pmiBoard', 'otk', 'audit', 'mPcb', 'mAsm' ) as $k ) {
+	$try( 'Курс юаня', $p, array_merge( $fx, array( 'cny' => $fx['cny'] * 1.1 ) ) );
+	foreach ( array( 'stencil', 'feeder', 'asmPack', 'axi', 'bank', 'agent', 'buffer', 'finRate', 'shipMin', 'pack', 'insure', 'duty', 'broker', 'otk', 'otkBoard', 'audit' ) as $k ) {
 		if ( (float) $p[ $k ] <= 0 ) {
 			continue;
 		}
@@ -653,15 +834,18 @@ function pcb_calc_sensitivity( array $p, array $in, array $fx ) {
 		$try( $P[ $k ]['n'], $p2 );
 	}
 	foreach ( pcb_calc_input_layers( $in ) as $l ) {
-		if ( isset( $p['dm2'][ $l ] ) ) {
-			$p2               = $p;
-			$p2['dm2'][ $l ] *= 1.1;
-			$try( 'Ставка за дм², ' . pcb_calc_layer_word( (int) $l ), $p2 );
+		if ( isset( $p['mrate']['y'][ $l ] ) ) {
+			$p2         = $p;
+			$p2['mrate'] = pcb_calc_curve_scale( $p['mrate'], 1.1, $l );
+			$try( 'Ставка материала, ' . pcb_calc_layer_word( (int) $l ), $p2 );
 		}
 	}
-	$p2 = $p;
-	$p2['tariff'][ $p['shipMode'] ] *= 1.1;
+	$p2           = $p;
+	$p2['tariff'] = pcb_calc_curve_scale( $p['tariff'], 1.1, $p['shipMode'] );
 	$try( 'Тариф доставки', $p2 );
+	$p2           = $p;
+	$p2['margin'] = pcb_calc_curve_scale( $p['margin'], 1.1 );
+	$try( 'Наценка', $p2 );
 	usort( $out, function ( $a, $b ) {
 		return $b[1] <=> $a[1];
 	} );

@@ -109,11 +109,15 @@
     var rb = $('#cs-rulebtn'); rb.setAttribute('aria-pressed', group === 'rules');
     rb.innerHTML = 'Когда сайт не считает сам и какие сроки показывает' + (groupChanged('rules') ? ' · <b>изменено</b>' : '') + ' →';
   }
+  function softGroup(g) {   // red | yellow | ''
+    var w = (PV.soft || []).filter(function (x) { return DEF[x.k] && DEF[x.k].g === g; });
+    return w.some(function (x) { return x.lvl === 'red'; }) ? 'red' : w.length ? 'yellow' : '';
+  }
   function stepBtn(g, name, val, warn, sub) {
     var i = STEPS.indexOf(g) + 1;
     return '<button class="cs-fx__t' + (warn ? ' cs-fx__t--warn' : '') + '" type="button" data-g="' + g + '" aria-pressed="' + (g === group && !warn) + '"' + (sub ? ' title="' + esc(sub) + '"' : '') + '>' +
       '<span class="cs-fx__l">' + (warn ? '' : i + ' · ') + esc(G[g].l) + '</span><span class="cs-fx__n">' + esc(name) + '</span><span class="cs-fx__v">' + val + '</span>' +
-      (groupChanged(g) && !warn ? '<i class="cs-dot" title="Есть изменения в черновике"></i>' : '') + '</button>';
+      (groupChanged(g) && !warn ? '<i class="cs-dot" title="Есть изменения в черновике"></i>' : '') + (!warn && softGroup(g) ? '<i class="cs-dot cs-dot--' + softGroup(g) + '" title="Есть предупреждения — откройте шаг"></i>' : '') + '</button>';
   }
   function T(it) {
     var v = it.m ? money(conv(it.m[0], it.m[1])) + (it.per || '') : it.x !== undefined ? '×' + fmt2.format(it.x) : it.p !== undefined ? pc(it.p) : fmt2.format(it.num) + (it.u ? ' ' + it.u : '');
@@ -131,7 +135,7 @@
     var x = res.x;
     $('#cs-fx').innerHTML = x.terms.map(function (t, i) {
       var val = t.g === 'asm' && !t.m ? 'нет' : show(t.m);
-      var sub = t.g === 'money' ? 'Курс в расчёте: ' + fmt2.format(x.rate) + ' ₽ за ¥ (ЦБ ' + fmt2.format(x.cbr) + ')' : t.g === 'margin' ? 'Платы +' + fmt2.format(D.mPcb) + ' %, монтаж +' + fmt2.format(D.mAsm) + ' %' : '';
+      var sub = t.g === 'money' ? 'Курс в расчёте: ' + fmt2.format(x.rate) + ' ₽ за ¥ (ЦБ ' + fmt2.format(x.cbr) + ')' : t.g === 'margin' ? 'Платы +' + fmt2.format(x.mP) + ' %, монтаж +' + fmt2.format(x.mA) + ' % — по кривой при себестоимости ' + show(x.cost) : '';
       return (i ? O('+') : '') + stepBtn(t.g, t.n, val, t.warn, sub);
     }).join('') + O('=') + '<span class="cs-fx__t cs-fx__t--tot"><span class="cs-fx__l">Итог</span><span class="cs-fx__n">Стоимость</span><span class="cs-fx__v">' + show(x.gross) + '</span></span>' +
       (res.engineer ? '<p class="cs-eng" style="flex-basis:100%"><b>Сайт не покажет цену — расчёт инженером:</b> ' + res.warn.map(esc).join(', ') + '. Ниже — как сложилась бы цена.</p>' : '');
@@ -141,7 +145,9 @@
       if (b.ivat) note += ' НДС на ввоз ' + show(b.ivat) + ' принимаем к вычету — в цену не входит.';
       if (b.g === 'vat') {
         note = (b.top ? '<b>Заказ меньше минимальной суммы ' + show(D.minOrder) + ' — добавлено ' + show(b.top) + '.</b> ' : '') +
-          'Итог округлён до ' + fmt.format(b.round) + ' ₽. На сайте — вилка от ' + siteRub(b.lo) + ' до ' + siteRub(b.hi) + ' (' + fmt2.format(D.lo) + ' / +' + fmt2.format(D.hi) + ' %).';
+          'Итог округлён до ' + fmt.format(b.round) + ' ₽. На сайте — вилка от ' + siteRub(b.lo) + ' до ' + siteRub(b.hi) + ' (' + fmt2.format(b.loP) + ' / +' + fmt2.format(b.hiP) + ' %). Вилка: ' +
+          (b.band || []).map(function (r) { return esc(r.n) + ' ' + fmt2.format(r.lo) + ' / +' + fmt2.format(r.hi) + ' %'; }).join('; ') +
+          (b.loP <= D.bandMin || b.hiP >= D.bandMax ? ' — обрезано ограничением «не ниже / не выше».' : '.');
       }
       var f = b.f.length ? b.f.map(function (it) { return typeof it === 'string' ? O(it) : T(it); }).join('') : '';
       return '<div class="cs-fxrow' + (b.g === group ? ' is-on' : '') + '"><div class="cs-fxrow__h"><b>' + esc(b.n) + '</b><span>' + (b.m || b.g !== 'asm' ? show(b.m) : '—') + '</span></div><div class="cs-fx">' + f + '</div>' +
@@ -154,8 +160,119 @@
   function shown(d, v) { return d.cur ? edit(conv(v, d.cur)) : v; }
   function wasTxt(d, v) { return d.t === 'sel' ? d.opts[v] : d.cur ? money(conv(v, d.cur)) : fmt2.format(v) + ' ' + unitOf(d); }
   function curWord(c) { return { CNY: 'юанях', RUB: 'рублях', USD: 'долларах' }[c]; }
+  function curSym(s) { return String(s).replace(/[¥₽$]/g, SYM[CUR]); }
+
+  /* подсказка «?»: что это, на что влияет, как подобрать; открытые запоминаются между перерисовками */
+  var openHelp = {}, openChart = {};
+  function helpBtn(k) {
+    var d = DEF[k];
+    return d.help ? '<button type="button" class="cs-q" data-help="' + k + '" aria-expanded="' + !!openHelp[k] + '" aria-controls="cs-help-' + k + '" title="Что это и как подобрать">?</button>' : '';
+  }
+  function helpBox(k) { var d = DEF[k]; return d.help ? '<div class="cs-help" id="cs-help-' + k + '"' + (openHelp[k] ? '' : ' hidden') + '>' + esc(d.help) + '</div>' : ''; }
+  function softOf(k) { return (PV.soft || []).filter(function (w) { return w.k === k; }); }
+  function softList(k) {
+    var w = softOf(k);
+    return '<div data-warn="' + k + '">' + (w.length ? '<ul class="cs-warn">' + w.map(function (x) { return '<li class="is-' + x.lvl + '">' + esc(x.t) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
+  }
+  function refreshLive() {   // после сохранения, пока фокус в редакторе: графики и предупреждения без перерисовки полей
+    $$('[data-chartb]').forEach(function (el) { var k = el.dataset.chartb; el.innerHTML = chart(DEF[k], D[k]); });
+    $$('[data-warn]').forEach(function (el) { var tmp = document.createElement('div'); tmp.innerHTML = softList(el.dataset.warn); el.innerHTML = tmp.firstChild.innerHTML; });
+  }
+  function head(k, extra) {
+    var d = DEF[k];
+    return '<div class="cs-prm__head"><span class="cs-prm__n">' + esc(d.n) + (extra || '') + '</span>' + helpBtn(k) + '</div>' + (d.h ? '<div class="cs-prm__h">' + esc(d.h) + '</div>' : '') + helpBox(k);
+  }
+
+  /* таблица опций: строки × столбцы */
+  function gridField(k) {
+    var d = DEF[k], v = D[k], was = PUB[k], cols = Object.keys(d.cols), ch = !same(v, was);
+    var cc = d.ccur || {};
+    var rows = Object.keys(d.rows).map(function (r) {
+      return '<tr><th scope="row">' + esc(d.rows[r]) + '</th>' + cols.map(function (c) {
+        var x = v[r][c], w = was[r] ? was[r][c] : x, c1 = x !== w;
+        var val = cc[c] ? edit(conv(x, cc[c])) : x;
+        var tip = c1 ? 'было ' + (cc[c] ? money(conv(w, cc[c])) : fmt2.format(w)) : (cc[c] && cc[c] !== CUR ? 'в исходной валюте: ' + money(x, cc[c]) : '');
+        return '<td' + (c1 ? ' class="is-changed"' : '') + '><input class="num" type="number" step="any" data-k="' + k + '" data-r="' + esc(r) + '" data-c="' + c + '" value="' + val + '" aria-label="' + esc(d.rows[r] + ', ' + d.cols[c]) + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '></td>';
+      }).join('') + '</tr>';
+    }).join('');
+    var anyCur = cols.some(function (c) { return cc[c] && cc[c] !== CUR; });
+    return '<div class="cs-prm cs-prm--full' + (ch ? ' is-changed' : '') + '" data-row="' + k + '"><div>' + head(k) +
+      (anyCur ? '<div class="cs-prm__src">Суммы хранятся в ' + curWord(cc[cols[0]] || 'CNY') + ', показаны в ' + curWord(CUR) + '; исходное значение — в подсказке поля</div>' : '') +
+      '<div class="cs-gwrap"><table class="cs-gtab"><thead><tr><th></th>' + cols.map(function (c) { return '<th scope="col">' + esc(cc[c] ? curSym(d.cols[c]) : d.cols[c]) + '</th>'; }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      softList(k) + '</div></div>';
+  }
+
+  /* кривая по точкам: X — в шапке, строки — значения; под спойлером — график */
+  var PAL = ['#1f6f50', '#b8642c', '#2f5fa8', '#b0902a', '#7a3f8f', '#2a8a8a', '#a33a3a', '#5c7a1f', '#c06a9a', '#44546a', '#8a6a3a', '#3a7ac0', '#6a6a6a'];
+  function cX(d, x) { return d.xcur ? conv(x, d.xcur) : x; }
+  function cY(d, y) { return d.cur ? conv(y, d.cur) : y; }
+  function curveField(k) {
+    var d = DEF[k], v = D[k], was = PUB[k], rows = Object.keys(d.rows), ch = !same(v, was), n = v.x.length;
+    var xu = d.xcur ? SYM[CUR] : d.xu, yu = d.cur ? SYM[CUR] + (d.per || '') : (d.u || '');
+    var hx = v.x.map(function (x, i) {
+      var c1 = !was || was.x[i] !== x;
+      return '<th scope="col"' + (c1 ? ' class="is-changed"' : '') + '><input class="num" type="number" step="any" min="0" data-k="' + k + '" data-cx="' + i + '" value="' + edit(cX(d, x)) + '" aria-label="' + esc(d.xn + ', точка ' + (i + 1)) + '">' +
+        (n > 1 && B.canEdit ? '<button type="button" class="cs-ptdel" data-delpt="' + k + '" data-i="' + i + '" title="Убрать точку">×</button>' : '') + '</th>';
+    }).join('');
+    var body = rows.map(function (r, ri) {
+      return '<tr><th scope="row">' + (rows.length > 1 ? '<i class="cs-sw" style="background:' + PAL[ri % PAL.length] + '"></i>' : '') + esc(d.rows[r]) + '</th>' + v.x.map(function (x, i) {
+        var y = v.y[r][i], w = was && was.y[r] ? was.y[r][i] : y, c1 = y !== w;
+        var tip = c1 ? 'было ' + (d.cur ? money(conv(w, d.cur)) : fmt2.format(w)) : (d.cur && d.cur !== CUR ? 'в исходной валюте: ' + money(y, d.cur) : '');
+        return '<td' + (c1 ? ' class="is-changed"' : '') + '><input class="num" type="number" step="any" data-k="' + k + '" data-r="' + esc(r) + '" data-ci="' + i + '" value="' + edit(cY(d, y)) + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + ' aria-label="' + esc(d.rows[r] + ', точка ' + (i + 1)) + '"></td>';
+      }).join('') + '</tr>';
+    }).join('');
+    return '<div class="cs-prm cs-prm--full' + (ch ? ' is-changed' : '') + '" data-row="' + k + '"><div>' + head(k, ', ' + yu) +
+      '<div class="cs-gwrap"><table class="cs-gtab cs-ctab"><thead><tr><th scope="col">' + esc(d.xn) + ', ' + esc(xu) + '</th>' + hx +
+      (B.canEdit && n < 12 ? '<th><button type="button" class="cs-ptadd" data-addpt="' + k + '">+ точка</button></th>' : '') + '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+      softList(k) +
+      '<details class="cs-chart" data-chart="' + k + '"' + (openChart[k] ? ' open' : '') + '><summary>График</summary><div data-chartb="' + k + '">' + chart(d, v) + '</div></details></div></div>';
+  }
+  function chart(d, v) {
+    var W = 620, H = 230, L = 58, R = 14, T = 12, Bm = 34, rows = Object.keys(d.rows), lg = d.log;
+    var xs = v.x.map(function (x) { return cX(d, x); });
+    var x0 = xs[0], x1 = xs[xs.length - 1];
+    if (xs.length === 1) { x0 = lg ? x0 / 4 : x0 - Math.max(1, Math.abs(x0)); x1 = lg ? x1 * 4 : x1 + Math.max(1, Math.abs(x1)); }
+    else if (lg) { x0 = x0 / 1.6; x1 = x1 * 1.6; } else { var pd = (x1 - x0) * 0.1; x0 -= pd; x1 += pd; }
+    var tx = function (x) { return L + (lg ? (Math.log(x) - Math.log(x0)) / (Math.log(x1) - Math.log(x0)) : (x - x0) / (x1 - x0)) * (W - L - R); };
+    var ymax = 0;
+    rows.forEach(function (r) { v.y[r].forEach(function (y) { ymax = Math.max(ymax, cY(d, y)); }); });
+    ymax = ymax > 0 ? ymax * 1.12 : 1;
+    var ty = function (y) { return T + (1 - y / ymax) * (H - T - Bm); };
+    var g = '';
+    for (var i = 0; i <= 4; i++) {
+      var yv = ymax * i / 4, yy = ty(yv);
+      g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" class="cs-ch-grid"/><text x="' + (L - 6) + '" y="' + (yy + 4).toFixed(1) + '" text-anchor="end" class="cs-ch-t">' + fmt2.format(+yv.toPrecision(3)) + '</text>';
+    }
+    xs.forEach(function (x) {
+      var xx = tx(x);
+      g += '<line x1="' + xx.toFixed(1) + '" x2="' + xx.toFixed(1) + '" y1="' + T + '" y2="' + (H - Bm) + '" class="cs-ch-grid cs-ch-grid--x"/><text x="' + xx.toFixed(1) + '" y="' + (H - Bm + 16) + '" text-anchor="middle" class="cs-ch-t">' + fmt2.format(+x.toPrecision(4)) + '</text>';
+    });
+    g += '<text x="' + (W - R) + '" y="' + (H - 4) + '" text-anchor="end" class="cs-ch-t">' + esc(d.xn) + ', ' + esc(d.xcur ? SYM[CUR] : d.xu) + (lg ? ' (логарифмическая шкала)' : '') + '</text>';
+    rows.forEach(function (r, ri) {
+      var c = PAL[ri % PAL.length], pts = xs.map(function (x, i) { return [tx(x), ty(cY(d, v.y[r][i]))]; });
+      var first = pts[0], last = pts[pts.length - 1];
+      g += '<polyline points="' + L + ',' + first[1].toFixed(1) + ' ' + first[0].toFixed(1) + ',' + first[1].toFixed(1) + '" class="cs-ch-ext" stroke="' + c + '"/>';
+      g += '<polyline points="' + last[0].toFixed(1) + ',' + last[1].toFixed(1) + ' ' + (W - R) + ',' + last[1].toFixed(1) + '" class="cs-ch-ext" stroke="' + c + '"/>';
+      g += '<polyline points="' + pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '" class="cs-ch-line" stroke="' + c + '"><title>' + esc(d.rows[r]) + '</title></polyline>';
+      pts.forEach(function (p, i) { g += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" fill="' + c + '"><title>' + esc(d.rows[r]) + ': ' + fmt2.format(cY(d, v.y[r][i])) + '</title></circle>'; });
+    });
+    var leg = rows.length > 1 ? '<div class="cs-ch-leg">' + rows.map(function (r, ri) { return '<span><i class="cs-sw" style="background:' + PAL[ri % PAL.length] + '"></i>' + esc(d.rows[r]) + '</span>'; }).join('') + '</div>' : '';
+    return '<svg class="cs-ch" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(d.n) + '">' + g + '</svg>' + leg +
+      '<p class="cs-prm__h">Сплошная линия — между точками' + (lg ? ' (плавно по логарифму)' : '') + '; пунктир — за крайними точками значение не меняется. Одна точка — прямая: одно значение для всех.</p>';
+  }
+  function normCurve(c) {   // по возрастанию X, без повторов и пустых — как сделает сервер
+    var idx = c.x.map(function (x, i) { return i; }).filter(function (i) { return isFinite(c.x[i]) && c.x[i] > 0; });
+    idx.sort(function (a, b) { return c.x[a] - c.x[b]; });
+    var seen = {}, keep = idx.filter(function (i) { if (seen[c.x[i]]) return false; seen[c.x[i]] = 1; return true; });
+    var out = { x: keep.map(function (i) { return c.x[i]; }), y: {} };
+    Object.keys(c.y).forEach(function (r) { out.y[r] = keep.map(function (i) { return c.y[r][i]; }); });
+    return out.x.length ? out : c;
+  }
+
   function field(k) {
     var d = DEF[k], v = D[k], was = PUB[k], ch = !same(v, was);
+    if (d.t === 'grid') return gridField(k);
+    if (d.t === 'curve') return curveField(k);
     if (d.t === 'table') {
       var cells = Object.keys(d.rows).map(function (r) {
         var c = v[r] !== was[r], note = [];
@@ -164,13 +281,13 @@
         return '<label class="cs-tc' + (c ? ' is-changed' : '') + '"><span>' + esc(d.rows[r]) + '</span><input class="num" type="number" step="any" min="0" data-k="' + k + '" data-r="' + esc(r) + '" value="' + shown(d, v[r]) + '">' +
           (note.length ? '<small>' + note.join(' · ') + '</small>' : '') + '</label>';
       }).join('');
-      return '<div class="cs-prm" style="grid-template-columns:1fr"><div><div class="cs-prm__n">' + esc(d.n) + ', ' + unitOf(d) + '</div>' + (d.h ? '<div class="cs-prm__h">' + esc(d.h) + '</div>' : '') +
+      return '<div class="cs-prm cs-prm--full" data-row="' + k + '"><div>' + head(k, ', ' + unitOf(d)) +
         (d.cur && d.cur !== CUR ? '<div class="cs-prm__src">Хранится в ' + curWord(d.cur) + ' — под полями исходные значения</div>' : '') +
-        '</div><div class="cs-tgrid">' + cells + '</div></div>';
+        '<div class="cs-tgrid">' + cells + '</div>' + softList(k) + '</div></div>';
     }
     if (d.t === 'bool') {
-      return '<label class="cs-toggle" for="cs-i-' + k + '"><input type="checkbox" id="cs-i-' + k + '" data-k="' + k + '"' + (v ? ' checked' : '') + '><span><b style="font-weight:500">' + esc(d.n) + '</b>' +
-        (d.h ? '<br><span class="cs-prm__h">' + esc(d.h) + '</span>' : '') + (ch ? ' <span class="cs-prm__was">изменено</span>' : '') + '</span></label>';
+      return '<div class="cs-prm cs-prm--full" data-row="' + k + '"><div><div class="cs-prm__head"><label class="cs-toggle" for="cs-i-' + k + '"><input type="checkbox" id="cs-i-' + k + '" data-k="' + k + '"' + (v ? ' checked' : '') + '><span><b style="font-weight:500">' + esc(d.n) + '</b>' +
+        (d.h ? '<br><span class="cs-prm__h">' + esc(d.h) + '</span>' : '') + (ch ? ' <span class="cs-prm__was">изменено</span>' : '') + '</span></label>' + helpBtn(k) + '</div>' + helpBox(k) + '</div></div>';
     }
     var off = (k === 'rate' || k === 'usd') && !D.rateFix;
     var input = d.t === 'sel'
@@ -178,12 +295,13 @@
       : d.t === 'text'
         ? '<input id="cs-i-' + k + '" type="text" maxlength="120" data-k="' + k + '" value="' + esc(v) + '">'
         : '<input id="cs-i-' + k + '" class="num" type="number" step="' + (d.cur ? 'any' : (d.step || (d.t === 'mul' ? 0.01 : 1))) + '" data-k="' + k + '" value="' + shown(d, v) + '"' + (off ? ' disabled' : '') + '><span>' + unitOf(d) + '</span>';
-    var isBad = bad(k), hint = d.h || '';
+    var isBad = bad(k), hint = d.h || '', sw = softOf(k);
     if (off) hint = 'Используется, если закрепить курсы вручную. Сейчас в расчёте курс ЦБ: ' + fmt2.format(k === 'rate' ? fx().cny : fx().usd) + ' ' + d.u;
     var lim = d.cur ? money(conv(d.min, d.cur)) + ' до ' + money(conv(d.max, d.cur)) : fmt2.format(d.min) + ' до ' + fmt2.format(d.max) + ' ' + unitOf(d);
-    return '<div class="cs-prm' + (d.t === 'text' ? ' cs-prm--wide' : '') + (ch ? ' is-changed' : '') + (isBad ? ' is-bad' : '') + '" data-row="' + k + '"><div><label class="cs-prm__n" for="cs-i-' + k + '">' + esc(d.n) + '</label>' +
+    return '<div class="cs-prm' + (d.t === 'text' ? ' cs-prm--wide' : '') + (ch ? ' is-changed' : '') + (isBad ? ' is-bad' : '') + (sw.length ? ' is-soft' : '') + '" data-row="' + k + '"><div><div class="cs-prm__head"><label class="cs-prm__n" for="cs-i-' + k + '">' + esc(d.n) + '</label>' + helpBtn(k) + '</div>' +
       (hint ? '<div class="cs-prm__h">' + esc(hint) + '</div>' : '') + (d.cur && d.cur !== CUR ? '<span class="cs-prm__src">в исходной валюте: ' + money(v, d.cur) + '</span>' : '') +
-      (ch ? '<div class="cs-prm__was">было ' + esc(wasTxt(d, was)) + '</div>' : '') + '</div><div class="cs-inp">' + input + '</div>' + (isBad ? '<div class="cs-prm__err">Допустимо от ' + lim + '</div>' : '') + '</div>';
+      (ch ? '<div class="cs-prm__was">было ' + esc(wasTxt(d, was)) + '</div>' : '') + '</div><div class="cs-inp">' + input + '</div>' + helpBox(k) +
+      (isBad ? '<div class="cs-prm__err">Допустимо от ' + lim + '</div>' : '') + (sw.length ? '<div class="cs-prm__err cs-prm__err--soft">' + sw.map(function (x) { return esc(x.t); }).join(' ') + '</div>' : '') + '</div>';
   }
   function drawEditor() {
     var g = G[group], keys = Object.keys(DEF).filter(function (k) { return DEF[k].g === group; }), extra = '';
@@ -192,7 +310,8 @@
       extra = '<p class="cs-prm__h" style="margin-top:10px">Итоговый курс в расчёте: ' + fmt2.format(f.cny) + ' × ' + (1 + D.bank / 100).toFixed(3) + ' × ' + (1 + D.agent / 100).toFixed(3) + ' × ' + (1 + D.buffer / 100).toFixed(3) +
         ' = <b class="num">' + fmt2.format(R().ok ? R().x.rate : f.cny) + ' ₽ за ¥</b></p>';
     }
-    if (group === 'rules') extra = '<p class="cs-prm__h" style="margin-top:10px">Всегда — расчёт инженером: ' + B.engFixed.map(esc).join(', ') + '.</p>';
+    if (group === 'rules') extra = '<p class="cs-prm__h" style="margin-top:10px">Всегда — расчёт инженером: ' + (PV.engFixed || B.engFixed).map(esc).join(', ') + '.</p>';
+    if (group === 'vat' && PV.fx) extra = '<p class="cs-prm__h" style="margin-top:10px">Разброс курса юаня по последним загрузкам ЦБ: <b>' + (PV.fx.vol ? fmt2.format(PV.fx.vol) + ' %' : 'пока не считается (нужно 5 загрузок)') + '</b> — для строки «Колебание юаня».</p>';
     var cl = g.l === 'Фабрика' && group !== 'rules' ? '<span class="cs-pill">прайс фабрики в юанях' + (CUR !== 'CNY' ? ' · показан в ' + curWord(CUR) : '') + '</span>' : '';
     $('#cs-editor').innerHTML = '<div class="cs-boxhead"><h2>' + esc(g.l + ' · ' + g.t) + '</h2>' + cl + '</div><p class="cs-hint">' + esc(g.h) + '</p><div>' + keys.map(field).join('') + '</div>' + extra +
       (B.canEdit ? '' : '<p class="cs-prm__h" style="margin-top:10px">Изменять формулу может менеджер или администратор.</p>');
@@ -200,20 +319,59 @@
   function onInput(i) {
     var k = i.dataset.k, d = DEF[k];
     if (!d || !B.canEdit) return;
-    if (i.dataset.r) { var x = parseFloat(i.value); if (!isFinite(x)) return; D[k] = Object.assign({}, D[k]); D[k][i.dataset.r] = d.cur ? conv(x, CUR, d.cur) : x; }
+    var x = parseFloat(i.value);
+    if (d.t === 'grid') {
+      if (!isFinite(x)) return;
+      var c = i.dataset.c, cc = (d.ccur || {})[c];
+      D[k] = JSON.parse(JSON.stringify(D[k])); D[k][i.dataset.r][c] = cc ? conv(x, CUR, cc) : x;
+      i.parentNode.classList.toggle('is-changed', D[k][i.dataset.r][c] !== PUB[k][i.dataset.r][c]);
+    } else if (d.t === 'curve') {
+      if (!isFinite(x)) return;
+      D[k] = JSON.parse(JSON.stringify(D[k]));
+      if (i.dataset.cx !== undefined) D[k].x[+i.dataset.cx] = d.xcur ? conv(x, CUR, d.xcur) : x;
+      else D[k].y[i.dataset.r][+i.dataset.ci] = d.cur ? conv(x, CUR, d.cur) : x;
+      i.parentNode.classList.add('is-changed');
+    } else if (i.dataset.r) { if (!isFinite(x)) return; D[k] = Object.assign({}, D[k]); D[k][i.dataset.r] = d.cur ? conv(x, CUR, d.cur) : x; }
     else if (i.type === 'checkbox') D[k] = i.checked;
     else if (i.tagName === 'SELECT' || d.t === 'text') D[k] = i.value;
-    else { var y = parseFloat(i.value); if (!isFinite(y)) return; D[k] = d.cur ? conv(y, CUR, d.cur) : y; }
+    else { if (!isFinite(x)) return; D[k] = d.cur ? conv(x, CUR, d.cur) : x; }
     // подсветка без перерисовки поля, чтобы не сбить ввод
     var row = i.closest('[data-row]');
     if (row) { row.classList.toggle('is-changed', !same(D[k], PUB[k])); row.classList.toggle('is-bad', bad(k)); }
-    if (i.dataset.r) i.closest('.cs-tc').classList.toggle('is-changed', D[k][i.dataset.r] !== PUB[k][i.dataset.r]);
+    if (i.dataset.r && d.t === 'table') i.closest('.cs-tc').classList.toggle('is-changed', D[k][i.dataset.r] !== PUB[k][i.dataset.r]);
     if (i.type === 'checkbox' || i.tagName === 'SELECT') { scheduleSave(); drawEditor(); return; }
     scheduleSave();
   }
+  function addPoint(k) {
+    var d = DEF[k], c = JSON.parse(JSON.stringify(D[k])), n = c.x.length, last = c.x[n - 1];
+    c.x.push(d.log ? last * 2 : last + (n > 1 ? last - c.x[n - 2] : Math.max(1, last)));
+    Object.keys(c.y).forEach(function (r) { c.y[r].push(c.y[r][n - 1]); });
+    D[k] = c; scheduleSave(); drawEditor();
+  }
+  function delPoint(k, i) {
+    var c = JSON.parse(JSON.stringify(D[k]));
+    if (c.x.length < 2) return;
+    c.x.splice(i, 1); Object.keys(c.y).forEach(function (r) { c.y[r].splice(i, 1); });
+    D[k] = c; scheduleSave(); drawEditor();
+  }
+  $('#cs-editor').addEventListener('click', function (e) {
+    var h = e.target.closest('[data-help]');
+    if (h) { var k = h.dataset.help, box = $('#cs-help-' + k); openHelp[k] = !openHelp[k]; if (box) box.hidden = !openHelp[k]; h.setAttribute('aria-expanded', !!openHelp[k]); return; }
+    var a = e.target.closest('[data-addpt]');
+    if (a && B.canEdit) { addPoint(a.dataset.addpt); return; }
+    var dl = e.target.closest('[data-delpt]');
+    if (dl && B.canEdit) { delPoint(dl.dataset.delpt, +dl.dataset.i); }
+  });
+  $('#cs-editor').addEventListener('toggle', function (e) { if (e.target.dataset && e.target.dataset.chart) openChart[e.target.dataset.chart] = e.target.open; }, true);
   $('#cs-editor').addEventListener('input', function (e) { if (e.target.dataset.k && e.target.type !== 'checkbox' && e.target.tagName !== 'SELECT') onInput(e.target); });
   $('#cs-editor').addEventListener('change', function (e) { if (e.target.dataset.k && (e.target.type === 'checkbox' || e.target.tagName === 'SELECT')) onInput(e.target); });
-  $('#cs-editor').addEventListener('focusout', function () { setTimeout(function () { if (!$('#cs-editor').contains(document.activeElement)) drawEditor(); }, 0); });
+  $('#cs-editor').addEventListener('focusout', function () {
+    setTimeout(function () {
+      if ($('#cs-editor').contains(document.activeElement)) return;
+      Object.keys(DEF).forEach(function (k) { if (DEF[k].t === 'curve' && DEF[k].g === group) { var c = normCurve(D[k]); if (!same(c, D[k])) { D[k] = c; scheduleSave(); } } });
+      drawEditor();
+    }, 0);
+  });
 
   /* ---------- правая колонка ---------- */
   function drawEtalons() {
@@ -281,7 +439,7 @@
   }
   function render(keepEditor) {
     drawRates(); drawDraft(); drawFormula(); drawEtalons(); drawClient(); drawRate(); drawSens(); drawHist();
-    if (!keepEditor || !$('#cs-editor').contains(document.activeElement)) drawEditor();
+    if (!keepEditor || !$('#cs-editor').contains(document.activeElement)) drawEditor(); else refreshLive();
   }
 
   /* ---------- события ---------- */
@@ -326,7 +484,8 @@
     $('#cs-confirm-h').textContent = B.siteOn ? 'Опубликовать версию ' + (B.pub.v + 1) + '?' : 'Опубликовать первую версию? Сайт перейдёт на расчёт по этой формуле.';
     $('#cs-confirm-list').innerHTML = (ch.length ? ch.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') : '<li>Значения по умолчанию без изменений</li>') +
       (d.length ? '<li>Эталоны: от ' + fmt2.format(Math.min.apply(null, d)) + ' % до ' + fmt2.format(Math.max.apply(null, d)) + ' %' + (big ? ' — <b>у ' + big + ' больше 15 %, проверьте</b>' : '') + '</li>' : '') +
-      (Object.keys(PV.errors || {}).length ? '<li><b>Есть значения вне допустимого — исправьте их перед публикацией.</b></li>' : '');
+      (Object.keys(PV.errors || {}).length ? '<li><b>Есть значения вне допустимого — исправьте их перед публикацией.</b></li>' : '') +
+      ((PV.soft || []).length ? '<li>Предупреждения: ' + (PV.soft || []).filter(function (x) { return x.lvl === 'red'; }).length + ' красных, ' + (PV.soft || []).filter(function (x) { return x.lvl === 'yellow'; }).length + ' жёлтых — публикацию не блокируют, но проверьте шаги с точкой.</li>' : '');
     $('#cs-confirm').hidden = false; $('#cs-confirm-note').focus();
   };
   $('#cs-cancel').onclick = function () { $('#cs-confirm').hidden = true; };

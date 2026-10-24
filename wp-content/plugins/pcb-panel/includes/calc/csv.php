@@ -8,7 +8,13 @@
  *   # PCB Восток, формула калькулятора, черновик, 23.10.2026 16:40, курс ЦБ 11,42 ₽ за ¥
  *   key;row;step;name;value;unit;currency;min;max
  *   setup;;Фабрика · Платы;Подготовка производства;450;;CNY;0;20000
- *   dm2;4;Фабрика · Платы;Ставка за дм², 4 слоя;55;/дм²;CNY;;
+ *   matMin;4;Фабрика · Платы;Материал: минимум за заказ, 4 слоя;200;;CNY;;
+ *   finish;enig:dm2;Фабрика · Платы;Финишное покрытие, ENIG, надбавка;1,2;¥/дм²;CNY;;      ← таблица опций: row = строка:столбец
+ *   mrate;x:2;Фабрика · Платы;Материал: ставка …, точка 2 — площадь партии;100;дм²;;;      ← кривая: row = x:N — X точки N,
+ *   mrate;4:2;Фабрика · Платы;Материал: ставка …, 4 слоя, точка 2;11;/дм²;CNY;;            row = строка:N — значение в точке N
+ *
+ * У кривой точки нумеруются с 1 по возрастанию X; новую точку можно добавить строками с номером на 1 больше
+ * (X и значения всех строк), убрать точку — только в панели.
  *
  * Формат — для Excel и для машины: UTF-8 с BOM, разделитель «;», десятичная запятая. При загрузке принимаются
  * запятая и точка, разделитель «,» или табуляция, кодировка Windows-1251 (Excel «CSV» без UTF-8).
@@ -76,6 +82,23 @@ function pcb_calc_csv_rows( array $params ) {
 					$rows[] = array( $k, (string) $rk, $step, $name, pcb_calc_csv_num( $v[ (string) $rk ] ?? 0 ), $unit, $d['cur'] ?? '', '', '' );
 				}
 				break;
+			case 'grid':
+				foreach ( $d['rows'] as $rk => $label ) {
+					foreach ( $d['cols'] as $ck => $cl ) {
+						$rows[] = array( $k, $rk . ':' . $ck, $step, $d['n'] . ', ' . $label . ', ' . mb_strtolower( $cl ), pcb_calc_csv_num( $v[ (string) $rk ][ $ck ] ?? 0 ), $cl, $d['ccur'][ $ck ] ?? '', '', '' );
+					}
+				}
+				break;
+			case 'curve':
+				foreach ( $v['x'] as $i => $x ) {
+					$rows[] = array( $k, 'x:' . ( $i + 1 ), $step, $d['n'] . ', точка ' . ( $i + 1 ) . ' — ' . mb_strtolower( $d['xn'] ), pcb_calc_csv_num( $x ), $d['xu'], $d['xcur'] ?? '', '', '' );
+				}
+				foreach ( $d['rows'] as $rk => $label ) {
+					foreach ( $v['x'] as $i => $x ) {
+						$rows[] = array( $k, $rk . ':' . ( $i + 1 ), $step, $d['n'] . ( count( $d['rows'] ) > 1 ? ', ' . $label : '' ) . ', точка ' . ( $i + 1 ), pcb_calc_csv_num( $v['y'][ (string) $rk ][ $i ] ?? 0 ), isset( $d['cur'] ) ? ( $d['per'] ?? '' ) : ( $d['u'] ?? '' ), $d['cur'] ?? '', '', '' );
+					}
+				}
+				break;
 			case 'bool':
 				$rows[] = array( $k, '', $step, $d['n'], $v ? '1' : '0', '1 = да, 0 = нет', '', '', '' );
 				break;
@@ -116,6 +139,13 @@ function pcb_calc_csv_title( $what, array $params ) {
 
 /** Значение параметра для показа: «1,25 ×», «450 ¥», «Авиа», «да». */
 function pcb_calc_csv_show( array $d, $v ) {
+	if ( 'curve' === $d['t'] ) {
+		$ys = array();
+		foreach ( $v['y'] as $rk => $row ) {
+			$ys[] = ( count( $v['y'] ) > 1 ? $d['rows'][ $rk ] . ': ' : '' ) . implode( ' / ', array_map( 'pcb_calc_csv_num', $row ) );
+		}
+		return 'точки ' . implode( ' / ', array_map( 'pcb_calc_csv_num', $v['x'] ) ) . ' ' . $d['xu'] . '; ' . implode( '; ', $ys );
+	}
 	if ( 'bool' === $d['t'] ) {
 		return $v ? 'да' : 'нет';
 	}
@@ -166,6 +196,7 @@ function pcb_calc_csv_parse( $text, array $base ) {
 
 	$cols    = array( 'key' => 0, 'row' => 1, 'value' => 4 );
 	$params  = $base;
+	$curves  = array(); // кривые, затронутые файлом: точки выравниваются после разбора
 	$seen    = array();
 	$warn    = array();
 	$count   = 0;
@@ -201,7 +232,18 @@ function pcb_calc_csv_parse( $text, array $base ) {
 			$warn[] = 'Строка ' . $num . ': у параметра «' . $d['n'] . '» нет строки «' . mb_substr( $row, 0, 20 ) . '» — пропущена.';
 			continue;
 		}
-		$label = 'table' === $d['t'] ? $d['n'] . ', ' . $d['rows'][ $row ] : $d['n'];
+		$rc = explode( ':', $row, 2 );
+		if ( 'grid' === $d['t'] && ( 2 !== count( $rc ) || ! isset( $d['rows'][ $rc[0] ], $d['cols'][ $rc[1] ] ) ) ) {
+			$warn[] = 'Строка ' . $num . ': у таблицы «' . $d['n'] . '» нет ячейки «' . mb_substr( $row, 0, 30 ) . '» (нужно строка:столбец) — пропущена.';
+			continue;
+		}
+		if ( 'curve' === $d['t'] && ( 2 !== count( $rc ) || ( 'x' !== $rc[0] && ! isset( $d['rows'][ $rc[0] ] ) ) || ! ctype_digit( $rc[1] ) || (int) $rc[1] < 1 || (int) $rc[1] > 12 ) ) {
+			$warn[] = 'Строка ' . $num . ': у кривой «' . $d['n'] . '» нет точки «' . mb_substr( $row, 0, 30 ) . '» (нужно x:N или строка:N, N от 1 до 12) — пропущена.';
+			continue;
+		}
+		$label = 'table' === $d['t'] ? $d['n'] . ', ' . $d['rows'][ $row ]
+			: ( 'grid' === $d['t'] ? $d['n'] . ', ' . $d['rows'][ $rc[0] ] . ', ' . mb_strtolower( $d['cols'][ $rc[1] ] )
+			: ( 'curve' === $d['t'] ? $d['n'] . ', ' . ( 'x' === $rc[0] ? 'X' : $d['rows'][ $rc[0] ] ) . ' точки ' . $rc[1] : $d['n'] ) );
 		if ( '' === $raw ) {
 			$warn[] = 'Строка ' . $num . ': «' . $label . '» — пустое значение, оставлено как было.';
 			continue;
@@ -244,6 +286,15 @@ function pcb_calc_csv_parse( $text, array $base ) {
 		}
 		if ( 'table' === $d['t'] ) {
 			$params[ $key ][ $row ] = $val;
+		} elseif ( 'grid' === $d['t'] ) {
+			$params[ $key ][ $rc[0] ][ $rc[1] ] = $val;
+		} elseif ( 'curve' === $d['t'] ) {
+			$curves[ $key ] = true;
+			if ( 'x' === $rc[0] ) {
+				$params[ $key ]['x'][ (int) $rc[1] - 1 ] = $val;
+			} else {
+				$params[ $key ]['y'][ $rc[0] ][ (int) $rc[1] - 1 ] = $val;
+			}
 		} else {
 			$params[ $key ] = $val;
 		}
@@ -255,12 +306,55 @@ function pcb_calc_csv_parse( $text, array $base ) {
 	if ( ! $count ) {
 		return new WP_Error( 'pcb_calc', 'Ни одна строка не подошла: ' . implode( ' ', array_slice( $warn, 0, 3 ) ), array( 'status' => 400 ) );
 	}
+	foreach ( array_keys( $curves ) as $key ) { // номера точек → по порядку; новой точке без значения строки — значение соседней
+		$c = $params[ $key ];
+		ksort( $c['x'] );
+		$x = array();
+		$y = array();
+		foreach ( $c['x'] as $i => $xv ) {
+			$x[] = $xv;
+			foreach ( $defs[ $key ]['rows'] as $rk => $label ) {
+				$rk          = (string) $rk;
+				$y[ $rk ][]  = $c['y'][ $rk ][ $i ] ?? ( $y[ $rk ] ? end( $y[ $rk ] ) : null );
+			}
+		}
+		$params[ $key ] = array( 'x' => $x, 'y' => $y );
+	}
 	$params = pcb_calc_clean( $params, $base );
 
 	// что изменится и что вне допустимого
 	$changes = array();
 	foreach ( $defs as $k => $d ) {
-		if ( 'table' === $d['t'] ) {
+		if ( 'grid' === $d['t'] ) {
+			foreach ( $d['rows'] as $rk => $label ) {
+				foreach ( $d['cols'] as $ck => $cl ) {
+					$a = (float) $base[ $k ][ (string) $rk ][ $ck ];
+					$b = (float) $params[ $k ][ (string) $rk ][ $ck ];
+					if ( $a !== $b ) {
+						$cd        = $d + array( 'cur' => $d['ccur'][ $ck ] ?? null );
+						$cd['t']   = isset( $d['ccur'][ $ck ] ) ? 'money' : 'num';
+						$cd['cur'] = $d['ccur'][ $ck ] ?? null;
+						if ( ! $cd['cur'] ) {
+							unset( $cd['cur'] );
+						}
+						$changes[] = array( 'key' => $k, 'row' => $rk . ':' . $ck, 'g' => $d['g'], 'name' => $d['n'] . ', ' . $label . ', ' . mb_strtolower( $cl ), 'old' => pcb_calc_csv_show( $cd, $a ), 'new' => pcb_calc_csv_show( $cd, $b ),
+							'pct' => $a ? round( ( $b - $a ) / abs( $a ) * 100, 1 ) : null );
+					}
+				}
+			}
+		} elseif ( 'curve' === $d['t'] ) {
+			$list = function ( $a ) { return implode( ' / ', array_map( 'pcb_calc_csv_num', $a ) ); };
+			if ( $base[ $k ]['x'] != $params[ $k ]['x'] ) {
+				$changes[] = array( 'key' => $k, 'row' => 'x', 'g' => $d['g'], 'name' => $d['n'] . ', точки: ' . mb_strtolower( $d['xn'] ) . ', ' . $d['xu'], 'old' => $list( $base[ $k ]['x'] ), 'new' => $list( $params[ $k ]['x'] ), 'pct' => null );
+			}
+			foreach ( $d['rows'] as $rk => $label ) {
+				$a = $base[ $k ]['y'][ (string) $rk ];
+				$b = $params[ $k ]['y'][ (string) $rk ];
+				if ( $a != $b ) {
+					$changes[] = array( 'key' => $k, 'row' => (string) $rk, 'g' => $d['g'], 'name' => $d['n'] . ( count( $d['rows'] ) > 1 ? ', ' . $label : '' ), 'old' => $list( $a ), 'new' => $list( $b ), 'pct' => null );
+				}
+			}
+		} elseif ( 'table' === $d['t'] ) {
 			foreach ( $d['rows'] as $rk => $label ) {
 				$rk = (string) $rk;
 				if ( (float) $base[ $k ][ $rk ] !== (float) $params[ $k ][ $rk ] ) {

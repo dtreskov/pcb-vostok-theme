@@ -36,7 +36,7 @@ function pcb_calc_preview( array $draft ) {
 			'sens' => pcb_calc_sensitivity( $draft, $e['in'], $fxD ),
 		);
 	}
-	return array( 'etalons' => $out, 'fx' => $fxD, 'errors' => pcb_calc_errors( $draft ), 'changes' => pcb_calc_diff( $pub, $draft ) );
+	return array( 'etalons' => $out, 'fx' => $fxD, 'errors' => pcb_calc_errors( $draft ), 'soft' => pcb_calc_soft( $draft ), 'changes' => pcb_calc_diff( $pub, $draft ), 'engFixed' => pcb_calc_engineer_fixed( $draft ) );
 }
 
 /** Изменение цен эталонов при публикации: [мин %, макс %]. */
@@ -82,7 +82,7 @@ function pcb_calc_bootstrap() {
 		'canEdit'  => current_user_can( 'pcb_calc_edit' ),
 		'groups'   => pcb_calc_groups(),
 		'defs'     => $defs,
-		'engFixed' => pcb_calc_engineer_fixed(),
+		'engFixed' => pcb_calc_engineer_fixed( $draft['params'] ),
 		'draft'    => $draft['params'],
 		'rev'      => (int) $draft['rev'],
 		'draftBy'  => $draft['user'] ? pcb_crm_log_user( (int) $draft['user'] ) . ', ' . mysql2date( 'd.m.Y H:i', $draft['time'] ) : '',

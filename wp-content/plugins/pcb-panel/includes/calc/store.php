@@ -112,9 +112,24 @@ function pcb_calc_rates() {
 function pcb_calc_fx( array $p ) {
 	$r = pcb_calc_rates();
 	if ( empty( $p['rateFix'] ) && ! empty( $r['cny'] ) ) {
-		return array( 'cny' => (float) $r['cny'], 'usd' => (float) ( $r['usd'] ?: $p['usd'] ), 'src' => 'cbr', 'date' => $r['date'] ?? '' );
+		return array( 'cny' => (float) $r['cny'], 'usd' => (float) ( $r['usd'] ?: $p['usd'] ), 'src' => 'cbr', 'date' => $r['date'] ?? '', 'vol' => pcb_calc_fx_vol( $r['hist'] ?? array() ) );
 	}
-	return array( 'cny' => (float) $p['rate'], 'usd' => (float) $p['usd'], 'src' => empty( $p['rateFix'] ) ? 'none' : 'manual', 'date' => '' );
+	return array( 'cny' => (float) $p['rate'], 'usd' => (float) $p['usd'], 'src' => empty( $p['rateFix'] ) ? 'none' : 'manual', 'date' => '', 'vol' => 0.0 );
+}
+
+/**
+ * Разброс курса юаня по истории загрузок ЦБ (до 30), %: стандартное отклонение от среднего.
+ * Нужен для вилки «от–до» (строка «Колебание юаня»). Меньше 5 загрузок — 0.
+ */
+function pcb_calc_fx_vol( array $hist ) {
+	$v = array_values( array_filter( array_map( function ( $h ) { return (float) ( $h[1] ?? 0 ); }, $hist ) ) );
+	$n = count( $v );
+	if ( $n < 5 ) {
+		return 0.0;
+	}
+	$m  = array_sum( $v ) / $n;
+	$sd = sqrt( array_sum( array_map( function ( $x ) use ( $m ) { return ( $x - $m ) ** 2; }, $v ) ) / ( $n - 1 ) );
+	return round( $sd / $m * 100, 2 );
 }
 
 /**
