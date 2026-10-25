@@ -1,7 +1,8 @@
 <?php
 /**
  * REST вкладки SEO: /wp-json/pcb-panel/v1/seo/…  Любые изменения — pcb_seo_edit (администратор).
- * Каждое изменение пишется в общий журнал (entity = seo:<id страницы> | seo:site | seo:robots | seo:maint).
+ * Каждое изменение пишется в общий журнал
+ * (entity = seo:<id страницы> | seo:site | seo:robots | seo:maint | seo:markup | seo:semantic | seo:cards).
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -9,6 +10,11 @@ defined( 'ABSPATH' ) || exit;
 /** Запись «было → стало» о SEO в общий журнал. */
 function pcb_crm_log_seo( $what, $label, $old, $new ) {
 	pcb_cl_log( 'seo:' . $what, 'cl_field', '', wp_json_encode( array( 'label' => $label, 'old' => (string) $old, 'new' => (string) $new ), JSON_UNESCAPED_UNICODE ) );
+}
+
+/** Запись о SEO в журнал готовой строкой (без «было → стало»). */
+function pcb_crm_log_seo_text( $what, $text ) {
+	pcb_cl_log( 'seo:' . $what, 'cl_field', '', wp_json_encode( array( 'text' => (string) $text ), JSON_UNESCAPED_UNICODE ) );
 }
 
 function pcb_seo_err( $msg, $fields = array(), $status = 400 ) {
@@ -215,6 +221,189 @@ add_action( 'rest_api_init', function () {
 			if ( ! empty( $p['on_present'] ) ) {
 				pcb_maint_set( ! empty( $p['on'] ) );
 			}
+			return array( 'ok' => true );
+		},
+	) );
+
+	// анкета разметки: org_description, svc{1..3}_name|desc, faq_on (+faq_present), webapp_on (+webapp_present), webapp_page, webapp_name, webapp_desc
+	register_rest_route( $ns, '/seo/markup', array(
+		'methods'             => 'POST',
+		'permission_callback' => $edit,
+		'callback'            => function ( WP_REST_Request $r ) {
+			$p    = (array) $r->get_params();
+			$L    = PCB_SEO_MARKUP_LEN;
+			$old  = pcb_seo_markup_get();
+			$new  = $old;
+			$errs = array();
+			if ( array_key_exists( 'org_description', $p ) ) {
+				$new['org_description'] = pcb_seo_text( $p['org_description'], $L['org_description'] );
+			}
+			for ( $i = 1; $i <= 3; $i++ ) {
+				if ( array_key_exists( "svc{$i}_name", $p ) ) {
+					$new['services'][ $i - 1 ]['name'] = pcb_seo_text( $p[ "svc{$i}_name" ], $L['svc_name'] );
+				}
+				if ( array_key_exists( "svc{$i}_desc", $p ) ) {
+					$new['services'][ $i - 1 ]['description'] = pcb_seo_text( $p[ "svc{$i}_desc" ], $L['svc_desc'] );
+				}
+				if ( '' === $new['services'][ $i - 1 ]['name'] && '' !== $new['services'][ $i - 1 ]['description'] ) {
+					$errs[ "svc{$i}_name" ] = 'У услуги с описанием нужно название.';
+				}
+			}
+			if ( ! empty( $p['webapp_present'] ) ) {
+				$new['webapp_on'] = empty( $p['webapp_on'] ) ? 0 : 1;
+			}
+			if ( ! empty( $p['faq_present'] ) ) {
+				$new['faq_on'] = empty( $p['faq_on'] ) ? 0 : 1;
+			}
+			if ( array_key_exists( 'webapp_page', $p ) ) {
+				$pg = (int) $p['webapp_page'];
+				if ( $pg && ! pcb_seo_is_page( $pg ) ) {
+					$errs['webapp_page'] = 'Страница не найдена.';
+				}
+				$new['webapp_page'] = $pg;
+			}
+			foreach ( array( 'webapp_name', 'webapp_desc' ) as $k ) {
+				if ( array_key_exists( $k, $p ) ) {
+					$new[ $k ] = pcb_seo_text( $p[ $k ], $L[ $k ] );
+				}
+			}
+			if ( $new['webapp_on'] && '' === $new['webapp_name'] ) {
+				$errs['webapp_name'] = 'Нужно название калькулятора.';
+			}
+			if ( $errs ) {
+				return pcb_seo_err( implode( ' ', $errs ), $errs );
+			}
+			// журнал: «было → стало» по каждому изменённому полю
+			$log = function ( $label, $a, $b ) {
+				if ( (string) $a !== (string) $b ) {
+					pcb_crm_log_seo( 'markup', $label, pcb_seo_log_val( $a ), pcb_seo_log_val( $b ) );
+				}
+			};
+			$log( 'Описание компании', $old['org_description'], $new['org_description'] );
+			foreach ( $new['services'] as $i => $s ) {
+				$log( 'Услуга ' . ( $i + 1 ) . ': название', $old['services'][ $i ]['name'], $s['name'] );
+				$log( 'Услуга ' . ( $i + 1 ) . ': описание', $old['services'][ $i ]['description'], $s['description'] );
+			}
+			$log( 'Вопросы из FAQ в разметке', $old['faq_on'] ? 'включены' : 'выключены', $new['faq_on'] ? 'включены' : 'выключены' );
+			$log( 'Калькулятор в разметке', $old['webapp_on'] ? 'включён' : 'выключен', $new['webapp_on'] ? 'включён' : 'выключен' );
+			$log( 'Калькулятор: страница', $old['webapp_page'] ? get_the_title( $old['webapp_page'] ) : 'по адресу /calculator/', $new['webapp_page'] ? get_the_title( $new['webapp_page'] ) : 'по адресу /calculator/' );
+			$log( 'Калькулятор: название', $old['webapp_name'], $new['webapp_name'] );
+			$log( 'Калькулятор: описание', $old['webapp_desc'], $new['webapp_desc'] );
+			pcb_seo_markup_update( $new );
+			pcb_seo_purge();
+			return array( 'ok' => true );
+		},
+	) );
+
+	// семантика: phrases, g_<n>_name, g_<n>_words (группы минус-слов; пустая группа удаляется)
+	register_rest_route( $ns, '/seo/semantic', array(
+		'methods'             => 'POST',
+		'permission_callback' => $edit,
+		'callback'            => function ( WP_REST_Request $r ) {
+			$p      = (array) $r->get_params();
+			$groups = array();
+			$keys   = array();
+			foreach ( $p as $k => $v ) {
+				if ( preg_match( '/^g_(\d+)_name$/', $k, $m ) ) {
+					$keys[] = (int) $m[1];
+				}
+			}
+			sort( $keys );
+			$total = 0;
+			foreach ( $keys as $n ) {
+				$words = pcb_seo_sem_lines( $p[ "g_{$n}_words" ] ?? '' );
+				$name  = pcb_seo_text( $p[ "g_{$n}_name" ] ?? '', 60 );
+				if ( ! $words && '' === $name ) {
+					continue;
+				}
+				$groups[] = array( 'name' => '' !== $name ? $name : 'Без названия', 'words' => implode( "\n", $words ) );
+				$total   += count( $words );
+			}
+			$phrases = pcb_seo_sem_lines( $p['phrases'] ?? '' );
+			if ( count( $groups ) > PCB_SEO_SEM_GROUPS ) {
+				return pcb_seo_err( 'Групп минус-слов не больше ' . PCB_SEO_SEM_GROUPS . '.' );
+			}
+			if ( $total + count( $phrases ) > PCB_SEO_SEM_WORDS ) {
+				return pcb_seo_err( 'Слишком длинные списки: не больше ' . PCB_SEO_SEM_WORDS . ' строк вместе.' );
+			}
+			$old    = pcb_seo_semantic_get();
+			$new    = array( 'phrases' => implode( "\n", $phrases ), 'groups' => $groups );
+			$o_ph   = pcb_seo_sem_lines( $old['phrases'] );
+			$o_mw   = pcb_seo_minus_words( $old );
+			$n_mw   = pcb_seo_minus_words( $new );
+			$diff   = function ( $a, $b ) {
+				$add = array_values( array_diff( $b, $a ) );
+				$del = array_values( array_diff( $a, $b ) );
+				$s   = array();
+				if ( $add ) {
+					$s[] = 'добавлены: ' . implode( ', ', $add );
+				}
+				if ( $del ) {
+					$s[] = 'убраны: ' . implode( ', ', $del );
+				}
+				return implode( '; ', $s );
+			};
+			if ( $d = $diff( $o_ph, $phrases ) ) {
+				pcb_crm_log_seo_text( 'semantic', pcb_seo_log_val( 'Ключевые фразы: ' . $d ) );
+			}
+			if ( $d = $diff( $o_mw, $n_mw ) ) {
+				pcb_crm_log_seo_text( 'semantic', pcb_seo_log_val( 'Минус-слова: ' . $d ) );
+			}
+			if ( wp_list_pluck( $old['groups'], 'name' ) !== wp_list_pluck( $groups, 'name' ) ) {
+				pcb_crm_log_seo( 'semantic', 'Группы минус-слов', pcb_seo_log_val( implode( ', ', wp_list_pluck( $old['groups'], 'name' ) ) ), pcb_seo_log_val( implode( ', ', wp_list_pluck( $groups, 'name' ) ) ) );
+			}
+			pcb_seo_semantic_update( $new );
+			return array( 'ok' => true );
+		},
+	) );
+
+	// карточки организаций: <сервис>_url
+	register_rest_route( $ns, '/seo/cards', array(
+		'methods'             => 'POST',
+		'permission_callback' => $edit,
+		'callback'            => function ( WP_REST_Request $r ) {
+			$p     = (array) $r->get_params();
+			$cards = pcb_seo_cards_get();
+			$svc   = pcb_seo_card_services();
+			$errs  = array();
+			foreach ( $svc as $k => $info ) {
+				if ( ! array_key_exists( $k . '_url', $p ) ) {
+					continue;
+				}
+				$url = pcb_seo_card_url( $k, $p[ $k . '_url' ] );
+				if ( false === $url ) {
+					$errs[ $k . '_url' ] = 'Нужна ссылка на карточку в ' . $info['label'] . '.';
+					continue;
+				}
+				if ( $url !== $cards[ $k ]['url'] ) {
+					pcb_crm_log_seo( 'cards', $info['label'] . ': ссылка на карточку', $cards[ $k ]['url'], $url );
+					$cards[ $k ]['url'] = $url;
+				}
+			}
+			if ( $errs ) {
+				return pcb_seo_err( implode( ' ', $errs ), $errs );
+			}
+			pcb_seo_cards_update( $cards );
+			pcb_seo_purge(); // ссылки идут в разметку главной (sameAs)
+			return array( 'ok' => true );
+		},
+	) );
+
+	// отметка сверки карточки: { card: yandex | gis }
+	register_rest_route( $ns, '/seo/cards/check', array(
+		'methods'             => 'POST',
+		'permission_callback' => $edit,
+		'callback'            => function ( WP_REST_Request $r ) {
+			$k     = (string) $r['card'];
+			$svc   = pcb_seo_card_services();
+			$cards = pcb_seo_cards_get();
+			if ( ! isset( $svc[ $k ] ) ) {
+				return pcb_seo_err( 'Неизвестная карточка.' );
+			}
+			$cards[ $k ]['checked'] = current_time( 'mysql' );
+			$cards[ $k ]['by']      = get_current_user_id();
+			pcb_seo_cards_update( $cards );
+			pcb_crm_log_seo_text( 'cards', $svc[ $k ]['label'] . ': сверено — данные совпадают с сайтом' );
 			return array( 'ok' => true );
 		},
 	) );

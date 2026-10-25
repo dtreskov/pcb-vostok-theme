@@ -1,4 +1,5 @@
-/* Вкладка SEO: счётчики длины, превью сниппета и карточки мессенджера на лету, загрузка картинок.
+/* Вкладка SEO: счётчики длины, превью сниппета и карточки мессенджера на лету, загрузка картинок,
+   группы минус-слов (Семантика) и кнопки «скопировать».
    Сохранение форм — общий обработчик form[data-api] из crm.js. */
 (function () {
   'use strict';
@@ -60,4 +61,53 @@
       if (note) note.textContent = 'Будет стандартная картинка. Нажмите «Сохранить».';
     });
   });
+  // счётчик знаков у полей анкеты разметки
+  $$('[data-seo-len]').forEach(function (el) {
+    var out = el.parentNode.querySelector('[data-seo-len-out]'); if (!out) return;
+    var max = +out.dataset.seoLenOut;
+    function upd() { var n = el.value.trim().length; out.textContent = n + ' / ' + max + ' зн.'; out.classList.toggle('is-over', n > max * 0.9); }
+    el.addEventListener('input', upd); upd();
+  });
+
+  // группы минус-слов: добавить и убрать (сохраняется вместе с формой)
+  var groups = document.querySelector('[data-seo-groups]');
+  function bindDel(g) {
+    var b = g.querySelector('[data-seo-group-del]');
+    if (b) b.addEventListener('click', function () {
+      var ta = g.querySelector('textarea');
+      if (ta.value.trim() && !confirm('Убрать группу со всеми словами? Изменение сохранится кнопкой «Сохранить».')) return;
+      g.remove();
+    });
+  }
+  if (groups) {
+    $$('[data-seo-group]', groups).forEach(bindDel);
+    var add = document.querySelector('[data-seo-group-add]');
+    if (add) add.addEventListener('click', function () {
+      var n = 0;
+      $$('input[name^="g_"]', groups).forEach(function (i) { var m = /^g_(\d+)_name$/.exec(i.name); if (m) n = Math.max(n, +m[1] + 1); });
+      var g = document.createElement('div');
+      g.className = 'seo-group'; g.setAttribute('data-seo-group', '');
+      g.innerHTML = '<input type="text" maxlength="60" aria-label="Название группы" placeholder="Название группы">' +
+        '<textarea rows="4" class="seo-mono" aria-label="Слова группы" placeholder="по слову в строке"></textarea>' +
+        '<button class="crm-link" type="button" data-seo-group-del>Убрать группу</button>';
+      g.querySelector('input').name = 'g_' + n + '_name';
+      g.querySelector('textarea').name = 'g_' + n + '_words';
+      groups.appendChild(g); bindDel(g); g.querySelector('input').focus();
+    });
+  }
+
+  // «скопировать»: текст элемента по селектору
+  $$('[data-seo-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = document.querySelector(b.dataset.seoCopy); if (!el) return;
+      var t = el.textContent.trim();
+      var done = function () { say('Скопировано'); };
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, function () { fallback(t); done(); });
+      else { fallback(t); done(); }
+    });
+  });
+  function fallback(t) {
+    var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove();
+  }
 })();

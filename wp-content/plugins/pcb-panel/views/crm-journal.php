@@ -25,7 +25,7 @@ $object = function ( array $r ) {
 	$kind = pcb_crm_log_object( $r );
 	if ( 'seo' === $kind ) {
 		$sk = substr( $r['entity'], 4 );
-		$sl = ctype_digit( $sk ) ? 'SEO: ' . ( get_the_title( (int) $sk ) ?: '#' . $sk ) : 'SEO: ' . ( array( 'site' => 'данные сайта', 'robots' => 'robots.txt', 'maint' => 'техработы' )[ $sk ] ?? $sk );
+		$sl = ctype_digit( $sk ) ? 'SEO: ' . ( get_the_title( (int) $sk ) ?: '#' . $sk ) : 'SEO: ' . ( array( 'site' => 'данные сайта', 'markup' => 'разметка', 'semantic' => 'семантика', 'cards' => 'карточки организаций', 'robots' => 'robots.txt', 'maint' => 'техработы' )[ $sk ] ?? $sk );
 		return array( $sl, pcb_panel_url( 'seo' ) . ( ctype_digit( $sk ) ? $sk : ( 'maint' === $sk ? 'maintenance' : $sk ) ) . '/' );
 	}
 	if ( 'calc' === $kind ) {

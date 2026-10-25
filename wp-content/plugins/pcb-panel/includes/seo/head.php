@@ -1,6 +1,6 @@
 <?php
 /**
- * SEO на сайте: <title>, description, Open Graph, разметка schema.org, robots, robots.txt, карта сайта.
+ * SEO на сайте: <title>, description, Open Graph, разметка schema.org (главная и калькулятор), robots, robots.txt, карта сайта.
  * Защита тестового домена работает всегда, остальной вывод — если не включён сторонний SEO-плагин.
  * canonical выводит сам WordPress (rel_canonical) — не дублируем.
  */
@@ -157,12 +157,21 @@ function pcb_seo_head() {
 	}
 	echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
 
+	$ld = null;
 	if ( is_front_page() ) {
-		echo '<script type="application/ld+json">' . wp_json_encode( pcb_seo_schema(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . "</script>\n";
+		$ld = pcb_seo_schema();
+	} elseif ( $id && $id === pcb_seo_calc_page() ) {
+		$ld = pcb_seo_schema_calc();
+	}
+	if ( $ld ) {
+		echo '<script type="application/ld+json">' . wp_json_encode( $ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . "</script>\n";
 	}
 }
 
-/** Разметка главной: организация и сайт. Реквизиты (ИНН и др.) не выводим — F-1.10. */
+/**
+ * Разметка главной: организация, сайт, услуги и вопросы из FAQ (анкета — SEO → Разметка, markup.php).
+ * Реквизиты (ИНН и др.) не выводим — F-1.10.
+ */
 function pcb_seo_schema() {
 	$s    = pcb_seo_get();
 	$home = home_url( '/' );
@@ -173,6 +182,10 @@ function pcb_seo_schema() {
 		'name'  => $s['brand'],
 		'url'   => $home,
 	);
+	$desc = trim( (string) pcb_seo_markup_get( 'org_description' ) );
+	if ( '' !== $desc ) {
+		$org['description'] = $desc;
+	}
 	if ( '' !== $logo['url'] ) {
 		$org['logo'] = array( '@type' => 'ImageObject', 'url' => $logo['url'], 'width' => $logo['w'], 'height' => $logo['h'] );
 	}
@@ -195,9 +208,13 @@ function pcb_seo_schema() {
 			'addressCountry'  => 'RU',
 		) );
 	}
-	return array(
-		'@context' => 'https://schema.org',
-		'@graph'   => array(
+	$org['areaServed'] = pcb_seo_area_served();
+	$same = pcb_seo_cards_same_as();
+	if ( $same ) {
+		$org['sameAs'] = $same;
+	}
+	$graph = array_merge(
+		array(
 			$org,
 			array(
 				'@type'      => 'WebSite',
@@ -208,5 +225,14 @@ function pcb_seo_schema() {
 				'publisher'  => array( '@id' => $home . '#organization' ),
 			),
 		),
+		pcb_seo_schema_services( $home )
+	);
+	$faq = pcb_seo_schema_faq( $home );
+	if ( $faq ) {
+		$graph[] = $faq;
+	}
+	return array(
+		'@context' => 'https://schema.org',
+		'@graph'   => $graph,
 	);
 }

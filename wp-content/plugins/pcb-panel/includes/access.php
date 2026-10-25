@@ -59,7 +59,7 @@ function pcb_panel_handle_request() {
 
 /** Вложенные адреса вкладок. Сейчас — только у CRM: карточка заявки и общий журнал. */
 function pcb_panel_render_item( $slug, $item ) {
-	// SEO: /panel/seo/<id страницы>/, /panel/seo/site|robots|maintenance/
+	// SEO: /panel/seo/<id страницы>/, /panel/seo/site|markup|semantic|cards|robots|maintenance/
 	if ( 'seo' === $slug ) {
 		if ( '' !== (string) get_query_var( 'pcb_panel_sub' ) ) {
 			pcb_panel_render( 'notfound', 404, 'seo' );
@@ -68,7 +68,7 @@ function pcb_panel_render_item( $slug, $item ) {
 			include PCB_PANEL_DIR . 'templates/maintenance.php';
 			exit;
 		}
-		if ( in_array( $item, array( 'site', 'robots', 'maintenance' ), true ) ) {
+		if ( in_array( $item, array( 'site', 'markup', 'semantic', 'cards', 'robots', 'maintenance' ), true ) ) {
 			pcb_panel_render( 'seo-' . $item, 200, 'seo' );
 		}
 		if ( ctype_digit( $item ) && pcb_seo_is_page( (int) $item ) ) {

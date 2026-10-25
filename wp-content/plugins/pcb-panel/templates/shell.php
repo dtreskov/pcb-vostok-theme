@@ -28,8 +28,8 @@ if ( 'crm-reply' === $view ) {
 	$title = 'Проверить совпадения';
 } elseif ( 'seo-page' === $view ) {
 	$title = 'SEO: ' . wp_strip_all_tags( get_the_title( $GLOBALS['pcb_panel_seo_page'] ) );
-} elseif ( in_array( $view, array( 'seo-site', 'seo-robots', 'seo-maintenance' ), true ) ) {
-	$title = array( 'seo-site' => 'Данные сайта', 'seo-robots' => 'robots.txt', 'seo-maintenance' => 'Техработы' )[ $view ];
+} elseif ( in_array( $view, array( 'seo-site', 'seo-markup', 'seo-semantic', 'seo-cards', 'seo-robots', 'seo-maintenance' ), true ) ) {
+	$title = array( 'seo-site' => 'Данные сайта', 'seo-markup' => 'Разметка', 'seo-semantic' => 'Семантика', 'seo-cards' => 'Карточки организаций', 'seo-robots' => 'robots.txt', 'seo-maintenance' => 'Техработы' )[ $view ];
 } elseif ( 'profile' === $view ) {
 	$title = 'Мой профиль';
 } elseif ( 'crm-card' === $view ) {

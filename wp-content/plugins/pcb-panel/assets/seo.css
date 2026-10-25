@@ -76,3 +76,32 @@ code.seo-mono { display: block; padding: 8px 10px; background: var(--color-secti
 .seo-rules dt { overflow-wrap: anywhere; }
 .seo-rules dd { margin: 0; color: var(--color-text-grey); }
 @media (max-width: 767px) { .seo-rules { grid-template-columns: 1fr; } .seo-rules dd { margin-bottom: 6px; } }
+
+/* разметка: услуги, вопросы из FAQ */
+.seo-svc { padding: var(--space-sm) 0; border-top: 1px solid var(--color-separator); }
+.seo-svc:first-of-type { border-top: 0; padding-top: 0; }
+.seo-len { justify-self: end; font-size: 12px; }
+.seo-len.is-over { color: var(--color-text-copper-dark); font-weight: 600; }
+.seo-faq { display: grid; gap: var(--space-sm); margin: 0 0 var(--space-sm); padding-left: 20px; font-size: 14px; line-height: 1.45; }
+.seo-faq li { display: grid; gap: 2px; }
+.seo-warn { color: #6B5418; }
+
+/* семантика: группы минус-слов */
+.seo-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-sm); }
+.seo-group { display: grid; gap: 6px; align-content: start; padding: var(--space-sm); border: 1px solid var(--color-separator); border-radius: 8px; background: var(--color-white); }
+.seo-group input[type=text] { font-weight: 600; }
+.seo-group .crm-link { justify-self: start; font-size: 12.5px; }
+.seo-code--short { max-height: 180px; margin-bottom: 6px; }
+.seo-list { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; line-height: 1.5; }
+.seo-box--warn { background: var(--color-gold-light); box-shadow: inset 3px 0 0 var(--color-gold); }
+.seo-box--warn h2 { color: #6B5418; }
+
+/* карточки организаций */
+.seo-ref { display: grid; grid-template-columns: minmax(0, 28%) minmax(0, 1fr); gap: 8px var(--space-md); margin: 0 0 var(--space-sm); font-size: 14px; line-height: 1.5; }
+.seo-ref dt { color: var(--color-text-grey); }
+.seo-ref dd { margin: 0; overflow-wrap: anywhere; }
+.seo-ref .crm-link { margin-left: 8px; font-size: 12.5px; }
+.seo-cardrow { display: grid; gap: 6px; padding: var(--space-md) 0; border-top: 1px solid var(--color-separator); }
+.seo-cardrow:first-of-type { border-top: 0; padding-top: 0; }
+.seo-cardrow__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); }
+@media (max-width: 767px) { .seo-ref { grid-template-columns: 1fr; } .seo-ref dd { margin-bottom: 6px; } }

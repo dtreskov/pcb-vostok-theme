@@ -7,6 +7,9 @@ $base    = pcb_panel_url( 'seo' );
 $items   = array(
 	'pages'       => array( 'Страницы', $base ),
 	'site'        => array( 'Данные сайта', $base . 'site/' ),
+	'markup'      => array( 'Разметка', $base . 'markup/' ),
+	'cards'       => array( 'Карточки организаций', $base . 'cards/' ),
+	'semantic'    => array( 'Семантика', $base . 'semantic/' ),
 	'robots'      => array( 'robots.txt', $base . 'robots/' ),
 	'maintenance' => array( 'Техработы', $base . 'maintenance/' ),
 );
@@ -16,7 +19,7 @@ $items   = array(
 <nav class="crm-subnav" aria-label="Разделы SEO">
 	<?php foreach ( $items as $k => $it ) : ?>
 		<a class="<?php echo $k === $seo_nav ? 'is-on' : ''; ?>" href="<?php echo esc_url( $it[1] ); ?>"<?php echo $k === $seo_nav ? ' aria-current="page"' : ''; ?>>
-			<?php echo esc_html( $it[0] ); ?><?php if ( 'maintenance' === $k && $st['maint'] ) : ?><span class="pp-badge" title="Сайт закрыт заглушкой">вкл</span><?php endif; ?>
+			<?php echo esc_html( $it[0] ); ?><?php if ( 'maintenance' === $k && $st['maint'] ) : ?><span class="pp-badge" title="Сайт закрыт заглушкой">вкл</span><?php endif; ?><?php if ( 'cards' === $k && $st['cards'] ) : ?><span class="pp-badge" title="Карточки не сверены с данными сайта"><?php echo (int) $st['cards']; ?></span><?php endif; ?>
 		</a>
 	<?php endforeach; ?>
 </nav>

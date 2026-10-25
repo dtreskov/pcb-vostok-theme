@@ -228,6 +228,8 @@ function pcb_seo_status() {
 		'conflict' => pcb_seo_conflict(),
 		'ucmm'     => pcb_maint_legacy_active(),
 		'robots'   => file_exists( ABSPATH . 'robots.txt' ),
+		// карточек организаций, которые пора сверить (сверки не было или данные сайта менялись после неё)
+		'cards'    => count( array_filter( pcb_seo_cards_get(), 'pcb_seo_card_stale' ) ),
 	);
 	$s['open'] = $s['prod'] && $s['public'] && ! $s['maint'];
 	return $s;
