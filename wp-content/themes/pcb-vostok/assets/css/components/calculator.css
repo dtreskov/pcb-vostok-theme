@@ -9,12 +9,9 @@
    Брейкпоинты — по шкале globals.css: 1199px / 767px.
    ================================= */
 
-
 .cx {
     --cx-col: 120px;
     --cx-gap: var(--space-xl);
-    --cx-pad: clamp(36px, 4vw, 56px);
-    --cx-num: 112px;
 }
 
 .cx-wrap {
@@ -23,27 +20,6 @@
     max-width: 100%;
     margin-inline: auto;
     padding-inline: var(--content-spacing);
-}
-
-.cx-eyebrow {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin: 0 0 var(--space-sm);
-    color: var(--color-copper);
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-
-.cx-eyebrow::before {
-    content: "";
-    width: 24px;
-    height: 2px;
-    background: var(--color-copper);
-    flex: 0 0 auto;
 }
 
 .cx-layout {
@@ -64,7 +40,6 @@
     display: grid;
     grid-template-columns: var(--cx-col) minmax(0, 1fr);
     gap: var(--cx-gap);
-    padding-block: var(--cx-pad);
     background-color: var(--cx-bg);
     box-shadow: 0 0 0 100vmax var(--cx-bg);
     clip-path: inset(0 -100vmax);
@@ -85,7 +60,6 @@
 .cx-stage__num {
     margin: 0;
     text-align: center;
-    font-size: var(--cx-num);
     font-weight: 800;
     line-height: .82;
     letter-spacing: 0;
@@ -97,29 +71,12 @@
 }
 
 .cx-stage__title {
-    font-size: clamp(24px, 3vw, 36px);
     font-weight: 700;
     letter-spacing: -0.02em;
 }
 
-.cx-stage__lead {
-    margin-top: var(--space-md);
-    max-width: 60ch;
-    color: #2E3B35;
-    font-size: 18px;
-    line-height: 1.55;
-}
-
 .cx-stage__body {
     min-width: 0;
-}
-
-.cx-stage__body > * + * {
-    margin-top: var(--space-lg);
-}
-
-.cx-stage__body > .cx-stage__title + .cx-stage__lead {
-    margin-top: var(--space-md);
 }
 
 .cx-drop {
@@ -142,9 +99,6 @@
 }
 
 .cx-drop__ico {
-    width: 32px;
-    height: 32px;
-    margin: 0 auto 10px;
     fill: none;
     stroke: var(--color-copper);
     stroke-width: 1.7;
@@ -213,7 +167,6 @@
     background: var(--color-white);
     border: 1px solid var(--color-separator);
     border-radius: var(--radius-card);
-    padding: 18px 22px;
 }
 
 .cx-report__files {
@@ -232,8 +185,6 @@
     display: grid;
     grid-template-columns: 22px 1fr auto;
     gap: 10px;
-    align-items: baseline;
-    padding: 8px 0;
     border-top: 1px solid var(--color-separator);
     font-size: 14px;
 }
@@ -245,7 +196,6 @@
 }
 
 .cx-report__list .src {
-    display: block;
     font-size: 12px;
     color: var(--color-text-grey);
 }
@@ -255,7 +205,6 @@
     height: 20px;
     border-radius: 50%;
     position: relative;
-    top: 4px;
 }
 
 .ic--ok {
@@ -391,27 +340,6 @@
     border-radius: var(--radius-faq);
 }
 
-.cx-faq__ico {
-    flex: 0 0 26px;
-    width: 26px;
-    height: 26px;
-    border: 2px solid var(--color-copper);
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    box-sizing: border-box;
-}
-
-.cx-faq__ico svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: var(--color-copper);
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
 .cx-faq__body {
     padding: 0 18px 16px 50px;
     display: grid;
@@ -426,7 +354,6 @@
 }
 
 .cx-faq__body .cx-btn {
-    justify-self: start;
     margin-top: 4px;
 }
 
@@ -488,7 +415,6 @@
 .cx-field {
     display: flex;
     flex-direction: column;
-    gap: 7px;
     min-width: 0;
 }
 
@@ -503,7 +429,6 @@
 
 .cx input[type="number"], .cx input[inputmode="decimal"], .cx select {
     width: 100%;
-    height: 46px;
     box-sizing: border-box;
     padding: 0 14px;
     border: 1.5px solid var(--color-separator);
@@ -529,7 +454,6 @@
 
 .cx input:focus, .cx select:focus {
     outline: none;
-    border-color: var(--color-copper);
     box-shadow: 0 0 0 3px rgba(192, 112, 58, .3);
 }
 
@@ -679,17 +603,11 @@
     outline-offset: 2px;
 }
 
-.cx-more__body {
-    margin-top: var(--space-lg);
-}
-
 .cx-checks {
     border: 0;
     margin: var(--space-lg) 0 0;
     padding: 0;
-    display: flex;
     flex-wrap: wrap;
-    gap: 10px 24px;
 }
 
 .cx-checks legend {
@@ -715,7 +633,6 @@
 }
 
 .cx-seg {
-    display: inline-grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
     gap: 2px;
@@ -766,36 +683,7 @@
     outline-offset: 2px;
 }
 
-.cx-hint {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 14px;
-    padding: 12px 16px;
-    background: var(--color-white);
-    border: 1px solid var(--color-separator);
-    border-left: 3px solid var(--color-primary);
-    border-radius: 0 var(--radius-card) var(--radius-card) 0;
-    font-size: 14px;
-}
-
-.cx-hint b {
-    color: var(--color-primary);
-}
-
-.cx-hint button {
-    background: none;
-    border: 0;
-    padding: 0;
-    font: inherit;
-    font-weight: 700;
-    color: var(--color-copper-dark);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    cursor: pointer;
-}
-
-.cx-hint[hidden], .cx-note[hidden] {
+.cx-note[hidden] {
     display: none;
 }
 
@@ -820,24 +708,6 @@
     font-size: 15px;
     font-weight: 700;
     color: var(--color-text-black);
-}
-
-.cx-note__facts {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 8px;
-}
-
-.cx-note__facts li {
-    background: var(--color-primary-light);
-    color: var(--color-primary-dark);
-    border-radius: var(--radius-pill);
-    padding: 4px 12px;
-    font-size: 13.5px;
-    font-weight: 600;
 }
 
 .cx-note .cx-mini, .cx-note .cx-btn {
@@ -918,10 +788,6 @@
     background-color: var(--color-gold-light);
 }
 
-.cx-asm > * + * {
-    margin-top: var(--space-lg);
-}
-
 .cx-empty {
     color: var(--color-text-grey);
 }
@@ -958,10 +824,6 @@
     width: 150px;
 }
 
-.cx-table input[type="number"] {
-    height: 38px;
-}
-
 .cx-fixed {
     color: var(--color-text-grey);
     padding-left: 15px !important;
@@ -971,8 +833,6 @@
     position: sticky;
     top: calc(var(--anchor-offset) + 16px);
     z-index: 2;
-    margin-top: var(--cx-pad);
-    margin-bottom: var(--cx-pad);
     background: var(--color-primary-dark);
     color: var(--color-primary-light);
     border-radius: var(--radius-card);
@@ -984,13 +844,8 @@
     display: none;
 }
 
-.cx-sum__inner {
-    padding: 24px 24px 22px;
-}
-
 .cx-sum__label {
     font-size: 13.5px;
-    color: #9DB8AB;
 }
 
 .cx-sum__total {
@@ -1038,7 +893,6 @@
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    padding: 9px 0;
     border-bottom: 1px solid rgba(255, 255, 255, .08);
     font-size: 14px;
 }
@@ -1147,7 +1001,6 @@
     }
 
     .cx-layout {
-        grid-template-columns: minmax(0, 1fr) 320px;
         column-gap: 32px;
     }
 
@@ -1207,14 +1060,12 @@
 
 @media (max-width: 767px) {
     .cx-stage {
-        grid-template-columns: minmax(0, 1fr);
         gap: var(--space-md);
         background-image: none;
     }
 
     .cx-stage__num {
         text-align: left;
-        font-size: 64px;
         -webkit-text-stroke-width: 2px;
     }
 
@@ -1247,10 +1098,7 @@
 
 .cx-drop {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    padding: 30px 20px;
 }
 
 .cx-drop:hover, .cx-drop.is-over {
@@ -1511,10 +1359,7 @@
 }
 
 .ic--conflict::after {
-    content: "≠";
     position: absolute;
-    inset: 0;
-    display: grid;
     place-items: center;
     font-size: 13px;
     font-weight: 700;
@@ -1622,11 +1467,6 @@
     gap: 8px;
 }
 
-.cx-note__groups {
-    margin: 0;
-    padding-left: 18px;
-}
-
 .cx-faq__item .cx-cad summary {
     padding: 10px 14px;
     gap: 10px;
@@ -1702,10 +1542,6 @@
     border-bottom: var(--width-border-main) solid var(--color-copper);
 }
 
-.cx .cx-head__in {
-    padding-block: clamp(24px, 3vw, 36px);
-}
-
 /* «beta» — надстрочным индексом после заголовка */
 .cx .cx-head__beta {
     margin-left: .3em;
@@ -1719,7 +1555,6 @@
 
 .cx .cx-head__title {
     color: var(--color-white);
-    font-size: clamp(28px, 3vw, 40px);
 }
 
 .cx {
@@ -1788,10 +1623,6 @@
 
 .cx-faq__item .cx-cad summary {
     padding-block: calc(var(--cx-faq-py) - 2px);
-}
-
-.cx-drop {
-    padding: 20px 20px;
 }
 
 .cx-drop__ico {
@@ -1927,7 +1758,6 @@
         fill 0 / 0 / 0 100vmax;
 }
 
-
 /* =================================
    Чередование фона этапов — как у секций-этапов цикла на главной:
    1 и 3 — основной фон, 2 и 4 (форма заявки, request-form.css) — альтернативный.
@@ -1936,7 +1766,6 @@
 .cx-stage--alt {
     --cx-bg: var(--color-section-alt);
 }
-
 
 /* =================================
    Контрастность текста и границ полей (WCAG: текст ≥ 4,5:1, границы ≈ 3:1)
@@ -1975,8 +1804,7 @@
 
 .cx-link,
 .cx-more > summary,
-.cx-confirm button,
-.cx-hint button {
+.cx-confirm button {
     color: #975224;                         /* было #A85C28: 4,5 → 5,6 : 1 на альтернативном фоне */
 }
 
@@ -2000,7 +1828,6 @@
 .cx-how {
     color: #A7BDB2;
 }
-
 
 /* =================================
    Спойлеры этапа 1: заголовок раскрытого пункта остаётся в своей ячейке,
@@ -2059,7 +1886,6 @@
     }
 }
 
-
 /* =================================
    Сегменты режима монтажа (этап 3) — на всю ширину, как выбор услуги в форме
    ================================= */
@@ -2069,7 +1895,6 @@
     width: 100%;
     box-sizing: border-box;
 }
-
 
 /* =================================
    «Особые требования» — по две галочки в колонке, ровной сеткой
@@ -2086,7 +1911,6 @@
         grid-template-columns: 1fr;
     }
 }
-
 
 /* =================================
    Демо-проект: предупреждение, если клиент уже загрузил свои файлы
@@ -2117,7 +1941,6 @@
     flex-wrap: wrap;
     gap: 10px;
 }
-
 
 /* =================================
    Заголовок страницы — над колонкой этапов («Файлы проекта»), а не над номерами
@@ -2167,7 +1990,7 @@
     box-shadow: inset 0 0 0 1px rgba(216, 180, 90, .7);
 }
 
-.cx-boards[hidden], .cx-board-now[hidden] {
+.cx-boards[hidden] {
     display: none;
 }
 
@@ -2180,7 +2003,6 @@
 
 .cx-boards__list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     gap: 8px;
 }
 
@@ -2242,7 +2064,6 @@
 
 .cx-board__ctl {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 4px 12px;
     padding: 6px 12px 8px;
@@ -2279,12 +2100,6 @@
 .cx-boards.is-solo .cx-board__ctl,
 .cx-boards.is-solo .cx-board__sum {
     display: none;
-}
-
-.cx-board-now {
-    margin: 4px 0 12px;
-    font-size: 13px;
-    color: #7A5A12;
 }
 
 /* ===== UI/UX, 2026-10-21 ===== */
@@ -3148,8 +2963,6 @@
     font-weight: 600;
 }
 
-
-
 /* итог прилипает к низу экрана — подсказку и всплывающую строку поднимаем над ним */
 @media (max-width: 1199px) {
     .cx-help {
@@ -3277,7 +3090,6 @@
 .cx-stage__sum[hidden] {
     display: none;
 }
-
 
 @media (max-width: 767px) {
     .cx-stage__toggle {
