@@ -32,36 +32,6 @@
 .acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
 .acc__inner img{max-width:140px}
 }
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
 .stg-p{font-size:16px;line-height:1.6;color:#2E3B35}
 .stg-p b{color:var(--color-black)}
 .stg-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-md)}
@@ -118,57 +88,15 @@
 .stg .stg-card,.stg .stg-key,.stg .acc,.stg .stg-sup__col>div{border-radius:var(--stg-r)}
 .stg-cyc *,.stg-cyc *::before,.stg-cyc *::after{box-sizing:border-box}
 .stg .stg-cyc .cycle-step{border-radius:var(--stg-r);clip-path:inset(0 round var(--stg-r))}
-.stg .stg-cyc.cycle-grid--fill .cycle-step::after{top:-1px;left:-1px;right:-1px;height:6px;border-radius:0}
-.stg .stg-cyc.cycle-grid--fill .cycle-step::after{height:3px}
+.stg .stg-cyc.cycle-grid--fill .cycle-step::after{top:-1px;left:-1px;right:-1px;height:3px;border-radius:0}
 #order .stg-two{gap:28px}
 @media (min-width:1200px){
 .stg-accs2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-@media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
-}
-.stg-aud10 .bw{position:relative}
+.stg-aud10 .bw{position:relative;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 .stg-aud10 .bw svg{display:block;width:100%;height:auto}
 .stg-aud10 .hl{cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent}
 .stg-aud10 svg *:focus,.stg-aud10 svg:focus{outline:none}
-.stg-aud10 .bw{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 .stg-aud10 .hl .dash{transition:stroke .18s ease,stroke-width .18s ease}
 .stg-aud10 .hl.on .dash{stroke:#fff;stroke-width:2.4}
 .stg-aud10 .tip{position:absolute;z-index:3;width:260px;padding:12px 14px;background:#fff;border-radius:12px;border-top:3px solid #F2735A;box-shadow:0 12px 30px rgba(11,44,34,.3);opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity .15s ease,transform .15s ease}
@@ -205,9 +133,6 @@
 .acc:has(#t7-1:checked) .i-1 .acc__body,.acc:has(#t7-2:checked) .i-2 .acc__body,.acc:has(#t7-3:checked) .i-3 .acc__body,.acc:has(#t7-4:checked) .i-4 .acc__body,.acc:has(#t7-5:checked) .i-5 .acc__body{grid-template-rows:1fr}
 .acc:has(#t7-1:focus-visible) .i-1 .acc__head,.acc:has(#t7-2:focus-visible) .i-2 .acc__head,.acc:has(#t7-3:focus-visible) .i-3 .acc__head,.acc:has(#t7-4:focus-visible) .i-4 .acc__head,.acc:has(#t7-5:focus-visible) .i-5 .acc__head{outline:2px solid var(--color-copper);outline-offset:-2px}
 @media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
 .acc:has(#t7-1:checked) .i-1 .acc__title,.acc:has(#t7-2:checked) .i-2 .acc__title,.acc:has(#t7-3:checked) .i-3 .acc__title,.acc:has(#t7-4:checked) .i-4 .acc__title,.acc:has(#t7-5:checked) .i-5 .acc__title{font-size:19px}
 }
 .acc:has(#s7-1:checked) .i-1,.acc:has(#s7-2:checked) .i-2,.acc:has(#s7-3:checked) .i-3,.acc:has(#s7-4:checked) .i-4,.acc:has(#s7-5:checked) .i-5{box-shadow:inset 3px 0 0 var(--color-copper)}
@@ -218,9 +143,6 @@
 .acc:has(#s7-1:checked) .i-1 .acc__body,.acc:has(#s7-2:checked) .i-2 .acc__body,.acc:has(#s7-3:checked) .i-3 .acc__body,.acc:has(#s7-4:checked) .i-4 .acc__body,.acc:has(#s7-5:checked) .i-5 .acc__body{grid-template-rows:1fr}
 .acc:has(#s7-1:focus-visible) .i-1 .acc__head,.acc:has(#s7-2:focus-visible) .i-2 .acc__head,.acc:has(#s7-3:focus-visible) .i-3 .acc__head,.acc:has(#s7-4:focus-visible) .i-4 .acc__head,.acc:has(#s7-5:focus-visible) .i-5 .acc__head{outline:2px solid var(--color-copper);outline-offset:-2px}
 @media (max-width:767px){
-.acc__head{padding:8px 14px;gap:12px}
-.acc__inner{grid-template-columns:1fr;gap:16px;padding:0 14px 18px}
-.acc__inner img{max-width:140px}
 .acc:has(#s7-1:checked) .i-1 .acc__title,.acc:has(#s7-2:checked) .i-2 .acc__title,.acc:has(#s7-3:checked) .i-3 .acc__title,.acc:has(#s7-4:checked) .i-4 .acc__title,.acc:has(#s7-5:checked) .i-5 .acc__title{font-size:19px}
 }
 .stg-road{padding:22px 24px 24px;border-radius:var(--stg-r,12px);background:var(--color-white);border:1px solid var(--color-separator)}

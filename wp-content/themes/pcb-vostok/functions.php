@@ -101,17 +101,15 @@ function theme_enqueue_frontend_assets(): void
         array('layout')
     );
 
-    theme_enqueue_css(
-        'utils',
-        'assets/css/utils.css',
-        array('globals')
-    );
 
-    theme_enqueue_css(
-        'hero',
-        'assets/css/components/hero.css',
-        array('layout')
-    );
+    // секции главной
+    if (is_front_page()) {
+        theme_enqueue_css(
+            'hero',
+            'assets/css/components/hero.css',
+            array('layout')
+        );
+    }
 
     theme_enqueue_css(
         'faq',
@@ -125,82 +123,79 @@ function theme_enqueue_frontend_assets(): void
         array('layout')
     );
 
-    theme_enqueue_css(
-        'carousel',
-        'assets/css/components/carousel.css',
-        array('layout')
-    );
-
-    theme_enqueue_css(
-        'calculator',
-        'assets/css/components/calculator.css',
-        array('layout')
-    );
-
-    theme_enqueue_css(
-        'cycle',
-        'assets/css/components/cycle.css',
-        array('layout')
-    );
-
-    theme_enqueue_css(
-        'overview',
-        'assets/css/components/overview.css',
-        array('layout', 'typography')
-    );
-
-    theme_enqueue_css(
-        'section-stage',
-        'assets/css/components/section-stage.css',
-        array('layout', 'typography')
-    );
-
-    theme_enqueue_css(
-        'pcb-tabs',
-        'assets/css/components/pcb-tabs.css',
-        array('layout')
-    );
-
-    theme_enqueue_css(
-        'stage-content',
-        'assets/css/components/stage-content.css',
-        array('section-stage')
-    );
-
-    theme_enqueue_css(
-        'request-form',
-        'assets/css/components/request-form.css',
-        array('layout')
-    );
-
-    theme_enqueue_css(
-        'legal',
-        'assets/css/components/legal.css',
-        array('layout', 'typography')
-    );
-
-    theme_enqueue_css(
-        'frontend',
-        'assets/css/frontend.css',
-        array(
-            'layout',
-            'header',
-            'footer',
-            'utils',
-            'hero',
-            'faq',
-            'details',
+    // секции главной
+    if (is_front_page()) {
+        theme_enqueue_css(
             'carousel',
+            'assets/css/components/carousel.css',
+            array('layout')
+        );
+    }
+
+    // только страница калькулятора
+    if (is_page(array(709, 'calculator'))) {
+        theme_enqueue_css(
             'calculator',
+            'assets/css/components/calculator.css',
+            array('layout')
+        );
+    }
+
+    // секции главной
+    if (is_front_page()) {
+        theme_enqueue_css(
             'cycle',
+            'assets/css/components/cycle.css',
+            array('layout')
+        );
+    }
+
+    // секции главной
+    if (is_front_page()) {
+        theme_enqueue_css(
             'overview',
+            'assets/css/components/overview.css',
+            array('layout', 'typography')
+        );
+    }
+
+    // секции главной
+    if (is_front_page()) {
+        theme_enqueue_css(
             'section-stage',
-            'pcb-tabs',
+            'assets/css/components/section-stage.css',
+            array('layout', 'typography')
+        );
+    }
+
+
+    // секции главной
+    if (is_front_page()) {
+        theme_enqueue_css(
             'stage-content',
+            'assets/css/components/stage-content.css',
+            array('section-stage')
+        );
+    }
+
+    // форма заявки: главная и калькулятор
+    if (pcb_request_form_on_page()) {
+        theme_enqueue_css(
             'request-form',
-            'legal'
-        )
-    );
+            'assets/css/components/request-form.css',
+            array('layout')
+        );
+    }
+
+    // только «Правовая информация»
+    if (is_page(array(81, 'politics'))) {
+        theme_enqueue_css(
+            'legal',
+            'assets/css/components/legal.css',
+            array('layout', 'typography')
+        );
+    }
+
 }
 
 add_action(
@@ -241,11 +236,6 @@ function theme_enqueue_editor_assets(): void
         array('globals')
     );
 
-    theme_enqueue_css(
-        'utils',
-        'assets/css/utils.css',
-        array('globals')
-    );
 
     theme_enqueue_css(
         'hero',
@@ -295,11 +285,6 @@ function theme_enqueue_editor_assets(): void
         array('layout', 'typography')
     );
 
-    theme_enqueue_css(
-        'pcb-tabs',
-        'assets/css/components/pcb-tabs.css',
-        array('layout')
-    );
 
     theme_enqueue_css(
         'stage-content',
@@ -324,7 +309,6 @@ function theme_enqueue_editor_assets(): void
         'assets/css/gutenberg.css',
         array(
             'layout',
-            'utils',
             'hero',
             'faq',
             'details',
@@ -333,7 +317,6 @@ function theme_enqueue_editor_assets(): void
             'cycle',
             'overview',
             'section-stage',
-            'pcb-tabs',
             'stage-content',
             'request-form',
             'legal'
@@ -362,36 +345,45 @@ function theme_enqueue_scripts(): void
         true
     );
 
-    wp_enqueue_script(
-        'theme-carousel',
-        get_theme_file_uri('assets/js/carousel.js'),
-        array('theme-utils'),
-        filemtime(
-            get_theme_file_path('assets/js/carousel.js')
-        ),
-        true
-    );
+    // скрипты секций главной
+    if (is_front_page()) {
+        wp_enqueue_script(
+            'theme-carousel',
+            get_theme_file_uri('assets/js/carousel.js'),
+            array('theme-utils'),
+            filemtime(
+                get_theme_file_path('assets/js/carousel.js')
+            ),
+            true
+        );
+    }
 
-    // черновик формы и калькулятора в браузере посетителя (IndexedDB) — до request-form.js и calculator.js
-    wp_enqueue_script(
-        'theme-form-draft',
-        get_theme_file_uri('assets/js/form-draft.js'),
-        array(),
-        filemtime(
-            get_theme_file_path('assets/js/form-draft.js')
-        ),
-        true
-    );
+    // черновик и форма заявки — только где есть форма (калькулятор зависит от theme-form-draft)
+    if (pcb_request_form_on_page() || is_page(array(709, 'calculator'))) {
+        // черновик формы и калькулятора в браузере посетителя (IndexedDB) — до request-form.js и calculator.js
+        wp_enqueue_script(
+            'theme-form-draft',
+            get_theme_file_uri('assets/js/form-draft.js'),
+            array(),
+            filemtime(
+                get_theme_file_path('assets/js/form-draft.js')
+            ),
+            true
+        );
+    }
 
-    wp_enqueue_script(
-        'theme-request-form',
-        get_theme_file_uri('assets/js/request-form.js'),
-        array('theme-form-draft'),
-        filemtime(
-            get_theme_file_path('assets/js/request-form.js')
-        ),
-        true
-    );
+    // черновик и форма заявки — только где есть форма (калькулятор зависит от theme-form-draft)
+    if (pcb_request_form_on_page() || is_page(array(709, 'calculator'))) {
+        wp_enqueue_script(
+            'theme-request-form',
+            get_theme_file_uri('assets/js/request-form.js'),
+            array('theme-form-draft'),
+            filemtime(
+                get_theme_file_path('assets/js/request-form.js')
+            ),
+            true
+        );
+    }
 
     wp_enqueue_script(
         'theme-header',
@@ -403,46 +395,46 @@ function theme_enqueue_scripts(): void
         true
     );
 
-    wp_enqueue_script(
-        'theme-logo',
-        get_theme_file_uri('assets/js/logo.js'),
-        array(),
-        filemtime(
-            get_theme_file_path('assets/js/logo.js')
-        ),
-        true
-    );
 
-    wp_enqueue_script(
-        'theme-cycle',
-        get_theme_file_uri('assets/js/cycle.js'),
-        array(),
-        filemtime(
-            get_theme_file_path('assets/js/cycle.js')
-        ),
-        true
-    );
+    // скрипты секций главной
+    if (is_front_page()) {
+        wp_enqueue_script(
+            'theme-cycle',
+            get_theme_file_uri('assets/js/cycle.js'),
+            array(),
+            filemtime(
+                get_theme_file_path('assets/js/cycle.js')
+            ),
+            true
+        );
+    }
 
-    /* Переключатель услуг в «Производственном цикле» (#capabilities) */
-    wp_enqueue_script(
-        'theme-service-filter',
-        get_theme_file_uri('assets/js/service-filter.js'),
-        array(),
-        filemtime(
-            get_theme_file_path('assets/js/service-filter.js')
-        ),
-        true
-    );
+    // скрипты секций главной
+    if (is_front_page()) {
+        /* Переключатель услуг в «Производственном цикле» (#capabilities) */
+        wp_enqueue_script(
+            'theme-service-filter',
+            get_theme_file_uri('assets/js/service-filter.js'),
+            array(),
+            filemtime(
+                get_theme_file_path('assets/js/service-filter.js')
+            ),
+            true
+        );
+    }
 
-    wp_enqueue_script(
-        'theme-audit-board',
-        get_theme_file_uri('assets/js/audit-board.js'),
-        array(),
-        filemtime(
-            get_theme_file_path('assets/js/audit-board.js')
-        ),
-        true
-    );
+    // скрипты секций главной
+    if (is_front_page()) {
+        wp_enqueue_script(
+            'theme-audit-board',
+            get_theme_file_uri('assets/js/audit-board.js'),
+            array(),
+            filemtime(
+                get_theme_file_path('assets/js/audit-board.js')
+            ),
+            true
+        );
+    }
 
     /*
      * Калькулятор и JSZip (распаковка ZIP с Gerber прямо в браузере)

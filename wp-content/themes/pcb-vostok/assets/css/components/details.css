@@ -1,241 +1,53 @@
 /* =================================
-   Details button
+   Спойлеры «Подробнее»: анимация раскрытия
+   (класс .animate ставит assets/js/utils.js по событию toggle)
    ================================= */
 
 
 /* =================================
-   Details button
+   Closed state
    ================================= */
 
-.details-button > summary {
-    list-style: none;
-
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-
-    min-height: 48px;
-    box-sizing: border-box;
-
-    padding: 0 20px;
-
-    cursor: pointer;
-
-    border-radius: var(--radius-pill);
-
-    background-color: var(--color-copper);
-    color: var(--color-white);
-
-    font-weight: 600;
-
-    transition:
-        background-color var(--transition-fast),
-        color var(--transition-fast);
-}
-
-.details-button > summary::-webkit-details-marker {
-    display: none;
-}
-
-.details-button > summary::after {
-    content: "";
-
-    width: 8px;
-    height: 8px;
-
-    margin-left: 4px;
-
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-
-    transform: rotate(-45deg);
-
-    transition:
-        transform var(--transition-fast);
-}
-
-.details-button[open] > summary::after {
-    transform: rotate(45deg);
-}
-
-.details-button > summary:hover {
-    background-color: var(--color-copper-dark);
-}
-
-
-/* =================================
-   Details content
-   ================================= */
-
-.details-button > .details-content {
-    padding-left: var(--space-lg);
-
-    border-left: 3px solid transparent;
-}
-
-.details-button > .details-content.animate {
-    border-left-color: var(--color-copper);
-}
-
-.details-button > .details-content > *:first-child {
-    margin-top: var(--space-lg);
-}
-
-
-/* =================================
-   Cards grid
-   ================================= */
-
-.details-cards-grid {
+.details-content {
     display: grid;
 
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
+    grid-template-rows: 0fr;
 
-    gap:
-        var(--space-lg);
-
-    align-items: stretch;
-}
-
-/* =================================
-   Details cards
-   ================================= */
-
-.details-card {
-    margin: 0;
-    height: 100%;
-    box-sizing: border-box;
-
-    background-color:
-        var(--color-card-background);
-
-    border:
-        1px solid var(--color-card-border);
-
-    border-radius:
-        var(--radius-card);
-
-    padding:
-        var(--space-lg);
-
-    box-shadow:
-        0 1px 2px var(--color-card-box-shadow);
-
-    transition:
-        transform var(--transition-normal),
-        box-shadow var(--transition-normal);
-}
-
-.details-card:hover {
-    transform:
-        translateY(-3px);
-
-    box-shadow:
-        0 8px 20px var(--color-card-box-shadow);
-}
-
-/* =================================
-   Details card — внутренний ряд (иконка + текст)
-   Добавлено 2026-09-18: раскладка держалась на WP layout support
-   ("layout":{"type":"flex","flexWrap":"nowrap"}), отключённом
-   в functions.php — без этого правила картинка растягивалась
-   на всю карточку, а текст наезжал поверх неё.
-
-   Изменено 2026-09-19: картинка расширена с фикс. 56px до 30%
-   ширины карточки; заголовок/текст переоформлены под стиль
-   .carousel-card-body (services) — были слишком крупный заголовок
-   с большими отступами и тёмный (чёрный) текст параграфа.
-   ================================= */
-
-.details-card > .wp-block-group {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: flex-start;
-    gap: var(--space-md);
-}
-
-.details-card > .wp-block-group > .wp-block-image {
-    flex: 0 0 30%;
-    width: 30%;
-    margin: 0;
-}
-
-.details-card > .wp-block-group > .wp-block-image img {
-    display: block;
-    width: 100%;
-    height: auto;
-}
-
-.details-card > .wp-block-group > .wp-block-group {
-    min-width: 0;
-}
-
-.details-card .heading3-item-card {
-    margin: 0 0 8px;
-
-    color: var(--color-text-black);
-
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-    text-transform: none;
-}
-
-.details-card > .wp-block-group > .wp-block-group p {
-    margin: 0;
-
-    color: var(--color-text-grey);
-
-    font-size: 14.5px;
-    font-weight: 400;
-    line-height: 1.6;
-}
-
-
-/* =================================
-   Tablet
-   Заготовка — заполнить при необходимости
-   ================================= */
-
-@media (max-width: 1199px) {
-
-}
-
-/* Mobile */
-
-@media (max-width: 767px) {
-
-    .details-cards-grid {
-        grid-template-columns: 1fr;
-
-        gap: 6px;
-    }
-}
-
-
-/* =================================
-   Cards animation
-   ================================= */
-
-.details-content .details-cards-grid .details-card {
     opacity: 0;
 
     transform:
-        translateY(40px);
+        translateY(-8px);
 
     transition:
-        opacity 0.35s ease,
-        transform 0.35s ease;
-
-    transition-delay:
-        var(--card-delay, 0.5s);
+        grid-template-rows var(--transition-normal),
+        opacity var(--transition-fast),
+        transform var(--transition-fast);
 }
 
-.details-content.animate .details-cards-grid .details-card {
+
+/* =================================
+   Content clipping
+   ================================= */
+
+.details-content > * {
+    overflow: hidden;
+}
+
+
+/* =================================
+   Open state
+   ================================= */
+
+.details-content.animate {
+    grid-template-rows: 1fr;
+
     opacity: 1;
 
     transform:
         translateY(0);
 }
+
+/* =================================
+   Tablet
+   Заготовка — заполнить при необходимости
+   ================================= */

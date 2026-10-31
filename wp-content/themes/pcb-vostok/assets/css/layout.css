@@ -95,15 +95,6 @@
 }
 
 /* =================================
-   Section variants
-   ================================= */
-
-.section--alt {
-    background-color:
-        var(--color-section-alt);
-}
-
-/* =================================
    Section
    ================================= */
 
@@ -120,6 +111,9 @@
 
 .section--alt {
     position: relative;
+
+    background-color:
+        var(--color-section-alt);
 }
 
 .section--alt::before {
@@ -195,11 +189,3 @@
 
 }
 
-/* Hide header contacts on narrow screens */
-
-@media (max-width: 1200px) {
-
-    .header-contacts {
-        display: none;
-    }
-}

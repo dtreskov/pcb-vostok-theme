@@ -7,9 +7,14 @@ html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 68px)}
 
 @property --p{ syntax:'<number>'; inherits:true; initial-value:0; }
 
-.wp-site-blocks > header{
+/* высота шапки до сжатия (логотип + отступы + нижняя линия 2px) — нужна и секциям первого экрана */
+:root{
   --logo-h-start:clamp(28px,9vw,50px);              /* 50px от 556px ширины; уже — меньше, чтобы логотип и бургер помещались */
   --hdr-pad:12px;                                   /* отступ сверху и снизу */
+  --hdr-h-start:calc(var(--logo-h-start) + 2 * var(--hdr-pad) + 2px);
+}
+
+.wp-site-blocks > header{
   --k:1.6881;                                       /* уточняется скриптом логотипа */
   --logo-h:calc(var(--logo-h-start) / (1 + var(--p) * (var(--k) - 1)));
   --hdr-h:calc(var(--logo-h) + 2 * var(--hdr-pad));
@@ -36,9 +41,7 @@ html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 68px)}
 .site-header__logo a{display:block;line-height:0;border-radius:4px}
 .site-header__logo a:focus-visible{outline:2px solid var(--color-copper);outline-offset:4px}
 .logo-crop{display:block;overflow:hidden;height:var(--logo-h);width:calc(var(--logo-h) * var(--logo-r))}
-.logo-crop svg{display:block;overflow:visible;max-width:none;
-  height:var(--logo-h);width:calc(var(--logo-h) * var(--r-full,5.94));
-  margin-left:calc(var(--logo-h) * var(--p) * ((var(--k) - 1) * var(--wa,90) - 14) / var(--vb-h,63.5))}
+.logo-crop svg{display:block;overflow:visible;max-width:none;height:var(--logo-h)}
 .lg{--cu:#D2854F;--au:#D8B45A;--au2:#A8893F;--body:#06140F;--hi:#D8B45A;--bg:#0B2C22;--spark:#F6D78C}
 .lg text{font-family:Inter,Arial,sans-serif}
 .lg .i8{font-weight:800;letter-spacing:-.025em}
@@ -157,16 +160,6 @@ header:not(.is-compact) .lg .cap,header:not(.is-compact) .lg .via{transition-del
   width:calc(var(--logo-h) * (var(--r-full,5.94) + 2 * var(--vb-pad,0) / var(--vb-h,63.5)));
   margin-left:calc(var(--logo-h) * (var(--p) * ((var(--k) - 1) * var(--wa,90) - 14) - var(--vb-pad,0)) / var(--vb-h,63.5))}
 
-/* Логотип в подвале — концепция 25, тёмная тема (assets/js/logo.js) */
-.site-logo25{display:inline-flex;align-items:center;line-height:0;
-  --bg:#0B2C22;--ink:#FFFFFF;--ink2:#E4EFE9;--cu:#D2854F;--au:#D8B45A;--body:#06140F;--hi:#3E5A4E;--mk:#7E948A;--au2:#A8893F}
-.site-logo25 svg{display:block;max-width:none}
-.site-logo25 svg.lg text{font-family:Inter,Arial,sans-serif}
-.site-logo25 svg.lg .i8{font-weight:800;letter-spacing:-.025em}
-.site-logo25 svg.lg .f-ink{fill:var(--ink)} .site-logo25 svg.lg .f-cu{fill:var(--cu)} .site-logo25 svg.lg .f-au{fill:var(--au)} .site-logo25 svg.lg .f-wt{fill:#fff}
-.site-logo25 svg.lg .f-bg{fill:var(--bg)} .site-logo25 svg.lg .f-body{fill:var(--body)} .site-logo25 svg.lg .f-au2{fill:var(--au2)} .site-logo25 svg.lg .f-hi{fill:var(--hi)}
-.site-logo25 svg.lg .s-hi{stroke:var(--hi);fill:none} .site-logo25 svg.lg .s-cu{stroke:var(--cu);fill:none} .site-logo25 svg.lg .s-au{stroke:var(--au);fill:none}
-.site-footer__logo .site-logo25{margin-bottom:0}
 
 /* =====================================================
    Бургер-меню (2026-10-03).

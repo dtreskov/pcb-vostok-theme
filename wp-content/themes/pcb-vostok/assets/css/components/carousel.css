@@ -108,6 +108,15 @@
 
 /* ---------- #services: лента-тезис ---------- */
 .pcar--services .pcar__card { min-height: clamp(260px, 24vw, 340px); }
+
+/* первый экран на десктопе: высота карусели — var(--first-screen-car) (globals.css), картинка вписана в неё */
+@media (min-width: 1024px) {
+    .pcar--services { --car-pt: clamp(16px, 3svh - 6px, 48px); --car-pb: clamp(40px, 4.5svh, 72px); }
+    .pcar--services .pcar__card { box-sizing: border-box; height: var(--first-screen-car); min-height: 0; padding-top: var(--car-pt); padding-bottom: var(--car-pb); align-content: center; }
+    .pcar--services .pcar__fig img { max-height: calc(var(--first-screen-car) - var(--car-pt) - var(--car-pb)); width: auto; margin-inline: auto; }
+    .pcar--services .pcar__body h3 { font-size: clamp(24px, 1.6svh + 11px, 30px); }
+    .pcar--services .pcar__text { font-size: clamp(16px, 0.8svh + 10px, 19px); line-height: 1.55; }
+}
 .pcar--services .pcar__text {
     max-width: 64ch;
     color: var(--color-text-black);

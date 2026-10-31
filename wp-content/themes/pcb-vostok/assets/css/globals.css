@@ -16,6 +16,17 @@
    ================================= */
 
 :root {
+    color-scheme: light;
+
+    /* =================================
+       Первый экран (≥1024px): hero + карусель услуг
+       ровно по высоте окна минус намёк на следующий блок
+       ================================= */
+
+    --first-screen-peek: 64px;
+    --first-screen: calc(100svh - var(--hdr-h-start) - var(--first-screen-peek));
+    --first-screen-car: clamp(250px, calc(var(--first-screen) * 0.43), 470px);
+
 
     /* =================================
        Colors
@@ -56,21 +67,16 @@
     --color-text-gold: var(--color-gold);
 
     /* Header */
-    --color-head-background: var(--color-page-background);
-    --color-head-border: var(--color-separator);
 
 
     /* Footer */
     --color-footer-background: var(--color-primary-dark);
-    --color-footer-text: var(--color-white);
     --color-footer-border: var(--color-copper);
 
 
 
 
     /* Main */
-    --color-main-background: var(--color-white);
-    --color-main-border: var(--color-separator);
 
 
 
@@ -86,7 +92,6 @@
     --color-faq-background: var(--color-white);
     --color-faq-border: var(--color-separator);
     --color-faq-border-hover: var(--color-copper);
-    --color-faq-box-shadow: rgba(32, 36, 34, 0.08);
 
 
     /* =================================
@@ -108,15 +113,12 @@
 
 
     --content-spacing: 1.5em;
-    --content-vertical-spacing: 60px;
 
     --section-spacing: clamp(24px, 2vw, 40px);
 
     --section-head-max-width: 640px;
     --section-head-spacing: 0;
 
-    --wide-offset: 130px;
-    --list-indent: 2.5em;
 
 
     /* =================================
@@ -142,15 +144,12 @@
        Borders
        ================================= */
 
-    --width-border-header: 2px;
     --width-border-footer: 2px;
-    --width-border-full-wrapper: 2px;
     --width-border-main: 2px;
 
     --radius-card: 8px;
     --radius-faq: 8px;
     --radius-button: 4px;
-    --radius-page-wrapper: 8px;
     --radius-pill: 999px;
 
 
@@ -178,8 +177,6 @@
        Components
        ================================= */
 
-    --carousel-button-size: 40px;
-    --carousel-button-gap: 16px;
 
 
     /* =================================
@@ -193,16 +190,6 @@
        Gradients
        ================================= */
 
-    --gradient-page-horizontal:
-        linear-gradient(
-            to right,
-            var(--color-primary) 0,
-            var(--color-primary-dark)
-                calc(50% - var(--content-size) / 2),
-            var(--color-primary)
-                calc(50% + var(--content-size) / 2),
-            var(--color-primary) 100%
-        );
 }
 
 body {
