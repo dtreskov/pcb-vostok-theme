@@ -23,10 +23,9 @@
        ровно по высоте окна минус намёк на следующий блок
        ================================= */
 
-    --first-screen-peek: 64px;
+    --first-screen-peek: 36px;
     --first-screen: calc(100svh - var(--hdr-h-start) - var(--first-screen-peek));
-    --first-screen-car: clamp(250px, calc(var(--first-screen) * 0.43), 470px);
-
+    --first-screen-car: clamp(230px, calc(var(--first-screen) * 0.40), 440px);
 
     /* =================================
        Colors
@@ -53,13 +52,17 @@
     --color-gold: #D8B45A;
     --color-gold-light: #FBF3DF;
 
-
     /* Text Base */
     --color-text-white: var(--color-white);
     --color-text-black: var(--color-black);
     --color-text-primary: var(--color-primary);
     --color-text-primary-dark: var(--color-primary-dark);
     --color-text-grey: var(--color-grey);
+
+    /* Lead */
+    --color-lead: #2E3B35;                      /* лид на светлом фоне */
+    --color-lead-on-dark: var(--color-primary-light);
+    --color-muted-on-dark: rgba(228, 239, 233, .72);
 
     /* Text Accent */
     --color-text-copper: var(--color-copper);
@@ -68,31 +71,21 @@
 
     /* Header */
 
-
     /* Footer */
     --color-footer-background: var(--color-primary-dark);
     --color-footer-border: var(--color-copper);
 
-
-
-
     /* Main */
-
-
-
-
 
     /* Cards */
     --color-card-background: var(--color-section-alt);
     --color-card-border: var(--color-separator);
     --color-card-box-shadow: rgba(32, 36, 34, 0.08);
 
-
     /* FAQ */
     --color-faq-background: var(--color-white);
     --color-faq-border: var(--color-separator);
     --color-faq-border-hover: var(--color-copper);
-
 
     /* =================================
        Layout
@@ -111,15 +104,20 @@
         var(--content-max-width)
     );
 
-
     --content-spacing: 1.5em;
 
-    --section-spacing: clamp(24px, 2vw, 40px);
+    /* ритм секций: два значения, зависят от высоты окна (1080 → 68 / 39, 937 → 58 / 33, 730 → 43 / 28) */
+    --section-pad: clamp(40px, 7svh - 8px, 72px);
+    --section-pad-tight: clamp(28px, 4svh - 4px, 44px);   /* серия этапов */
+    --head-gap: var(--space-xl);                          /* от лида (или H2) до содержимого */
+    --title-gap: var(--space-md);                         /* от H2 до лида */
 
-    --section-head-max-width: 640px;
-    --section-head-spacing: 0;
+    /* сетка: 12 колонок в контейнере */
+    --grid-gap: 30px;
+    --grid-col: calc((var(--content-size) - 11 * var(--grid-gap)) / 12);
+    --grid-step: calc(var(--grid-col) + var(--grid-gap));
 
-
+    --section-head-max-width: calc(7 * var(--grid-col) + 6 * var(--grid-gap));   /* лид — 7 колонок (740 при 1290) */
 
     /* =================================
        Typography
@@ -135,10 +133,29 @@
         sans-serif;
 
     --font-size: 16px;
-    --font-size-lead: 18px;
+
+    /* шкала шрифтов: 8 ступеней, привязка к ширине окна (кроме первого экрана) */
+    --fs-xs: 12px;                              /* сноски, юридический текст, ошибки, метки-капсы */
+    --fs-sm: 14px;                              /* подписи полей, кнопки, текст компактных карточек */
+    --fs-md: 16px;                              /* основной текст, заголовок пункта (700) */
+    --fs-lg: 18px;                              /* лид, текст каруселей, заголовок карточки (700) */
+    --fs-xl: 22px;                              /* подзаголовок внутри блока */
+    --fs-h3: clamp(22px, 1.6vw + 2px, 28px);    /* заголовок слайда / крупной карточки */
+    --fs-h2: clamp(24px, 3vw, 36px);            /* заголовок секции */
+    --fs-h1: clamp(34px, 4.5vw, 56px);          /* только hero */
+
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+    --fw-display: 800;                          /* только H1 */
+
+    --lh-tight: 1.15;                           /* H1–H3 */
+    --lh-snug: 1.3;                             /* заголовки карточек и пунктов */
+    --lh-ui: 1.45;                              /* мелкий текст, подписи */
+    --lh-lead: 1.55;                            /* лид */
     --font-weight: 400;
     --line-height: 1.6;
-
 
     /* =================================
        Borders
@@ -147,11 +164,11 @@
     --width-border-footer: 2px;
     --width-border-main: 2px;
 
-    --radius-card: 8px;
+    --radius-field: 8px;                        /* поля, сегменты */
+    --radius-card: 12px;                        /* карточки, картинки, спойлеры */
     --radius-faq: 8px;
     --radius-button: 4px;
     --radius-pill: 999px;
-
 
     /* =================================
        Spacing
@@ -159,11 +176,20 @@
 
     --space-xs: 4px;
     --space-sm: 8px;
+    --space-ms: 12px;
     --space-md: 16px;
     --space-lg: 24px;
     --space-xl: 32px;
     --space-xxl: 48px;
 
+    /* =================================
+       Buttons: 2 размера
+       ================================= */
+
+    --btn-h: 40px;
+    --btn-fs: var(--fs-sm);
+    --btn-h-lg: 48px;
+    --btn-fs-lg: var(--fs-md);
 
     /* =================================
        Transitions
@@ -172,12 +198,9 @@
     --transition-fast: 0.32s ease;
     --transition-normal: 0.4s ease;
 
-
     /* =================================
        Components
        ================================= */
-
-
 
     /* =================================
        Anchor
@@ -185,11 +208,18 @@
 
     --anchor-offset: 60px;
 
-
     /* =================================
        Gradients
        ================================= */
 
+}
+
+@media (max-width: 1199px) {
+    :root { --grid-gap: 24px; --section-head-max-width: 680px; }
+}
+
+@media (max-width: 767px) {
+    :root { --grid-gap: 16px; --section-head-max-width: none; --fs-lg: 17px; --fs-xl: 20px; }
 }
 
 body {

@@ -1,53 +1,9 @@
 /* =================================
-   Спойлеры «Подробнее»: анимация раскрытия
-   (класс .animate ставит assets/js/utils.js по событию toggle)
-   ================================= */
-
-
-/* =================================
-   Closed state
+   Спойлеры (этапы, FAQ): содержимое под заголовком.
+   Раскрытие и закрытие анимирует assets/js/utils.js (высота, в обе стороны,
+   с разворотом при повторном клике; без анимации при prefers-reduced-motion).
    ================================= */
 
 .details-content {
-    display: grid;
-
-    grid-template-rows: 0fr;
-
-    opacity: 0;
-
-    transform:
-        translateY(-8px);
-
-    transition:
-        grid-template-rows var(--transition-normal),
-        opacity var(--transition-fast),
-        transform var(--transition-fast);
-}
-
-
-/* =================================
-   Content clipping
-   ================================= */
-
-.details-content > * {
     overflow: hidden;
 }
-
-
-/* =================================
-   Open state
-   ================================= */
-
-.details-content.animate {
-    grid-template-rows: 1fr;
-
-    opacity: 1;
-
-    transform:
-        translateY(0);
-}
-
-/* =================================
-   Tablet
-   Заготовка — заполнить при необходимости
-   ================================= */

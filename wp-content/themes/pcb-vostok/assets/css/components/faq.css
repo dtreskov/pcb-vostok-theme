@@ -1,163 +1,120 @@
 /* =================================
-   FAQ
-   ================================= */
-
-
-/* =================================
-   Tablet
-   Заготовка — заполнить при необходимости
-   ================================= */
-
-@media (max-width: 1199px) {
-
-}
-
-/* =================================
-   Grid
-   Изменено 2026-09-19: align-items был "start" — из-за этого
-   карточки в одном ряду не выравнивались по высоте (каждая
-   под свой контент). Теперь "stretch" (по умолчанию для grid) —
-   все карточки в ряду тянутся под самую высокую.
+   FAQ: сетка карточек-вопросов (3 колонки, на телефоне — 1)
+   Закрытые вопросы в ряду — одной высоты: --faq-sum-h ставит utils.js
+   по самому высокому вопросу ряда. align-items: start — открытый ответ
+   не растягивает соседние карточки.
    ================================= */
 
 .faq-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-sm);
-    align-items: stretch;
+    gap: var(--space-ms);
+    align-items: start;
 }
-
-.faq-grid details summary:hover {
-    color: var(--color-primary);
-}
-
-/* =================================
-   Responsive
-   ================================= */
 
 @media (max-width: 767px) {
-
-    .faq-grid {
-        grid-template-columns: 1fr;
-
-        gap: 6px;
-    }
+    .faq-grid { grid-template-columns: 1fr; }
 }
 
+/* =================================
+   Карточка
+   ================================= */
+
+.faq-item {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+
+    border: 1px solid var(--color-faq-border);
+    border-radius: var(--radius-card);
+    background-color: var(--color-faq-background);
+
+    transition: border-color var(--transition-fast);
+}
+
+.faq-item:hover,
+.faq-item:has(details[open]) {
+    border-color: var(--color-faq-border-hover);
+}
 
 /* =================================
-   FAQ summary
+   Вопрос
    ================================= */
 
 .faq-grid details summary {
-    list-style: none;
-
     display: flex;
     align-items: center;
+    gap: var(--space-ms);
 
-    gap: 10px;
+    box-sizing: border-box;
+    min-height: var(--faq-sum-h, 0px);
+    padding: var(--space-md) var(--space-lg);
 
-    min-height: 3.2em;
-
+    list-style: none;
     cursor: pointer;
 
-    font-weight: 600;
+    color: var(--color-text-black);
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-snug);
 }
 
+.faq-grid details summary::-webkit-details-marker { display: none; }
 
-/* Remove native marker */
+.faq-grid details summary:hover { color: var(--color-primary); }
 
-.faq-grid details summary::-webkit-details-marker {
-    display: none;
-}
-
-
-/* Question icon */
-
+/* значок «?» */
 .faq-grid details summary::before {
     content: "?";
 
     display: flex;
     align-items: center;
     justify-content: center;
-
-    width: 20px;
-    height: 20px;
-
     flex-shrink: 0;
 
-    border:
-        2px solid
-        var(--color-copper);
+    width: 22px;
+    height: 22px;
+    box-sizing: border-box;
 
+    border: 2px solid var(--color-copper);
     border-radius: 50%;
 
     color: var(--color-copper);
-
-    font-size: 14px;
-    font-weight: 700;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
 }
 
-
-/* Expand arrow */
-
+/* шеврон «вниз», как у этапов; не сжимается в узкой карточке */
 .faq-grid details summary::after {
     content: "";
 
+    flex: 0 0 auto;
     width: 8px;
     height: 8px;
+    margin: -4px 4px 0 auto;
 
-    margin-left: auto;
+    border-right: 2px solid var(--color-copper);
+    border-bottom: 2px solid var(--color-copper);
 
-    border-right: 2px solid var(--color-gold);
-    border-bottom: 2px solid var(--color-gold);
-
-    transform: rotate(-45deg);
-
-    transition: transform var(--transition-fast);
+    transform: rotate(45deg);
+    transition: transform var(--transition-fast), margin var(--transition-fast);
 }
 
 .faq-grid details[open] summary::after {
-    transform: rotate(45deg);
+    margin-top: 4px;
+    transform: rotate(-135deg);
 }
-
-/* Зазор между заголовком (summary) и раскрывающимся текстом.
-   Добавлено 2026-09-19: FAQ использует голый .wp-block-details
-   (не .details-button), для которого такого отступа не было
-   вообще — текст стартовал вплотную к summary. ~1 строка. */
-
-.faq-grid details .details-content > *:first-child {
-    margin-top: var(--space-lg);
-}
-
 
 /* =================================
-   FAQ card
+   Ответ
    ================================= */
-.faq-item {
-    width: 100%;
-    box-sizing: border-box;
+
+.faq-grid details .details-content p {
     margin: 0;
-    background-color: var(--color-faq-background);
+    padding: 0 var(--space-lg) var(--space-md) calc(var(--space-lg) + 22px + var(--space-ms));
 
-    border:
-        1px solid
-        var(--color-faq-border);
-
-    border-radius: var(--radius-faq);
-
-    padding: var(--space-lg);
-
-    transition:
-        border-color var(--transition-fast),
-        box-shadow var(--transition-fast);
-}
-
-
-.faq-item:hover {
-    border-color: var(--color-faq-border-hover);
-
-    box-shadow:
-        0 4px 12px
-        rgba(0, 0, 0, 0.08);
+    color: var(--color-lead);
+    font-size: var(--fs-md);
+    line-height: var(--line-height);
 }

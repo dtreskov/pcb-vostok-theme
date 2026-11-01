@@ -83,7 +83,7 @@
 
 .section-head {
     max-width: var(--section-head-max-width);
-    margin-bottom: var(--section-head-spacing);
+    margin-bottom: var(--head-gap);
 }
 
 /* =================================
@@ -102,7 +102,7 @@
     position: relative;
 
     padding-block:
-        var(--section-spacing);
+        var(--section-pad);
 }
 
 /* =================================
@@ -175,17 +175,16 @@
     border-bottom: 0;
 }
 
-.section--dark .section-title,
-.section--dark .section-lead {
+.section--dark .section-title {
     color: var(--color-text-white);
+}
+
+.section--dark .section-lead {
+    color: var(--color-lead-on-dark);
 }
 
 /* =================================
    Tablet
    Заготовка — заполнить при необходимости
    ================================= */
-
-@media (max-width: 1199px) {
-
-}
 

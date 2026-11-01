@@ -1,9 +1,7 @@
 /* =====================================================
    Секции-этапы 01–08: общий стиль («Этапы цикла: итерации», итерация 8)
    ===================================================== */
-.section--stage{--stage-col: 120px;
-    --stage-gap: var(--space-xl);
-    --stage-pad: clamp(36px, 4vw, 56px);
+.section--stage{
 
     --stage-num-size: 112px;
     --stage-num-h: calc(var(--stage-num-size) * 0.82);
@@ -18,8 +16,6 @@
     );
     --stage-axis-lit: linear-gradient(var(--color-copper), var(--color-copper));
 
-    --stage-lead-color: #2E3B35;
-
     
     --stage-num-fill: var(--color-page-background);
 
@@ -29,7 +25,6 @@
     max-width: 100%;
     margin-inline: auto;
     padding-inline: var(--content-spacing);
-    padding-block: var(--stage-pad);
 
     
     background-image: var(--stage-axis-dash), var(--stage-axis-dash);
@@ -92,13 +87,9 @@
     transition: color var(--transition-normal);}
 .stage-num:hover{color: var(--color-copper-light);}
 .section--stage:has(details[open]) .stage-num{color: var(--color-copper);}
-.section--stage .section-head{max-width: 680px;}
-.section--stage .section-lead{max-width: none;
+.section--stage .section-lead{
 
-    color: var(--stage-lead-color);
-
-    font-size: 20px;
-    line-height: 1.55;}
+    color: var(--stage-lead-color);}
 .stage-tab{position: absolute;
     z-index: 3;
     left: calc(
@@ -106,11 +97,8 @@
     );
 
     margin: 0;}
-.stage-tab--skip{top: -19px;}
 .stage-tab .wp-block-button__link{display: inline-flex;
     align-items: center;
-
-    height: 38px;
     padding: 0 16px;
 
     border: 1px solid var(--color-separator);
@@ -120,8 +108,6 @@
     color: var(--color-copper-dark);
 
     box-shadow: 0 6px 14px rgba(11, 44, 34, 0.08);
-
-    font-size: 14px;
     font-weight: 600;
     line-height: 1;
     text-decoration: none;
@@ -156,24 +142,18 @@
     overflow: hidden;
 
     border: 1px solid var(--color-copper-dark);
-    border-radius: var(--radius-pill);
-
-    box-shadow: 0 6px 18px rgba(168, 92, 40, 0.22);}
+    border-radius: var(--radius-pill);}
 .stage-actions .wp-block-button{margin: 0;}
 .stage-actions .wp-block-button__link{display: inline-flex;
     align-items: center;
 
     box-sizing: border-box;
-    height: 36px;
-    padding: 0 18px;
 
     border: 0;
     border-radius: 0;
 
     background: var(--color-copper-dark);
     color: var(--color-white);
-
-    font-size: 14px;
     font-weight: 600;
     line-height: 1;
     text-decoration: none;
@@ -243,10 +223,9 @@
     background-color: var(--color-copper-light);}
 .section--stage:has(.details-link > summary:hover) .stage-num{color: var(--color-copper-light);}
 .section--stage:has(details[open]):has(.details-link > summary:hover) .stage-num{color: var(--color-copper-dark);}
-.section--stage:has(.details-link) .section-head{padding-right: 64px;}
 .section--stage .details-link > .details-content,.stage-actions{position: relative;
     z-index: 2;}
-.section--stage .details-link > .details-content{margin-top: var(--space-lg);
+.section--stage .details-link > .details-content{
     margin-left:
         calc(var(--stage-col) + var(--stage-gap));}
 .details-inner > * + *{margin-top: var(--space-lg);}
@@ -271,4 +250,37 @@
 .stage-actions{margin-left: 0;}
 .section--stage:has(.details-link) .section-head{padding-right: 0;}
 .section--stage:has(.details-link) .stage-marker{padding-right: 56px;}
+}
+
+/* =====================================================
+   Дизайн-система v2 (2026-11-01): этапы на сетке 12 колонок.
+   Цифра — колонка 1 (по краю контейнера), текст — колонки 2–8,
+   шеврон — колонка 9; колонки 10–12 — под картинку этапа (будет добавлена).
+   ===================================================== */
+.section--stage{--content-spacing: 0px;
+    --stage-col: var(--grid-col);
+    --stage-gap: var(--grid-gap);
+    --stage-pad: var(--section-pad-tight);
+    --stage-lead-color: var(--color-lead);
+    padding-block: var(--stage-pad);}
+.section--stage-first{padding-top: calc(var(--stage-pad) + var(--space-ms));}
+.section--stage .section-head{max-width: var(--section-head-max-width);
+    margin-bottom: 0;}
+.section--stage .section-lead{max-width: none;
+    font-size: var(--fs-lg);
+    line-height: var(--lh-lead);}
+.section--stage:has(.details-link) .section-head{padding-right: 0;}
+.stage-actions{box-shadow: none;}
+.stage-actions .wp-block-button__link{height: var(--btn-h);
+    padding: 0 20px;
+    font-size: var(--btn-fs);}
+.stage-tab .wp-block-button__link{height: var(--btn-h);
+    font-size: var(--btn-fs);}
+.stage-tab--skip{top: -20px;}
+.section--stage .details-link > .details-content{margin-top: 0;
+    padding-top: var(--space-lg);}
+@media (min-width: 1200px){
+.section--stage{--stage-chev-x: calc(var(--stage-col) + var(--stage-gap) + var(--section-head-max-width) + var(--grid-gap) + (var(--grid-col) - 44px) / 2);}
+:where(body:not(.editor-styles-wrapper)) .section--stage .details-link > summary::after{right: auto;
+    left: var(--stage-chev-x);}
 }

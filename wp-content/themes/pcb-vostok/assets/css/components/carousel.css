@@ -99,29 +99,21 @@
 .pcar__body h3 {
     margin: 0;
     color: var(--color-text-black);
-    font-size: clamp(22px, 2.4vw, 30px);
-    font-weight: 800;
     line-height: 1.15;
-    letter-spacing: -0.02em;
 }
-.pcar__text { margin: var(--space-md) 0 0; max-width: 62ch; color: var(--color-text-grey); font-size: 16.5px; line-height: 1.6; }
+.pcar__text { margin: var(--space-md) 0 0; }
 
 /* ---------- #services: лента-тезис ---------- */
 .pcar--services .pcar__card { min-height: clamp(260px, 24vw, 340px); }
 
 /* первый экран на десктопе: высота карусели — var(--first-screen-car) (globals.css), картинка вписана в неё */
 @media (min-width: 1024px) {
-    .pcar--services { --car-pt: clamp(16px, 3svh - 6px, 48px); --car-pb: clamp(40px, 4.5svh, 72px); }
-    .pcar--services .pcar__card { box-sizing: border-box; height: var(--first-screen-car); min-height: 0; padding-top: var(--car-pt); padding-bottom: var(--car-pb); align-content: center; }
+        .pcar--services .pcar__card { box-sizing: border-box; height: var(--first-screen-car); min-height: 0; padding-top: var(--car-pt); padding-bottom: var(--car-pb); align-content: center; }
     .pcar--services .pcar__fig img { max-height: calc(var(--first-screen-car) - var(--car-pt) - var(--car-pb)); width: auto; margin-inline: auto; }
-    .pcar--services .pcar__body h3 { font-size: clamp(24px, 1.6svh + 11px, 30px); }
-    .pcar--services .pcar__text { font-size: clamp(16px, 0.8svh + 10px, 19px); line-height: 1.55; }
+        .pcar--services .pcar__text { line-height: 1.55; }
 }
 .pcar--services .pcar__text {
     max-width: 64ch;
-    color: var(--color-text-black);
-    font-size: clamp(17px, 1.45vw, 19px);
-    font-weight: 500;
     line-height: 1.55;
     letter-spacing: 0;
 }
@@ -232,6 +224,17 @@
     .pcar__track { scroll-behavior: auto; }
 }
 
-
 /* картинка-файл в слайде без плашки */
 .pcar__fig--bare img { width: 100%; height: auto; object-fit: contain; }
+
+/* ---------- Дизайн-система v2 (2026-11-01) ---------- */
+.pcar__body h3 { font-size: var(--fs-h3); font-weight: var(--fw-bold); letter-spacing: -0.02em; }
+.pcar__text { max-width: 64ch; color: var(--color-lead); font-size: var(--fs-lg); line-height: var(--lh-lead); }
+.pcar--services .pcar__text { color: var(--color-lead); font-size: var(--fs-lg); font-weight: var(--fw-regular); }
+#about .pcar__card { padding-block: 0 calc(var(--space-lg) + 28px); }
+/* первый экран: карусель без пустоты сверху; шрифт слайда — ещё и от высоты окна (исключение первого экрана) */
+@media (min-width: 1024px) {
+    .pcar--services { --car-pt: clamp(8px, 2svh - 8px, 24px); --car-pb: clamp(36px, 3svh + 8px, 56px); }
+    .pcar--services .pcar__body h3 { font-size: clamp(22px, 1.8svh + 11px, 28px); }
+    .pcar--services .pcar__text { font-size: clamp(16px, 1svh + 9px, 18px); }
+}

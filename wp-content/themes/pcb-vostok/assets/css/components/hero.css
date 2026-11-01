@@ -28,7 +28,7 @@
 .hero--v131 .i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .hero--v131 .btns{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:34px}
 .hero--v131 .seg{display:inline-flex;align-items:stretch;border-radius:var(--radius-pill);padding:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18)}
-.hero--v131 .seg a{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 24px;border-radius:var(--radius-pill);font:600 15px/1 var(--font-family);text-decoration:none;white-space:nowrap;transition:background .3s,color .3s}
+.hero--v131 .seg a{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-pill);font:600 15px/1 var(--font-family);text-decoration:none;white-space:nowrap;transition:background .3s,color .3s}
 .hero--v131 .seg__a{background:var(--color-copper-dark);color:#fff}
 .hero--v131 .seg__a:hover{background:var(--color-copper)}
 .hero--v131 .seg__b{color:var(--color-primary-light)}
@@ -106,13 +106,39 @@
 @media (min-width:1024px){
 .hero--v131{min-height:calc(var(--first-screen) - var(--first-screen-car));display:flex;flex-direction:column}
 .hero--v131 .top{flex:1 1 auto;display:flex;align-items:center}
-.hero--v131 .main{grid-template-columns:minmax(0,1fr) auto;padding:clamp(16px,3svh - 8px,48px) 0 clamp(12px,2.4svh - 8px,32px)}
+.hero--v131 .main{grid-template-columns:minmax(0,1fr) auto;}
 .hero--v131 .h1{font-size:clamp(34px,min(4.5vw,3.2svh + 17px),56px);line-height:1.1}
-.hero--v131 .desc{margin-top:clamp(10px,1.6svh,20px);font-size:clamp(16px,1.2svh + 6px,18px)}
+.hero--v131 .desc{margin-top:clamp(10px,1.6svh,20px);}
 .hero--v131 .btns{margin-top:clamp(16px,3svh - 4px,34px)}
-.hero--v131 .board12{width:min(38vw,calc((var(--first-screen) - var(--first-screen-car) - 80px) * .975));justify-self:center}
+.hero--v131 .board12{justify-self:center}
 .hero--v131 .a12{padding:clamp(10px,1.6svh - 3px,20px) 14px}
 }
-@media (min-width:1024px) and (max-height:799px){
+
+/* =================================
+   Дизайн-система v2 (2026-11-01). Первый экран (≥1024px):
+   hero + карусель услуг — ровно окно минус шапка и 36 px следующего блока.
+   Карусель — 40 % (230–440 px), hero — остаток; тёмная область hero заполняет
+   всю его долю, плата — по свободной высоте. Ниже 850 px высоты H1 переносится
+   по смыслу («…печатных плат» / «с полным циклом проверки»), ниже 700 px плата
+   скрыта, ниже 680 px — подзаголовок.
+   ================================= */
+.hero--v131 .seg a{min-height:var(--btn-h);padding:0 24px;font-size:var(--btn-fs-lg)}
+.hero--v131 .a12__tx b{font-size:var(--fs-md)}
+.hero--v131 .a12__tx small{font-size:var(--fs-sm)}
+@media (min-width:1024px){
+.hero--v131 > .v{flex:1 1 auto;display:flex;flex-direction:column}
+.hero--v131 .main{padding:clamp(8px,3svh - 14px,44px) 0 clamp(8px,2.4svh - 10px,32px)}
+.hero--v131 .desc{max-width:60ch;font-size:clamp(16px,1.2svh + 7px,18px)}
+.hero--v131 .board12{width:min(38vw,calc((var(--first-screen) - var(--first-screen-car) - 124px) * 1.25))}
+.hero--v131 .a12{padding-block:clamp(10px,2svh - 6px,24px)}
+}
+@media (min-width:1024px) and (max-height:849px){
+.hero--v131 .h1 span{display:block}
+}
+@media (min-width:1024px) and (max-height:699px){
+.hero--v131 .main{grid-template-columns:minmax(0,1fr)}
+.hero--v131 .board12{display:none}
+}
+@media (min-width:1024px) and (max-height:679px){
 .hero--v131 .desc{display:none}
 }

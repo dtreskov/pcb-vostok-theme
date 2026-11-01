@@ -33,7 +33,6 @@
     background-color: var(--color-card-background);
 
     border: 1px solid var(--color-card-border);
-    border-radius: var(--radius-card);
 
     padding: 22px 20px;
 
@@ -58,18 +57,12 @@
 
     background-color: var(--color-primary);
     color: var(--color-white);
-
-    font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.04em;}
-.cycle-step h3{margin: 14px 0 7px;
-    font-size: 16px;}
+.cycle-step h3{margin: 14px 0 7px;}
 .cycle-step__text{margin: 0;
 
-    color: var(--color-text-grey);
-
-    font-size: 13.5px;
-    line-height: 1.55;}
+    color: var(--color-text-grey);}
 .cycle-step__icon{position: absolute;
     top: 22px;
     right: 20px;
@@ -259,13 +252,11 @@
 .cycle-grid.cycle-grid--fill .cycle-step{clip-path:inset(0 round var(--radius-card))}
 .cycle-grid.cycle-grid--fill .cycle-step::after{border-radius:0}
 
-
 /* =================================
    «Производственный цикл» на тёмном фоне, как hero
    Секция: .section.section--dark.cap--dark (#capabilities)
    Карточки непрозрачные — трасса цикла под ними не просвечивает.
    ================================= */
-#capabilities.cap--dark { padding-block: clamp(40px, 5vw, 72px); }
 .cap--dark .section-title, .cap--dark .section-title strong { color: var(--color-text-white); }
 
 .cap--dark .cycle-step { background-color: #0F3A2D; border-color: rgba(216, 180, 90, .2); box-shadow: none; }
@@ -280,18 +271,17 @@
 .cap--dark .cycle-trace__line { opacity: .9; }
 
 /* шапка: заголовок и селектор в одну строку; не помещается — селектор под заголовком */
-#capabilities .section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 40px; max-width: none; margin-bottom: 32px; }
+#capabilities .section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 40px; max-width: none; }
 #capabilities .section-head .section-title { margin: 0; }
 
 /* селектор услуги — медный сегмент */
-.capsel { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1.5px solid var(--color-copper); border-radius: 6px; overflow: hidden; }
-.capsel button { padding: 12px 18px; text-align: center; border: 0; background: transparent; color: rgba(228, 239, 233, .8); font: 600 14px/1 var(--font-family); cursor: pointer; transition: background-color var(--transition-fast), color var(--transition-fast); }
+.capsel { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1.5px solid var(--color-copper); overflow: hidden; }
+.capsel button { text-align: center; border: 0; background: transparent; color: rgba(228, 239, 233, .8); font: 600 14px/1 var(--font-family); cursor: pointer; transition: background-color var(--transition-fast), color var(--transition-fast); }
 .capsel button + button { border-left: 1px solid rgba(192, 112, 58, .55); }
 .capsel button:hover { background: rgba(192, 112, 58, .14); color: var(--color-text-white); }
 .capsel button[aria-pressed="true"] { background: var(--color-copper-dark); color: var(--color-text-white); }
 
 /* расшифровка выбранной услуги */
-.cap-desc { max-width: 76ch; margin: -14px 0 32px; color: rgba(228, 239, 233, .78); font-size: 17px; line-height: 1.6; }
 .cap-desc[hidden] { display: none; }
 
 /* этап вне выбранной услуги: приглушается содержимое, без прогресса и галочки */
@@ -304,10 +294,19 @@
 .cycle-grid--check .cycle-step.is-svc-off .cycle-step__num::before,
 .cycle-grid--check .cycle-step.is-svc-off .cycle-step__num::after { display: none; }
 
-
-
 /* телефон: кнопки услуг на всю ширину, равные; длинные названия — в две строки */
 @media (max-width: 600px) {
     .capsel { display: grid; width: 100%; }
     .capsel button { padding: 11px 8px; font-size: 13px; line-height: 1.25; }
 }
+
+/* ---------- Дизайн-система v2 (2026-11-01) ---------- */
+#capabilities.cap--dark { padding-block: var(--section-pad); }
+#capabilities .section-head { margin-bottom: 0; }
+.cap-desc { max-width: var(--section-head-max-width); margin: var(--title-gap) 0 var(--head-gap); color: var(--color-lead-on-dark); font-size: var(--fs-lg); line-height: var(--lh-lead); }
+.capsel { border-radius: var(--radius-pill); }
+.capsel button { height: var(--btn-h); padding: 0 20px; font-size: var(--btn-fs); }
+.cycle-step { border-radius: var(--radius-card); }
+.cycle-step h3 { font-size: var(--fs-md); line-height: var(--lh-snug); }
+.cycle-step__text { font-size: var(--fs-sm); line-height: var(--lh-ui); }
+.cycle-step__num { font-size: var(--fs-xs); }

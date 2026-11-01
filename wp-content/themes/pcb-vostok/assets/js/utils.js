@@ -1,52 +1,118 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    /* Animate cards row by row, not card by card */
-    function setCardAnimationDelays(content) {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-        const INITIAL_DELAY = 0.2;
-        const ROW_DELAY = 0.12;
+    /*
+     * Раскрытие спойлеров (этапы, FAQ): анимация высоты .details-content
+     * в обе стороны. Повторный клик посреди анимации разворачивает её.
+     * Браузер открывает <details> мгновенно, поэтому клик по заголовку
+     * перехватывается и open ставится/снимается в нужный момент.
+     */
+    const ACC = ".faq-grid details, .section--stage .details-link";
 
-        const cards = content.querySelectorAll(
-            ".cards-grid .grid-item"
-        );
+    function setDetails(details, open) {
 
-        if (!cards.length) {
+        const content = details.querySelector(":scope > .details-content");
+
+        if (!content || reduceMotion.matches) {
+            details.open = open;
             return;
         }
 
-        let rows = [];
+        const from = details.open ? content.getBoundingClientRect().height : 0;
 
-        cards.forEach(card => {
+        if (details._anim) {
+            details._anim.cancel();
+        }
 
-            const top = card.offsetTop;
+        details._want = open;
 
-            let row = rows.find(
-                item => Math.abs(item.top - top) < 2
-            );
+        if (open) {
+            details.open = true;
+        }
 
-            if (!row) {
+        const to = open ? content.scrollHeight : 0;
 
-                row = {
-                    top: top,
-                    cards: []
-                };
-
-                rows.push(row);
+        const anim = content.animate(
+            [
+                { height: from + "px", opacity: open && !from ? 0 : 1 },
+                { height: to + "px", opacity: open ? 1 : 0 }
+            ],
+            {
+                duration: open ? 320 : 240,
+                easing: open ? "cubic-bezier(.2, .7, .3, 1)" : "cubic-bezier(.4, 0, .8, .6)"
             }
+        );
 
-            row.cards.push(card);
+        details._anim = anim;
 
-        });
+        anim.onfinish = () => {
+            if (!open) {
+                details.open = false;
+            }
+            details._anim = null;
+            details._want = undefined;
+        };
+
+    }
+
+    document.addEventListener("click", event => {
+
+        const summary = event.target.closest("summary");
+
+        if (!summary) {
+            return;
+        }
+
+        const details = summary.parentElement;
+
+        if (!details.matches(ACC)) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const isOpen = details._want !== undefined ? details._want : details.open;
+
+        setDetails(details, !isOpen);
+
+    });
 
 
-        rows.forEach((row, index) => {
+    /*
+     * FAQ: закрытые вопросы в одном ряду — по высоте самого высокого
+     * (--faq-sum-h на карточке; открытый ответ соседей не растягивает)
+     */
+    function equalizeFaq() {
 
-            row.cards.forEach(card => {
+        document.querySelectorAll(".faq-grid").forEach(grid => {
 
-                card.style.setProperty(
-                    "--card-delay",
-                    `${INITIAL_DELAY + index * ROW_DELAY}s`
-                );
+            const items = [...grid.querySelectorAll(".faq-item")];
+
+            items.forEach(item => item.style.removeProperty("--faq-sum-h"));
+
+            const rows = new Map();
+
+            items.forEach(item => {
+                const top = Math.round(item.offsetTop);
+                if (!rows.has(top)) {
+                    rows.set(top, []);
+                }
+                rows.get(top).push(item);
+            });
+
+            rows.forEach(row => {
+
+                let max = 0;
+
+                row.forEach(item => {
+                    const summary = item.querySelector("summary");
+                    if (summary) {
+                        max = Math.max(max, summary.getBoundingClientRect().height);
+                    }
+                });
+
+                row.forEach(item => item.style.setProperty("--faq-sum-h", Math.ceil(max) + "px"));
 
             });
 
@@ -54,43 +120,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
-    /*
-     * Запуск анимации details
-     */
+    let faqTimer;
 
-    function animateDetails(details) {
+    window.addEventListener("resize", () => {
+        clearTimeout(faqTimer);
+        faqTimer = setTimeout(equalizeFaq, 120);
+    });
 
-        const content =
-            details.querySelector(".details-content");
+    equalizeFaq();
 
-        if (!content) {
-            return;
-        }
-
-
-        // Сбрасываем предыдущую анимацию
-        content.classList.remove("animate");
-
-
-        // Принудительно применяем закрытое состояние
-        void content.offsetWidth;
-
-
-        // Определяем ряды карточек
-        setCardAnimationDelays(content);
-
-
-        // Запускаем анимацию со следующего кадра
-        requestAnimationFrame(() => {
-
-            requestAnimationFrame(() => {
-
-                content.classList.add("animate");
-
-            });
-
-        });
-
+    if (document.fonts) {
+        document.fonts.ready.then(equalizeFaq);
     }
 
 
@@ -110,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         requestAnimationFrame(() => {
 
-                            details.open = true;
+                            setDetails(details, true);
 
                         });
 
@@ -202,42 +242,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /*
-     * Повторная анимация при ручном открытии details
-     */
-    document
-        .querySelectorAll("details")
-        .forEach(details => {
-
-
-            details.addEventListener("toggle", () => {
-
-                if (details.open) {
-
-                    animateDetails(details);
-
-                } else {
-
-                    const content =
-                        details.querySelector(".details-content");
-
-                    if (content) {
-                        content.classList.remove("animate");
-                    }
-
-                }
-
-            });
-
-
-        });
-
-
-
-    /*
      * Открытие при загрузке страницы:
      * site.ru/#manufacturing
      */
     openDetailsByHash();
 
 
-});
+});

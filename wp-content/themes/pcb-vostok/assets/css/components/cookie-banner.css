@@ -295,3 +295,6 @@
     .cookie--prefs .cookie__actions { display: grid; grid-template-columns: 1fr; }
     .cookie--prefs .cookie__btn--accept { order: -1; }
 }
+
+/* Скругление карточек — прежнее (8px) до сверки с дизайн-системой v2 (2026-11-01) */
+.cookie { --radius-card: 8px; }
