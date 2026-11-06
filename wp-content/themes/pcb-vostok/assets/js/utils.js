@@ -7,15 +7,58 @@ document.addEventListener("DOMContentLoaded", () => {
      * в обе стороны. Повторный клик посреди анимации разворачивает её.
      * Браузер открывает <details> мгновенно, поэтому клик по заголовку
      * перехватывается и open ставится/снимается в нужный момент.
+     *
+     * На время анимации привязка прокрутки (scroll anchoring) отключена:
+     * иначе, если заголовок частично ушёл за верх экрана, браузер держит
+     * на месте содержимое ниже и спойлер «растёт вверх». Если после клика
+     * блок (этап или карточка FAQ) виден не целиком, экран один раз мягко
+     * подводится к его верху под шапку — без постоянного scroll-snap.
      */
     const ACC = ".faq-grid details, .section--stage .details-link";
 
-    function setDetails(details, open) {
+    const root = document.documentElement;
+
+    let anchorLocks = 0;
+
+    function lockAnchor(on) {
+        anchorLocks = Math.max(0, anchorLocks + (on ? 1 : -1));
+        root.style.overflowAnchor = anchorLocks ? "none" : "";
+    }
+
+    function snapTo(details, delta) {
+
+        const block = details.closest(".section--stage") || details.closest(".faq-item") || details;
+        const rect = block.getBoundingClientRect();
+        const offset = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+        const gap = block === details.closest(".section--stage") ? 0 : 16;
+
+        /* блок уже целиком на экране (с учётом будущей высоты) — не двигаем */
+        if (rect.top >= offset && rect.bottom + delta <= window.innerHeight) {
+            return;
+        }
+
+        /* при закрытии подводим, только если верх блока ушёл за шапку */
+        if (delta < 0 && rect.top >= offset) {
+            return;
+        }
+
+        window.scrollTo({
+            top: window.scrollY + rect.top - offset - gap,
+            behavior: reduceMotion.matches ? "auto" : "smooth"
+        });
+
+    }
+
+    function setDetails(details, open, snap) {
 
         const content = details.querySelector(":scope > .details-content");
 
         if (!content || reduceMotion.matches) {
+            const before = content && details.open ? content.getBoundingClientRect().height : 0;
             details.open = open;
+            if (snap && content) {
+                snapTo(details, (open ? content.getBoundingClientRect().height : 0) - before);
+            }
             return;
         }
 
@@ -23,6 +66,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (details._anim) {
             details._anim.cancel();
+        } else {
+            lockAnchor(true);
         }
 
         details._want = open;
@@ -32,6 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const to = open ? content.scrollHeight : 0;
+
+        if (snap) {
+            snapTo(details, to - from);
+        }
 
         const anim = content.animate(
             [
@@ -52,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             details._anim = null;
             details._want = undefined;
+            lockAnchor(false);
         };
 
     }
@@ -74,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const isOpen = details._want !== undefined ? details._want : details.open;
 
-        setDetails(details, !isOpen);
+        setDetails(details, !isOpen, true);
 
     });
 
