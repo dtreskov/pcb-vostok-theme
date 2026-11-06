@@ -178,6 +178,15 @@ function theme_enqueue_frontend_assets(): void
         );
     }
 
+    // этапы 05–08 (монтаж, ОТК, ПМИ, доставка): содержимое спойлеров — после stage-content.css
+    if (is_front_page()) {
+        theme_enqueue_css(
+            'stages-5-8',
+            'assets/css/components/stages-5-8.css',
+            array('stage-content')
+        );
+    }
+
     // форма заявки: главная и калькулятор
     if (pcb_request_form_on_page()) {
         theme_enqueue_css(
@@ -290,6 +299,12 @@ function theme_enqueue_editor_assets(): void
         'stage-content',
         'assets/css/components/stage-content.css',
         array('section-stage')
+    );
+
+    theme_enqueue_css(
+        'stages-5-8',
+        'assets/css/components/stages-5-8.css',
+        array('stage-content')
     );
 
     theme_enqueue_css(
@@ -473,6 +488,19 @@ function theme_enqueue_scripts(): void
             array(),
             filemtime(
                 get_theme_file_path('assets/js/legal-toc.js')
+            ),
+            true
+        );
+    }
+
+    // этапы 05–08: слайдер монтажа, сцены ОТК, стенд ПМИ, маршрут доставки
+    if (is_front_page()) {
+        wp_enqueue_script(
+            'theme-stages-5-8',
+            get_theme_file_uri('assets/js/stages-5-8.js'),
+            array('theme-utils'),
+            filemtime(
+                get_theme_file_path('assets/js/stages-5-8.js')
             ),
             true
         );
