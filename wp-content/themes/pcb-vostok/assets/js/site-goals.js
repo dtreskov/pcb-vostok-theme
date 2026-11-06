@@ -89,7 +89,12 @@
         });
     }
     [].forEach.call(document.querySelectorAll('details.details-link'), function (d) {
-      d.addEventListener('toggle', function () { if (d.open) goal('act_more'); });
+      var skip = d.open; // этап, открытый по умолчанию (#order): его первое «открытие» при загрузке — не действие посетителя
+      d.addEventListener('toggle', function () {
+        if (!d.open) { skip = false; return; }
+        if (skip) { skip = false; return; }
+        goal('act_more');
+      });
     });
     document.addEventListener('focusin', function (e) {
       if (e.target.closest && e.target.closest('.request-form')) goal('form_start');

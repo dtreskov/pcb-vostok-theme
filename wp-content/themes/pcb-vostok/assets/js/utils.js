@@ -10,11 +10,18 @@ document.addEventListener("DOMContentLoaded", () => {
      *
      * На время анимации привязка прокрутки (scroll anchoring) отключена:
      * иначе, если заголовок частично ушёл за верх экрана, браузер держит
-     * на месте содержимое ниже и спойлер «растёт вверх». Если после клика
-     * блок (этап или карточка FAQ) виден не целиком, экран один раз мягко
-     * подводится к его верху под шапку — без постоянного scroll-snap.
+     * на месте содержимое ниже и спойлер «растёт вверх».
+     *
+     * Этапы: открыт не более одного — открытие этапа сворачивает открытый.
+     * Если свёрнутый этап выше, заголовок нажатого этапа на время анимации
+     * удерживается на месте. Если после клика этап виден не целиком, экран
+     * один раз мягко подводится к его верху под шапку (без scroll-snap).
+     *
+     * FAQ: экран не двигается — ответ просто растёт вниз.
      */
     const ACC = ".faq-grid details, .section--stage .details-link";
+
+    const STAGE = ".section--stage .details-link";
 
     const root = document.documentElement;
 
@@ -27,10 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function snapTo(details, delta) {
 
-        const block = details.closest(".section--stage") || details.closest(".faq-item") || details;
+        const block = details.closest(".section--stage") || details;
         const rect = block.getBoundingClientRect();
         const offset = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
-        const gap = block === details.closest(".section--stage") ? 0 : 16;
 
         /* блок уже целиком на экране (с учётом будущей высоты) — не двигаем */
         if (rect.top >= offset && rect.bottom + delta <= window.innerHeight) {
@@ -43,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         window.scrollTo({
-            top: window.scrollY + rect.top - offset - gap,
+            top: window.scrollY + rect.top - offset,
             behavior: reduceMotion.matches ? "auto" : "smooth"
         });
 
@@ -124,9 +130,128 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const isOpen = details._want !== undefined ? details._want : details.open;
 
-        setDetails(details, !isOpen, true);
+        if (!details.matches(STAGE)) {
+            setDetails(details, !isOpen, false);
+            return;
+        }
+
+        if (isOpen) {
+            setDetails(details, false, true);
+            return;
+        }
+
+        openStage(details);
 
     });
+
+    const isOpening = d => (d._want !== undefined ? d._want : d.open);
+
+    /* открыть этап, свернув открытый; при сворачивании этапа выше — держать заголовок нажатого на месте */
+    function openStage(details) {
+
+        const summary = details.querySelector(":scope > summary");
+        const others = [...document.querySelectorAll(STAGE)].filter(d => d !== details && isOpening(d));
+        const above = others.some(d => d.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+        if (!above) {
+            others.forEach(d => setDetails(d, false, false));
+            setDetails(details, true, true);
+            return;
+        }
+
+        others.forEach(d => {
+            if (d.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                collapsePinned(d, summary);
+            } else {
+                setDetails(d, false, false);
+            }
+        });
+
+        setDetails(details, true, false);
+
+        const anims = [details, ...others].map(d => d._anim).filter(Boolean);
+
+        Promise.all(anims.map(a => a.finished.catch(() => null))).then(() => {
+            if (isOpening(details)) {
+                snapTo(details, 0);
+            }
+        });
+
+    }
+
+    /* свернуть этап выше нажатого: высота меняется покадрово, и в том же кадре
+       прокрутка компенсирует сдвиг — заголовок нажатого этапа стоит на месте */
+    function collapsePinned(details, pinEl) {
+
+        const content = details.querySelector(":scope > .details-content");
+        const pin = pinEl.getBoundingClientRect().top;
+        const keep = () => {
+            const shift = pinEl.getBoundingClientRect().top - pin;
+            if (shift) {
+                window.scrollBy(0, shift);
+            }
+        };
+
+        if (!content || reduceMotion.matches) {
+            setDetails(details, false, false);
+            keep();
+            return;
+        }
+
+        if (details._anim) {
+            details._anim.cancel();
+        } else {
+            lockAnchor(true);
+        }
+
+        details._want = false;
+
+        const from = content.getBoundingClientRect().height;
+        const start = performance.now();
+        const duration = 240;
+        let stopped = false;
+        let done;
+
+        const reset = () => {
+            content.style.height = "";
+            content.style.opacity = "";
+        };
+
+        const frame = now => {
+            if (stopped) {
+                return;
+            }
+            const p = Math.min(1, (now - start) / duration);
+            const e = p * p;
+            content.style.height = from * (1 - e) + "px";
+            content.style.opacity = String(1 - e);
+            keep();
+            if (p < 1) {
+                requestAnimationFrame(frame);
+                return;
+            }
+            details.open = false;
+            reset();
+            keep();
+            details._anim = null;
+            details._want = undefined;
+            lockAnchor(false);
+            done();
+        };
+
+        details._anim = {
+            finished: new Promise(resolve => { done = resolve; }),
+            cancel() {
+                stopped = true;
+                reset();
+                details._anim = null;
+                done();
+            }
+        };
+
+        requestAnimationFrame(frame);
+
+    }
 
 
     /*
