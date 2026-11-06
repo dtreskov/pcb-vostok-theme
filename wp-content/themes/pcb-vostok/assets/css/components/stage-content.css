@@ -75,14 +75,8 @@
 @media (max-width:767px){
 .stg-sup{grid-template-columns:1fr}
 }
-.stg-cyc{--color-card-background:var(--color-white);--color-card-border:var(--color-separator);--transition-normal:.4s ease}
-.stg .stg-cyc .cycle-step__num{color:#fff}
-.stg .stg-cyc .cycle-step h3{font-weight:700;letter-spacing:-.01em;text-transform:none;color:var(--color-text-black)}
 .stg{--stg-r:12px}
 .stg .stg-card,.stg .stg-key,.stg .acc{border-radius:var(--stg-r)}
-.stg-cyc *,.stg-cyc *::before,.stg-cyc *::after{box-sizing:border-box}
-.stg .stg-cyc .cycle-step{border-radius:var(--stg-r);clip-path:inset(0 round var(--stg-r))}
-.stg .stg-cyc.cycle-grid--fill .cycle-step::after{top:-1px;left:-1px;right:-1px;height:3px;border-radius:0}
 #order .stg-two{gap:28px}
 @media (min-width:1200px){
 .stg-accs2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -165,10 +159,10 @@
 .stg-way small{font-size:var(--fs-sm)}
 .stg-way a{height:var(--btn-h);padding:0 20px;font-size:var(--btn-fs)}
 .stg-card{padding:var(--space-lg)}
-.stg .stg-cyc .cycle-step h3{margin:var(--space-ms) 0 var(--space-xs);font-size:var(--fs-md)}
-.stg-cyc .cycle-step__text{min-height:0;font-size:var(--fs-sm);line-height:var(--lh-ui)}
 .stg-road b,.stg-map__cap b{font-size:var(--fs-md)}
 .stg-road p,.stg-map__cap p{font-size:var(--fs-sm);line-height:var(--lh-ui)}
+/* номера шагов — шрифт номеров цикла (Inter 700, 16 px), не моноширинный */
+.stg-road li>span{font:700 var(--fs-md)/1 var(--font-family);letter-spacing:.04em}
 .stg-aud10 .tip b,.stg-aud10 .tip span{font-size:var(--fs-sm)}
 .acc__head{padding:6px var(--space-lg)}
 .acc__thumb,.acc__thumb img{width:40px;height:40px}
@@ -196,8 +190,8 @@
    на уровне центра своего квадрата. Квадрат и полоска — одна фигура («молоточек»): полоска пристыкована к своему
    квадрату без шва, названия — по центру общей средней колонки, одно над другим. Подпись «Работаем с брендами».
    Знаки — assets/img/brands/<бренд>.svg: официальные SVG (Wikimedia Commons, сайты производителей), обрезанные до знака, в цвете брендов. */
-.stg-brands-cap { margin: 0 0 var(--space-ms); font: 700 var(--fs-xs)/1 var(--stg-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--color-copper-dark); }
-.stg-brands {
+.stg-brands-cap{ margin: 0 0 var(--space-ms); font: 700 var(--fs-xs)/1 var(--stg-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--color-copper-dark); }
+.stg-brands{
     --brand-s: 56px;          /* сторона квадрата */
     --brand-g: var(--space-md);   /* зазор между квадратами в колонке */
     --brand-name-h: 28px;     /* высота полоски названия */
@@ -207,36 +201,36 @@
     grid-template-rows: repeat(7, calc((var(--brand-s) - var(--brand-g)) / 2));
     column-gap: var(--space-ms); row-gap: var(--brand-g);
 }
-.stg-brands li { display: contents; }
-.stg-brands li:nth-child(1) > * { grid-row: 1 / span 2; }
-.stg-brands li:nth-child(2) > * { grid-row: 2 / span 2; }
-.stg-brands li:nth-child(3) > * { grid-row: 3 / span 2; }
-.stg-brands li:nth-child(4) > * { grid-row: 4 / span 2; }
-.stg-brands li:nth-child(5) > * { grid-row: 5 / span 2; }
-.stg-brands li:nth-child(6) > * { grid-row: 6 / span 2; }
-.stg-brands__mark { display: grid; place-items: center; box-sizing: border-box; padding: var(--space-sm); background: var(--color-white); border: 1px solid var(--color-separator); border-radius: var(--radius-card); }
-.stg-brands__mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.stg-brands__name { position: relative; align-self: center; display: flex; align-items: center; justify-content: center; text-align: center; height: var(--brand-name-h); box-sizing: border-box; padding: 0 var(--space-ms); background: var(--color-white); border: 1px solid var(--color-separator); border-radius: var(--radius-field); font-size: var(--fs-sm); font-weight: 600; line-height: 1; color: var(--color-black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stg-brands li{ display: contents; }
+.stg-brands li:nth-child(1) > *{ grid-row: 1 / span 2; }
+.stg-brands li:nth-child(2) > *{ grid-row: 2 / span 2; }
+.stg-brands li:nth-child(3) > *{ grid-row: 3 / span 2; }
+.stg-brands li:nth-child(4) > *{ grid-row: 4 / span 2; }
+.stg-brands li:nth-child(5) > *{ grid-row: 5 / span 2; }
+.stg-brands li:nth-child(6) > *{ grid-row: 6 / span 2; }
+.stg-brands__mark{ display: grid; place-items: center; box-sizing: border-box; padding: var(--space-sm); background: var(--color-white); border: 1px solid var(--color-separator); border-radius: var(--radius-card); }
+.stg-brands__mark img{ display: block; width: 100%; height: 100%; object-fit: contain; }
+.stg-brands__name{ position: relative; align-self: center; display: flex; align-items: center; justify-content: center; text-align: center; height: var(--brand-name-h); box-sizing: border-box; padding: 0 var(--space-ms); background: var(--color-white); border: 1px solid var(--color-separator); border-radius: var(--radius-field); font-size: var(--fs-sm); font-weight: 600; line-height: 1; color: var(--color-black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* нечётные — квадрат слева, чётные — справа; полоска заходит в зазор до своего квадрата и перекрывает его рамку,
    с внутренней стороны — дополнительный отступ на ту же величину, чтобы текст стоял по центру средней колонки */
-.stg-brands li:nth-child(odd) .stg-brands__mark { grid-column: 1; }
-.stg-brands li:nth-child(odd) .stg-brands__name { grid-column: 2; margin-left: calc(-1 * var(--brand-join)); padding-left: calc(var(--brand-join) + var(--space-ms)); border-left: 0; border-radius: 0 var(--radius-field) var(--radius-field) 0; }
-.stg-brands li:nth-child(even) .stg-brands__mark { grid-column: 3; }
-.stg-brands li:nth-child(even) .stg-brands__name { grid-column: 2; margin-right: calc(-1 * var(--brand-join)); padding-right: calc(var(--brand-join) + var(--space-ms)); border-right: 0; border-radius: var(--radius-field) 0 0 var(--radius-field); }
+.stg-brands li:nth-child(odd) .stg-brands__mark{ grid-column: 1; }
+.stg-brands li:nth-child(odd) .stg-brands__name{ grid-column: 2; margin-left: calc(-1 * var(--brand-join)); padding-left: calc(var(--brand-join) + var(--space-ms)); border-left: 0; border-radius: 0 var(--radius-field) var(--radius-field) 0; }
+.stg-brands li:nth-child(even) .stg-brands__mark{ grid-column: 3; }
+.stg-brands li:nth-child(even) .stg-brands__name{ grid-column: 2; margin-right: calc(-1 * var(--brand-join)); padding-right: calc(var(--brand-join) + var(--space-ms)); border-right: 0; border-radius: var(--radius-field) 0 0 var(--radius-field); }
 
-@media (min-width: 1200px) {
+@media (min-width: 1200px){
     #components .stg-sup--brands { position: relative; grid-template-columns: minmax(0, 1fr) minmax(0, 400px) minmax(0, 1fr); align-items: center; }
     /* подпись — в строке схемы, над левым блоком; высоту этапа не добавляет */
     #components .stg-sup--brands > .stg-brands-cap { position: absolute; top: 0; left: 0; margin: 0; }
 }
 /* узкий десктоп: колонки по бокам схемы узкие — квадрат меньше, полоска плотнее */
-@media (min-width: 1200px) and (max-width: 1365px) {
+@media (min-width: 1200px) and (max-width: 1365px){
     .stg-brands { --brand-s: 48px; --brand-g: var(--space-ms); }
     .stg-brands__name { font-size: var(--fs-xs); }
 }
-@media (max-width: 1199px) {
+@media (max-width: 1199px){
     #components .stg-sup--brands > .stg-brands-cap { grid-column: 1 / -1; margin: 0; }
 }
-@media (max-width: 767px) {
+@media (max-width: 767px){
     .stg-brands { --brand-s: 48px; --brand-g: var(--space-ms); --brand-name-h: 26px; --brand-join: calc(var(--space-sm) + 1px); column-gap: var(--space-sm); }
 }
